@@ -1,2 +1,2 @@
 # xpag
-*xpag* (for "eXPloring AGent") is a modular reinforcement learning platform.
+*xpag* ("eXPloring AGent") is a modular reinforcement learning platform.
