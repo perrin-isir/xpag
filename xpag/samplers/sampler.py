@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from typing import Union, Dict
 from enum import Enum
+import xpag
 
 
 class DataType(Enum):
@@ -12,7 +13,7 @@ class DataType(Enum):
 
 class Sampler(ABC):
     def __init__(self,
-                 datatype: DataType = DataType.TORCH):
+                 datatype: DataType = xpag.tl.DataType.TORCH):
         self.datatype = datatype
 
     @abstractmethod
