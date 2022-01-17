@@ -17,9 +17,13 @@ If you prefer to update an existing environment (`existing_env`), use the comman
 ```
 conda env update --name existing_env --file environment.yml
 ```
-To activate the environment:
+To activate the `xpagenv` environment:
 ```
 conda activate xpagenv
+```
+Use the following command to install the *xpag* library in the activated virtual environment:
+```
+pip install -e .
 ```
 
 Two more steps:
