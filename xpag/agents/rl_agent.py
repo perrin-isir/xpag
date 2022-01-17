@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 
-class RLAgent(ABC):
+class Agent(ABC):
     def __init__(self, name: str, observation_dim: int, action_dim: int, device: str,
                  params: dict):
         self.name = name

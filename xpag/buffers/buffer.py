@@ -1,45 +1,67 @@
+from abc import ABC, abstractmethod
 import numpy as np
 import torch
-import gym
-import string
-import collections
-import functools
-import random
-import time
-import datetime
-from IPython import embed
+from typing import Union, Dict, NamedTuple
+from enum import Enum
 
-class DefaultBuffer:
-    def __init__(self, dict_sizes: dict, episode_max_length: int, buffer_size: int,
-                 version: str = 'torch', device: str = 'cpu'):
-        self.version = version
-        self.device = device
+
+class DataType(Enum):
+    TORCH = 'data represented as torch tensors'
+    NUMPY = 'data represented as numpy arrays'
+
+
+class Buffer(ABC):
+    def __init__(self,
+                 episode_max_length: int,
+                 buffer_size: int,
+                 datatype: DataType = DataType.TORCH,
+                 device: str = 'cpu'):
         self.T = episode_max_length
+        self.buffer_size = buffer_size
+        self.datatype = datatype
+        self.device = device
         self.size = int(buffer_size // self.T)
         self.current_size = 0
         self.buffers = {}
+
+    @abstractmethod
+    def store_episode(self, num_envs: int, episode: NamedTuple, episode_length: int):
+        """Store one or several episodes in the buffer
+        """
+        pass
+
+    @abstractmethod
+    def pre_sample(self) -> Dict[str, Union[torch.Tensor, np.ndarray]]:
+        """Return a part of the buffer from which the sampler will extract samples
+        """
+        pass
+
+
+class DefaultBuffer(Buffer):
+    def __init__(self, dict_sizes: dict, episode_max_length: int, buffer_size: int,
+                 datatype: DataType, device: str = 'cpu'):
+        super().__init__(episode_max_length, buffer_size, datatype, device)
         self.dict_sizes = dict_sizes
         self.dict_sizes['episode_length'] = 1
         for key in dict_sizes:
-            if self.version == 'torch':
+            if self.datatype == DataType.TORCH:
                 self.buffers[key] = torch.empty([self.size, self.T, dict_sizes[key]],
                                                 device=self.device)
             else:
                 self.buffers[key] = np.empty([self.size, self.T, dict_sizes[key]])
 
-    def store_episode(self, num_envs: int, episode, episode_t: int):
-        # idxs = self._get_storage_idx(inc=1)
+    def store_episode(self, num_envs: int, episode: NamedTuple, episode_length: int):
         idxs = self._get_storage_idx(inc=num_envs)
         episode_dict = episode._asdict()
-        if self.version == 'torch':
+        if self.datatype == 'torch':
             ep_length = torch.full((num_envs, self.T, 1),
-                                   float(episode_t),
+                                   float(episode_length),
                                    device=self.device)
         else:
             ep_length = np.full((num_envs, self.T, 1),
-                                float(episode_t))
+                                float(episode_length))
         for key in episode._fields:
-            self.buffers[key][idxs][:episode_t, :] = episode_dict[key]
+            self.buffers[key][idxs][:episode_length, :] = episode_dict[key]
         self.buffers['episode_length'][idxs] = ep_length
 
     def pre_sample(self):
