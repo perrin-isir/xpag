@@ -1,5 +1,5 @@
 # xpag
-xpag ("exploring agent") is a reinforcement learning platform. 
+*xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning platform.
 
 ## Installation
 
