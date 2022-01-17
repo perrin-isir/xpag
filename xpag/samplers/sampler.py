@@ -2,18 +2,12 @@ from abc import ABC, abstractmethod
 import numpy as np
 import torch
 from typing import Union, Dict
-from enum import Enum
-import xpag
-
-
-class DataType(Enum):
-    TORCH = 'data represented as torch tensors'
-    NUMPY = 'data represented as numpy arrays'
+from xpag.tools.utils import DataType
 
 
 class Sampler(ABC):
     def __init__(self,
-                 datatype: DataType = xpag.tl.DataType.TORCH):
+                 datatype: DataType = DataType.TORCH):
         self.datatype = datatype
 
     @abstractmethod
@@ -31,7 +25,7 @@ class DefaultSampler(Sampler):
         super().__init__(datatype)
 
     def sample(self,
-               buffers : Dict[str, Union[torch.Tensor, np.ndarray]],
+               buffers: Dict[str, Union[torch.Tensor, np.ndarray]],
                batch_size_in_transitions: int):
         rollout_batch_size = buffers[list(buffers.keys())[0]].shape[0]
         batch_size = batch_size_in_transitions

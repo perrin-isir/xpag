@@ -1,4 +1,4 @@
-from .rl_agent import (
+from .agent import (
     Agent,
 )
 from .SAC import SAC

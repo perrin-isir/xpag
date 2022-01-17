@@ -3,7 +3,8 @@ from typing import Union, List
 import torch
 import os
 import numpy as np
-import xpag
+from xpag.buffers.buffer import Buffer
+from xpag.samplers.sampler import Sampler
 
 
 class Agent(ABC):
@@ -21,7 +22,7 @@ class Agent(ABC):
             target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
     @abstractmethod
-    def train(self, buffer: xpag.bf.Buffer, sampler: xpag.sa.Sampler, batch_size: int):
+    def train(self, buffer: Buffer, sampler: Sampler, batch_size: int):
         pass
 
     @abstractmethod

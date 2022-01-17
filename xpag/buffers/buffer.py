@@ -2,12 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import torch
 from typing import Union, Dict, NamedTuple
-from enum import Enum
-
-
-class DataType(Enum):
-    TORCH = 'data represented as torch tensors'
-    NUMPY = 'data represented as numpy arrays'
+from xpag.tools.utils import DataType
 
 
 class Buffer(ABC):
@@ -53,7 +48,7 @@ class DefaultBuffer(Buffer):
     def store_episode(self, num_envs: int, episode: NamedTuple, episode_length: int):
         idxs = self._get_storage_idx(inc=num_envs)
         episode_dict = episode._asdict()
-        if self.datatype == 'torch':
+        if self.datatype == DataType.TORCH:
             ep_length = torch.full((num_envs, self.T, 1),
                                    float(episode_length),
                                    device=self.device)
