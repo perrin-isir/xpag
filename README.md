@@ -8,16 +8,16 @@ Recommended installation steps (with conda):
 git clone https://github.com/perrin-isir/xpag.git
 cd xpag
 ```
-Choose a conda environmnent name, for instance xpagenv.  
-The following command creates the xpagenv environment with the requirements listed in [environment.yaml](xomx/environment.yaml):
+Choose a conda environmnent name, for instance `xpagenv`.  
+The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](xomx/environment.yaml):
 ```
-conda env create --file environment.yaml --name xpagenv
+conda env create --name xpagenv --file environment.yaml
 ```
-If you prefer to update an existing environment (xpagenv), use the command:
+If you prefer to update an existing environment (`existing_env`), use the command:
 ```
-conda env update --name xpagenv --file local.yml (--prune)
+conda env update --name existing_env --file environment.yml
 ```
-The --prune option removes all the unnecessary libraries.
+To activate the environment:
 ```
 conda activate xpagenv
 ```
