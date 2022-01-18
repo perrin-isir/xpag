@@ -3,6 +3,7 @@ from IPython import embed
 import numpy as np
 import torch
 import gym
+import gym_gmazes
 import string
 import collections
 import functools
@@ -181,18 +182,24 @@ def evaluate_agent(envir, agent_, eval_episodes=10):
 
 args = get_args('')
 
-env_name = 'halfcheetah'
+# env_name = 'halfcheetah'
+# device = 'cuda'
+# episode_max_length = 1000
+# num_envs = 128
+# gym_name = f'brax-{env_name}-v0'
+# if gym_name not in gym.envs.registry.env_specs:
+#     entry_point = functools.partial(envs.create_gym_env, env_name=env_name)
+#     gym.register(gym_name, entry_point=entry_point)
+# env = gym.make(gym_name, batch_size=num_envs, episode_length=episode_max_length)
+# # automatically convert between jax ndarrays and torch tensors:
+# env = to_torch.JaxToTorchWrapper(env, device=device)
+# version = 'torch'
+# datatype = xpag.tl.DataType.TORCH
+
 device = 'cuda'
-episode_max_length = 1000
 num_envs = 128
-gym_name = f'brax-{env_name}-v0'
-if gym_name not in gym.envs.registry.env_specs:
-    entry_point = functools.partial(envs.create_gym_env, env_name=env_name)
-    gym.register(gym_name, entry_point=entry_point)
-env = gym.make(gym_name, batch_size=num_envs, episode_length=episode_max_length)
-# automatically convert between jax ndarrays and torch tensors:
-env = to_torch.JaxToTorchWrapper(env, device=device)
-version = 'torch'
+episode_max_length = 50
+env = gym.make("GMazeSimple-v0", device=device, batch_size=num_envs, frame_skip=2)
 datatype = xpag.tl.DataType.TORCH
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -203,10 +210,10 @@ datatype = xpag.tl.DataType.TORCH
 # datatype = xpag.tl.DataType.NUMPY
 
 
-if '_max_episode_steps' in dir(env):
-    max_episode_steps = env._max_episode_steps
-else:
-    max_episode_steps = 1000
+# if '_max_episode_steps' in dir(env):
+#     max_episode_steps = env._max_episode_steps
+# else:
+#     max_episode_steps = 1000
 
 # Set seeds
 if args.seed is not None:
@@ -229,7 +236,7 @@ replay_buffer = xpag.bf.DefaultBuffer(
         'r': 1,
         'terminals': 1,
     },
-    max_episode_steps,
+    episode_max_length,
     args.buffer_size,
     datatype=datatype,
     device=device,
@@ -242,7 +249,7 @@ StepData = collections.namedtuple(
     'StepData',
     ('obs', 'obs_next', 'actions', 'r', 'terminals'))
 
-episode_max_length = max_episode_steps
+# episode_max_length = max_episode_steps
 
 xpag.tl.learn(agent, env, num_envs, episode_max_length, replay_buffer, sampler,
               datatype, device)
