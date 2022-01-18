@@ -201,7 +201,11 @@ args = get_args('')
 device = 'cuda'
 num_envs = 32
 episode_max_length = 50
-env = gym.make("GMazeSimple-v0", device=device, batch_size=num_envs, frame_skip=2)
+env = gym.make("GMazeSimple-v0",
+               device=device,
+               batch_size=num_envs,
+               frame_skip=2,
+               walls=[])
 datatype = xpag.tl.DataType.TORCH
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -263,5 +267,14 @@ plot_episode = functools.partial(
     plot_episode_2d,
     plot_env_function=env.plot if hasattr(env, "plot") else None
 )
-xpag.tl.learn(agent, env, num_envs, episode_max_length, replay_buffer, sampler,
-              datatype, device, save_dir=save_dir, plot_function=plot_episode)
+max_t = 1e6
+train_ratio = 1.
+batch_size = 256
+start_random_t = 1
+eval_freq = 50 * 7
+eval_episodes = 7
+save_freq = 0
+xpag.tl.learn(agent, env, num_envs, episode_max_length,
+              max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_episodes,
+              save_freq, replay_buffer, sampler, datatype, device, save_dir=save_dir,
+              plot_function=plot_episode)

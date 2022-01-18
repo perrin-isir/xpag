@@ -81,15 +81,10 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         for k in range(self.frame_skip):
             new_state = (self.state + action / 10.0).clip(-1.0, 1.0)
             bool_val = True
-            intersection = None
+            intersection = torch.full((self.batch_size,), False).to(self.device)
             for (w1, w2) in self.walls:
-                if intersection is None:
-                    intersection = intersect(self.state, new_state, w1, w2)
-                else:
-                    intersection = torch.logical_or(
-                        intersection, intersect(self.state, new_state, w1, w2))
-                # if intersect(self.state, new_state, w1, w2) is True:
-                #     bool_val = False
+                intersection = torch.logical_or(
+                    intersection, intersect(self.state, new_state, w1, w2))
             intersection = torch.unsqueeze(intersection, dim=-1)
             self.state = self.state * intersection + \
                 new_state * torch.logical_not(intersection)
@@ -130,49 +125,3 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         ax.set_ylim([-1, 1])
         plt.xlim(-1, 1)
         plt.ylim(-1, 1)
-
-    # def plot(self):
-    #     lines = []
-    #     rgbs = []
-    #     for w in self.walls:
-    #         lines.append(w)
-    #         rgbs.append((0, 0, 0, 1))
-    #     fig, ax = plt.subplots()
-    #     ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=2))
-    #     plt.xlim(-1, 1)
-    #     plt.ylim(-1, 1)
-    #     plt.show()
-
-    # def plotpaths(self, paths, plot_ax=None):
-    #     if plot_ax is None:
-    #         _, ax = plt.subplots()
-    #     else:
-    #         ax = plot_ax
-    #     lines = []
-    #     rgbs = []
-    #     lines.append(([-1, -1], [-1, 1]))
-    #     rgbs.append((0, 0, 0, 1))
-    #     lines.append(([-1, 1], [1, 1]))
-    #     rgbs.append((0, 0, 0, 1))
-    #     lines.append(([1, 1], [1, -1]))
-    #     rgbs.append((0, 0, 0, 1))
-    #     lines.append(([1, -1], [-1, -1]))
-    #     rgbs.append((0, 0, 0, 1))
-    #     for w in self.walls:
-    #         lines.append(w)
-    #         rgbs.append((0, 0, 0, 1))
-    #     ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=2))
-    #     lenpaths = len(paths)
-    #     for i, path in enumerate(paths):
-    #         lines = []
-    #         rgbs = []
-    #         for p in path:
-    #             lines.append((p["obs"], p["obs_next"]))
-    #             rgbs.append((1.0 - i / lenpaths, 0.2, 0.2, 1))
-    #         ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=2))
-    #     ax.set_xlim([-1, 1])
-    #     ax.set_ylim([-1, 1])
-    #     # plt.xlim(-1, 1)
-    #     # plt.ylim(-1, 1)
-    #     # plt.savefig(filename, dpi=200)
-    #     # plt.close()
