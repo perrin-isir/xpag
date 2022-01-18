@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union, List
+from typing import Union, Dict, List
 import torch
 import os
 import numpy as np
@@ -9,7 +9,7 @@ from xpag.samplers.sampler import Sampler
 
 class Agent(ABC):
     def __init__(self, name: str, observation_dim: int, action_dim: int, device: str,
-                 params: dict):
+                 params: Union[None, dict]):
         self.name = name
         self.observation_dim = observation_dim
         self.action_dim = action_dim
@@ -22,7 +22,10 @@ class Agent(ABC):
             target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
     @abstractmethod
-    def train(self, buffer: Buffer, sampler: Sampler, batch_size: int):
+    def train(self,
+              pre_sample: Dict[str, Union[torch.Tensor, np.ndarray]],
+              sampler: Sampler,
+              batch_size: int):
         pass
 
     @abstractmethod

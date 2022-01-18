@@ -17,7 +17,6 @@ from brax.io import metrics
 from IPython import embed
 import argparse
 import os
-import numpy as np
 import logging
 import xpag
 from xpag.plotting.basics import plot_episode_2d
@@ -160,66 +159,39 @@ def log_init(args, agent, gsetter, init_list, init_list_test):
     return logger, logger_test
 
 
-def evaluate_agent(envir, agent_, eval_episodes=10):
-    avg_reward = 0.0
-    for _ in range(eval_episodes):
-        o_ = envir.reset()
-        done_ = False
-        while not done_:
-            o_, r_, done_, _ = envir.step(
-                agent_.select_action(o_, deterministic=True)
-            )
-            avg_reward += r_
-
-    avg_reward /= eval_episodes
-    print(
-        '-----------------------------------------------------------------------'
-    )
-    print('Evaluation over %d episodes: %f' % (eval_episodes, avg_reward))
-    print(
-        '-----------------------------------------------------------------------'
-    )
-    return [eval_episodes, avg_reward, None]
-
-
 args = get_args('')
 
-# env_name = 'halfcheetah'
-# device = 'cuda'
-# episode_max_length = 1000
-# num_envs = 128
-# gym_name = f'brax-{env_name}-v0'
-# if gym_name not in gym.envs.registry.env_specs:
-#     entry_point = functools.partial(envs.create_gym_env, env_name=env_name)
-#     gym.register(gym_name, entry_point=entry_point)
-# env = gym.make(gym_name, batch_size=num_envs, episode_length=episode_max_length)
-# # automatically convert between jax ndarrays and torch tensors:
-# env = to_torch.JaxToTorchWrapper(env, device=device)
-# version = 'torch'
-# datatype = xpag.tl.DataType.TORCH
-
+env_name = 'halfcheetah'
 device = 'cuda'
-num_envs = 32
-episode_max_length = 50
-env = gym.make("GMazeSimple-v0",
-               device=device,
-               batch_size=num_envs,
-               frame_skip=2,
-               walls=[])
+episode_max_length = 1000
+num_envs = 128
+gym_name = f'brax-{env_name}-v0'
+if gym_name not in gym.envs.registry.env_specs:
+    entry_point = functools.partial(envs.create_gym_env, env_name=env_name)
+    gym.register(gym_name, entry_point=entry_point)
+env = gym.make(gym_name, batch_size=num_envs, episode_length=episode_max_length)
+# automatically convert between jax ndarrays and torch tensors:
+env = to_torch.JaxToTorchWrapper(env, device=device)
+version = 'torch'
 datatype = xpag.tl.DataType.TORCH
 
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = 'cuda'
+# num_envs = 32
+# episode_max_length = 50
+# env = gym.make("GMazeSimple-v0",
+#                device=device,
+#                batch_size=num_envs,
+#                frame_skip=2,
+#                walls=[])
+# datatype = xpag.tl.DataType.TORCH
+
+# device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # episode_max_length = 1000
 # num_envs = 1
 # env = gym.make('HalfCheetah-v3')
 # version = 'numpy'
 # datatype = xpag.tl.DataType.NUMPY
 
-
-# if '_max_episode_steps' in dir(env):
-#     max_episode_steps = env._max_episode_steps
-# else:
-#     max_episode_steps = 1000
 
 # Set seeds
 if args.seed is not None:
@@ -231,8 +203,6 @@ action_dim = env.action_space.shape[-1]
 max_action = env.action_space.high
 
 observation_dim = env.observation_space.shape[-1]
-o_dim = observation_dim
-params = {'max_action': max_action, 'device': device}
 
 replay_buffer = xpag.bf.DefaultBuffer(
     {
@@ -249,30 +219,25 @@ replay_buffer = xpag.bf.DefaultBuffer(
 )
 sampler = xpag.sa.DefaultSampler(datatype)
 
-agent = xpag.ag.SAC(o_dim, action_dim, device, params)
-
-# StepData = collections.namedtuple(
-#     'StepData',
-#     ('obs', 'obs_next', 'actions', 'r', 'terminals'))
-
-# episode_max_length = max_episode_steps
+agent = xpag.ag.SAC(observation_dim, action_dim, device, params=None)
 
 save_dir = os.path.join(os.path.expanduser("~"),
                         "results",
                         "xpag",
                         datetime.now().strftime("%Y%m%d_%H%M%S"))
-# plot_env_function = env.plot if hasattr(env, "plot") else None
-# embed()
+
 plot_episode = functools.partial(
     plot_episode_2d,
     plot_env_function=env.plot if hasattr(env, "plot") else None
 )
-max_t = 1e6
+plot_episode = None
+max_t = int(1e6)
 train_ratio = 1.
 batch_size = 256
-start_random_t = 1
-eval_freq = 50 * 7
-eval_episodes = 7
+start_random_t = 10_000
+# eval_freq = 50 * 7
+eval_freq = 1000 * 5
+eval_episodes = 5
 save_freq = 0
 xpag.tl.learn(agent, env, num_envs, episode_max_length,
               max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_episodes,

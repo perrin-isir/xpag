@@ -46,11 +46,8 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         )
 
         self.init_qpos = np.tile(np.array([-1.0, 0.0]), (self.batch_size, 1))
-        # self.init_qpos = np.array([-1.0, 0.0])  # the initial position
-        self.init_qvel = []
-        # self.init_qvel = np.array([])  # velocities are not used in this env
+        self.init_qvel = []  # velocities are not used in this env
         self.state = torch.tensor(self.init_qpos).to(self.device)
-        # self.state = np.copy(self.init_qpos)  # the current state (no velocity)
         if walls is None:
             self.walls = [
                 ([0.5, -0.5], [0.5, 1.01]),
@@ -63,12 +60,11 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         self._obs_dim = 2
         self._action_dim = 2
         self.num_steps = 0
-        # high = 1.0 * np.ones(self._action_dim)
         high = np.tile(1.0 * np.ones(self._action_dim), (self.batch_size, 1))
         low = -high
         self.action_space = spaces.Box(
             low=low, high=high, dtype=np.float32
-        )  # action_space.shape = (2,)
+        )
         high = 1.0 * np.ones(self._obs_dim)
         high = np.tile(1.0 * np.ones(self._obs_dim), (self.batch_size, 1))
         low = -high
@@ -77,7 +73,8 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         )
 
     def step(self, action: torch.Tensor):
-        # add the vector 'action' to the state frame_skip times, with -1 & +1 boundaries
+        # add action to the state frame_skip times,
+        # checking -1 & +1 boundaries and intersections with walls
         for k in range(self.frame_skip):
             new_state = (self.state + action / 10.0).clip(-1.0, 1.0)
             bool_val = True
@@ -88,11 +85,8 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
             intersection = torch.unsqueeze(intersection, dim=-1)
             self.state = self.state * intersection + \
                 new_state * torch.logical_not(intersection)
-            # if bool_val is True:
-            #     self.state = new_state
 
-        # observation = np.copy(self.state)  # the new state
-        observation = self.state  # the new state
+        observation = self.state
         reward = self.reward_function(
             action, observation
         )
@@ -102,17 +96,16 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         return observation, reward, done, info
 
     def reset_model(self):
+        # reset state to initial value
         self.state = torch.tensor(self.init_qpos).to(self.device)
-        # self.state = np.copy(self.init_qpos)  # reset state to initial value
 
     def reset(self):
-        self.reset_model()  # reset state to initial value
+        self.reset_model()
         self.num_steps = 0
         return self.state
 
     def set_state(self, qpos: torch.Tensor, qvel: torch.Tensor = None):
-        self.state = qpos  # sets state
-        # self.state = np.copy(qpos)  # sets state
+        self.state = qpos
 
     def plot(self, ax):
         lines = []
