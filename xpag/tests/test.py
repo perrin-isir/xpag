@@ -1,4 +1,4 @@
-import xpag
+from datetime import datetime
 from IPython import embed
 import numpy as np
 import torch
@@ -9,7 +9,7 @@ import collections
 import functools
 import random
 import time
-import datetime
+from datetime import datetime
 import brax
 from brax import envs
 from brax.envs import to_torch
@@ -19,6 +19,8 @@ import argparse
 import os
 import numpy as np
 import logging
+import xpag
+from xpag.plotting.basics import plot_episode_2d
 
 # have torch allocate on device first, to prevent JAX from swallowing up all the
 # GPU memory. By default JAX will pre-allocate 90% of the available GPU memory:
@@ -197,7 +199,7 @@ args = get_args('')
 # datatype = xpag.tl.DataType.TORCH
 
 device = 'cuda'
-num_envs = 128
+num_envs = 32
 episode_max_length = 50
 env = gym.make("GMazeSimple-v0", device=device, batch_size=num_envs, frame_skip=2)
 datatype = xpag.tl.DataType.TORCH
@@ -245,11 +247,21 @@ sampler = xpag.sa.DefaultSampler(datatype)
 
 agent = xpag.ag.SAC(o_dim, action_dim, device, params)
 
-StepData = collections.namedtuple(
-    'StepData',
-    ('obs', 'obs_next', 'actions', 'r', 'terminals'))
+# StepData = collections.namedtuple(
+#     'StepData',
+#     ('obs', 'obs_next', 'actions', 'r', 'terminals'))
 
 # episode_max_length = max_episode_steps
 
+save_dir = os.path.join(os.path.expanduser("~"),
+                        "results",
+                        "xpag",
+                        datetime.now().strftime("%Y%m%d_%H%M%S"))
+# plot_env_function = env.plot if hasattr(env, "plot") else None
+# embed()
+plot_episode = functools.partial(
+    plot_episode_2d,
+    plot_env_function=env.plot if hasattr(env, "plot") else None
+)
 xpag.tl.learn(agent, env, num_envs, episode_max_length, replay_buffer, sampler,
-              datatype, device)
+              datatype, device, save_dir=save_dir, plot_function=plot_episode)

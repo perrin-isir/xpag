@@ -2,9 +2,9 @@ from abc import ABC
 import gym
 from gym import utils, spaces
 import numpy as np
+import torch
 import matplotlib.pyplot as plt
 from matplotlib import collections as mc
-import torch
 
 
 def intersect(a, b, c, d):
@@ -12,11 +12,12 @@ def intersect(a, b, c, d):
     y1, y2, y3, y4 = a[:, 1], b[:, 1], c[1], d[1]
     denom = (x4 - x3) * (y1 - y2) - (x1 - x2) * (y4 - y3)
 
-    criterion1 = (denom == 0)
+    criterion1 = (denom != 0)
     t = ((y3 - y4) * (x1 - x3) + (x4 - x3) * (y1 - y3)) / denom
     criterion2 = torch.logical_and(t > 0, t < 1)
     t = ((y1 - y2) * (x1 - x3) + (x2 - x1) * (y1 - y3)) / denom
     criterion3 = torch.logical_and(t > 0, t < 1)
+
     return torch.logical_and(torch.logical_and(criterion1, criterion2), criterion3)
 
 
@@ -52,9 +53,9 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         # self.state = np.copy(self.init_qpos)  # the current state (no velocity)
         if walls is None:
             self.walls = [
-                ([0.5, -0.5], [0.5, 1.0]),
-                ([-0.5, -0.5], [-0.5, 1.0]),
-                ([0.0, -1.0], [0.0, 0.5]),
+                ([0.5, -0.5], [0.5, 1.01]),
+                ([-0.5, -0.5], [-0.5, 1.01]),
+                ([0.0, -1.01], [0.0, 0.5]),
             ]
         else:
             self.walls = walls
@@ -117,6 +118,18 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
     def set_state(self, qpos: torch.Tensor, qvel: torch.Tensor = None):
         self.state = qpos  # sets state
         # self.state = np.copy(qpos)  # sets state
+
+    def plot(self, ax):
+        lines = []
+        rgbs = []
+        for w in self.walls:
+            lines.append(w)
+            rgbs.append((0, 0, 0, 1))
+        ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=2))
+        ax.set_xlim([-1, 1])
+        ax.set_ylim([-1, 1])
+        plt.xlim(-1, 1)
+        plt.ylim(-1, 1)
 
     # def plot(self):
     #     lines = []
