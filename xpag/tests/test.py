@@ -186,13 +186,13 @@ args = get_args('')
 # datatype = xpag.tl.DataType.TORCH
 
 device = 'cuda'
-num_envs = 3
+num_envs = 1024
 episode_max_length = 50
 env = gym.make("GMazeGoalSimple-v0",
                device=device,
                batch_size=num_envs,
                frame_skip=2,
-               walls=[])
+               walls=None)
 datatype = xpag.tl.DataType.TORCH
 
 # device = 'cuda' if torch.cuda.is_available() else 'cpu'
