@@ -9,6 +9,7 @@ def plot_episode_2d(filename: str,
                     episode: collections.namedtuple,
                     episode_length: int,
                     projection_function=lambda x: x[0:2],
+                    projection_function_goal=lambda x: x[0:2],
                     plot_env_function=None,
                     ):
     """Plot episode(s), using a 2D projection from observations.
@@ -23,6 +24,8 @@ def plot_episode_2d(filename: str,
     for ep_idx in range(len(episode.obs)):
         lines = []
         rgbs = []
+        gx = []
+        gy = []
         for j in range(episode_length):
             x_obs = projection_function(
                 datatype_convert(episode.obs[ep_idx][j], DataType.NUMPY))
@@ -37,7 +40,15 @@ def plot_episode_2d(filename: str,
                          0.2,
                          0.2 + j / episode_length / 2.,
                          1))
-        ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=1.5))
+            if 'g' in episode._fields:
+                gxy = projection_function_goal(
+                    datatype_convert(episode.g[ep_idx][j], DataType.NUMPY)
+                )
+                gx.append(gxy[0])
+                gy.append(gxy[1])
+        ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=1.))
+        if 'g' in episode._fields:
+            ax.scatter(gx, gy, s=10, c="green", alpha=0.8)
     plt.xlim(xmin, xmax)
     plt.ylim(ymin, ymax)
     if plot_env_function is not None:

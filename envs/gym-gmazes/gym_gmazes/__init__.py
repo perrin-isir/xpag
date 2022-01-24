@@ -16,3 +16,9 @@ register(
     id="GMazeSimple-v0",
     entry_point="gym_gmazes.envs:GMazeSimple",
 )
+
+print("|    REGISTERING GMazeGoalSimple-v0 from", envpath())
+register(
+    id="GMazeGoalSimple-v0",
+    entry_point="gym_gmazes.envs:GMazeGoalSimple",
+)

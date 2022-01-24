@@ -26,7 +26,7 @@ def default_reward_fun(action, new_obs):
     return torch.unsqueeze(reward, dim=-1)
 
 
-class GMazeSimple(gym.Env, utils.EzPickle, ABC):
+class GMazeCommon:
     def __init__(
             self,
             device: str = 'cpu',
@@ -46,7 +46,7 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         )
 
         self.init_qpos = np.tile(np.array([-1.0, 0.0]), (self.batch_size, 1))
-        self.init_qvel = []  # velocities are not used in this env
+        self.init_qvel = []  # velocities are not used
         self.state = torch.tensor(self.init_qpos).to(self.device)
         if walls is None:
             self.walls = [
@@ -65,7 +65,32 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         self.action_space = spaces.Box(
             low=low, high=high, dtype=np.float32
         )
-        high = 1.0 * np.ones(self._obs_dim)
+
+    def plot(self, ax):
+        lines = []
+        rgbs = []
+        for w in self.walls:
+            lines.append(w)
+            rgbs.append((0, 0, 0, 1))
+        ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=2))
+        ax.set_xlim([-1, 1])
+        ax.set_ylim([-1, 1])
+        plt.xlim(-1, 1)
+        plt.ylim(-1, 1)
+
+
+class GMazeSimple(GMazeCommon, gym.Env, utils.EzPickle, ABC):
+    def __init__(
+            self,
+            device: str = 'cpu',
+            batch_size: int = 1,
+            frame_skip: int = 2,
+            walls=None,
+            reward_function=default_reward_fun,
+    ):
+        super().__init__(
+            device, batch_size, frame_skip, walls, reward_function)
+
         high = np.tile(1.0 * np.ones(self._obs_dim), (self.batch_size, 1))
         low = -high
         self.observation_space = spaces.Box(
@@ -77,14 +102,13 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
         # checking -1 & +1 boundaries and intersections with walls
         for k in range(self.frame_skip):
             new_state = (self.state + action / 10.0).clip(-1.0, 1.0)
-            bool_val = True
             intersection = torch.full((self.batch_size,), False).to(self.device)
             for (w1, w2) in self.walls:
                 intersection = torch.logical_or(
                     intersection, intersect(self.state, new_state, w1, w2))
             intersection = torch.unsqueeze(intersection, dim=-1)
-            self.state = self.state * intersection + \
-                new_state * torch.logical_not(intersection)
+            self.state = self.state * intersection + new_state * torch.logical_not(
+                intersection)
 
         observation = self.state
         reward = self.reward_function(
@@ -107,14 +131,99 @@ class GMazeSimple(gym.Env, utils.EzPickle, ABC):
     def set_state(self, qpos: torch.Tensor, qvel: torch.Tensor = None):
         self.state = qpos
 
-    def plot(self, ax):
-        lines = []
-        rgbs = []
-        for w in self.walls:
-            lines.append(w)
-            rgbs.append((0, 0, 0, 1))
-        ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=2))
-        ax.set_xlim([-1, 1])
-        ax.set_ylim([-1, 1])
-        plt.xlim(-1, 1)
-        plt.ylim(-1, 1)
+
+def goal_distance(goal_a, goal_b):
+    assert goal_a.shape == goal_b.shape
+    return torch.linalg.norm(goal_a - goal_b, axis=-1)
+
+
+class GMazeGoalSimple(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
+    def __init__(
+            self,
+            device: str = 'cpu',
+            batch_size: int = 1,
+            frame_skip: int = 2,
+            walls=None,
+            reward_function=default_reward_fun,
+    ):
+        super().__init__(
+            device, batch_size, frame_skip, walls, reward_function)
+
+        self.reward_type = "sparse"
+        self.distance_threshold = 0.1
+        high = np.tile(1.0 * np.ones(self._obs_dim), (self.batch_size, 1))
+        low = -high
+        self.observation_space = spaces.Dict(
+            dict(
+                desired_goal=spaces.Box(
+                    low, high, dtype=np.float32
+                ),
+                achieved_goal=spaces.Box(
+                    low, high, dtype=np.float32
+                ),
+                observation=spaces.Box(
+                    low, high, dtype=np.float32
+                ),
+            )
+        )
+        self.goal = None
+
+    def compute_reward(self, achieved_goal: torch.Tensor,
+                       desired_goal: torch.Tensor,
+                       info: dict):
+        d = goal_distance(achieved_goal, desired_goal)
+        if self.reward_type == "sparse":
+            return -1. * (d > self.distance_threshold)
+        else:
+            return -d
+
+    def _sample_goal(self):
+        return (torch.rand(self.batch_size, 2) * 2. - 1).to(self.device)
+
+    def reset_model(self):
+        # reset state to initial value
+        self.state = torch.tensor(self.init_qpos).to(self.device)
+
+    def reset(self):
+        self.reset_model()  # reset state to initial value
+        self.goal = self._sample_goal()  # sample goal
+        self.num_steps = 0
+        return {
+            "observation": self.state,
+            "achieved_goal": self.state,
+            "desired_goal": self.goal,
+        }
+
+    def _is_success(self, achieved_goal: torch.Tensor, desired_goal: torch.Tensor):
+        d = goal_distance(achieved_goal, desired_goal)
+        return 1. * (d < self.distance_threshold)
+
+    def step(self, action: torch.Tensor):
+        # add action to the state frame_skip times,
+        # checking -1 & +1 boundaries and intersections with walls
+        for k in range(self.frame_skip):
+            new_state = (self.state + action / 10.0).clip(-1.0, 1.0)
+            intersection = torch.full((self.batch_size,), False).to(self.device)
+            for (w1, w2) in self.walls:
+                intersection = torch.logical_or(
+                    intersection, intersect(self.state, new_state, w1, w2))
+            intersection = torch.unsqueeze(intersection, dim=-1)
+            self.state = self.state * intersection + new_state * torch.logical_not(
+                intersection)
+
+        reward = self.compute_reward(self.state, self.goal, {})
+        self.num_steps += 1
+
+        done = torch.full((self.batch_size, 1), False).to(self.device)
+        info = {"is_success": self._is_success(self.state, self.goal)}
+
+        return (
+            {
+                "observation": self.state,
+                "achieved_goal": self.state,
+                "desired_goal": self.goal,
+            },
+            reward,
+            done,
+            info,
+        )

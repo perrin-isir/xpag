@@ -28,12 +28,12 @@ v = torch.ones(1, device='cuda')
 print(torch.cuda.memory_allocated(device='cuda'))
 
 
-def str2bool(v):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ("yes", "true", "t", "y", "1"):
+def str2bool(val):
+    if isinstance(val, bool):
+        return val
+    if val.lower() in ("yes", "true", "t", "y", "1"):
         return True
-    elif v.lower() in ("no", "false", "f", "n", "0"):
+    elif val.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
         raise argparse.ArgumentTypeError("Boolean value expected.")
@@ -161,19 +161,19 @@ def log_init(args, agent, gsetter, init_list, init_list_test):
 
 args = get_args('')
 
-env_name = 'halfcheetah'
-device = 'cuda'
-episode_max_length = 1000
-num_envs = 128
-gym_name = f'brax-{env_name}-v0'
-if gym_name not in gym.envs.registry.env_specs:
-    entry_point = functools.partial(envs.create_gym_env, env_name=env_name)
-    gym.register(gym_name, entry_point=entry_point)
-env = gym.make(gym_name, batch_size=num_envs, episode_length=episode_max_length)
-# automatically convert between jax ndarrays and torch tensors:
-env = to_torch.JaxToTorchWrapper(env, device=device)
-version = 'torch'
-datatype = xpag.tl.DataType.TORCH
+# env_name = 'halfcheetah'
+# device = 'cuda'
+# episode_max_length = 1000
+# num_envs = 128
+# gym_name = f'brax-{env_name}-v0'
+# if gym_name not in gym.envs.registry.env_specs:
+#     entry_point = functools.partial(envs.create_gym_env, env_name=env_name)
+#     gym.register(gym_name, entry_point=entry_point)
+# env = gym.make(gym_name, batch_size=num_envs, episode_length=episode_max_length)
+# # automatically convert between jax ndarrays and torch tensors:
+# env = to_torch.JaxToTorchWrapper(env, device=device)
+# version = 'torch'
+# datatype = xpag.tl.DataType.TORCH
 
 # device = 'cuda'
 # num_envs = 32
@@ -184,6 +184,16 @@ datatype = xpag.tl.DataType.TORCH
 #                frame_skip=2,
 #                walls=[])
 # datatype = xpag.tl.DataType.TORCH
+
+device = 'cuda'
+num_envs = 3
+episode_max_length = 50
+env = gym.make("GMazeGoalSimple-v0",
+               device=device,
+               batch_size=num_envs,
+               frame_skip=2,
+               walls=[])
+datatype = xpag.tl.DataType.TORCH
 
 # device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # episode_max_length = 1000
@@ -199,27 +209,64 @@ if args.seed is not None:
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
+if isinstance(env, gym.Wrapper):
+    env_class = env.unwrapped.__class__
+else:
+    env_class = env.__class__
+
+is_goalenv = issubclass(env_class, gym.core.GoalEnv)
+
 action_dim = env.action_space.shape[-1]
 max_action = env.action_space.high
 
-observation_dim = env.observation_space.shape[-1]
+observation_dim = env.observation_space['observation'].shape[-1] if is_goalenv \
+    else env.observation_space.shape[-1]
+achieved_goal_dim = env.observation_space['achieved_goal'].shape[-1] if is_goalenv \
+    else None
+desired_goal_dim = env.observation_space['desired_goal'].shape[-1] if is_goalenv \
+    else None
 
-replay_buffer = xpag.bf.DefaultBuffer(
-    {
-        'obs': observation_dim,
-        'obs_next': observation_dim,
-        'actions': action_dim,
-        'r': 1,
-        'terminals': 1,
-    },
-    episode_max_length,
-    args.buffer_size,
-    datatype=datatype,
-    device=device,
-)
-sampler = xpag.sa.DefaultSampler(datatype)
+if is_goalenv:
+    replay_buffer = xpag.bf.DefaultBuffer(
+        {
+            "obs": observation_dim,
+            "obs_next": observation_dim,
+            "ag": achieved_goal_dim,
+            "ag_next": achieved_goal_dim,
+            "g": desired_goal_dim,
+            "g_next": desired_goal_dim,
+            "actions": action_dim,
+            "terminals": 1,
+        },
+        episode_max_length,
+        args.buffer_size,
+        datatype=datatype,
+        device=device,
+    )
+else:
+    replay_buffer = xpag.bf.DefaultBuffer(
+        {
+            'obs': observation_dim,
+            'obs_next': observation_dim,
+            'actions': action_dim,
+            'r': 1,
+            'terminals': 1,
+        },
+        episode_max_length,
+        args.buffer_size,
+        datatype=datatype,
+        device=device,
+    )
 
-agent = xpag.ag.SAC(observation_dim, action_dim, device, params=None)
+if is_goalenv:
+    sampler = xpag.sa.HER(env.compute_reward, datatype=datatype)
+else:
+    sampler = xpag.sa.DefaultSampler(datatype=datatype)
+
+if is_goalenv:
+    agent = xpag.ag.SAC(observation_dim + action_dim, action_dim, device, params=None)
+else:
+    agent = xpag.ag.SAC(observation_dim, action_dim, device, params=None)
 
 save_dir = os.path.join(os.path.expanduser("~"),
                         "results",
@@ -230,15 +277,16 @@ plot_episode = functools.partial(
     plot_episode_2d,
     plot_env_function=env.plot if hasattr(env, "plot") else None
 )
-plot_episode = None
+# plot_episode = None
 max_t = int(1e6)
 train_ratio = 1.
 batch_size = 256
-start_random_t = 10_000
+start_random_t = 0
 # eval_freq = 50 * 7
 eval_freq = 1000 * 5
 eval_episodes = 5
 save_freq = 0
+
 xpag.tl.learn(agent, env, num_envs, episode_max_length,
               max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_episodes,
               save_freq, replay_buffer, sampler, datatype, device, save_dir=save_dir,
