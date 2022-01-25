@@ -161,19 +161,19 @@ def log_init(args, agent, gsetter, init_list, init_list_test):
 
 args = get_args('')
 
-env_name = 'halfcheetah'
-device = 'cuda'
-episode_max_length = 1000
-num_envs = 128
-gym_name = f'brax-{env_name}-v0'
-if gym_name not in gym.envs.registry.env_specs:
-    entry_point = functools.partial(envs.create_gym_env, env_name=env_name)
-    gym.register(gym_name, entry_point=entry_point)
-env = gym.make(gym_name, batch_size=num_envs, episode_length=episode_max_length)
-# automatically convert between jax ndarrays and torch tensors:
-env = to_torch.JaxToTorchWrapper(env, device=device)
-version = 'torch'
-datatype = xpag.tl.DataType.TORCH
+# env_name = 'halfcheetah'
+# device = 'cuda'
+# episode_max_length = 1000
+# num_envs = 128
+# gym_name = f'brax-{env_name}-v0'
+# if gym_name not in gym.envs.registry.env_specs:
+#     entry_point = functools.partial(envs.create_gym_env, env_name=env_name)
+#     gym.register(gym_name, entry_point=entry_point)
+# env = gym.make(gym_name, batch_size=num_envs, episode_length=episode_max_length)
+# # automatically convert between jax ndarrays and torch tensors:
+# env = to_torch.JaxToTorchWrapper(env, device=device)
+# version = 'torch'
+# datatype = xpag.tl.DataType.TORCH
 
 # device = 'cuda'
 # num_envs = 32
@@ -195,12 +195,12 @@ datatype = xpag.tl.DataType.TORCH
 #                walls=None)
 # datatype = xpag.tl.DataType.TORCH
 
-# device = 'cuda' if torch.cuda.is_available() else 'cpu'
-# episode_max_length = 1000
-# num_envs = 1
-# env = gym.make('HalfCheetah-v3')
-# version = 'numpy'
-# datatype = xpag.tl.DataType.NUMPY
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+episode_max_length = 1000
+num_envs = 1
+env = gym.make('HalfCheetah-v3')
+version = 'numpy'
+datatype = xpag.tl.DataType.NUMPY
 
 
 # Set seeds
