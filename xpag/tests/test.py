@@ -290,4 +290,4 @@ save_freq = 0
 xpag.tl.learn(agent, env, num_envs, episode_max_length,
               max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_episodes,
               save_freq, replay_buffer, sampler, datatype, device, save_dir=save_dir,
-              plot_function=plot_episode)
+              save_episode=True, plot_function=plot_episode)
