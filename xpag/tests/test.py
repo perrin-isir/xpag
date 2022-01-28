@@ -14,6 +14,7 @@ import brax
 from brax import envs
 from brax.envs import to_torch
 from brax.io import metrics
+from brax.io import torch
 from IPython import embed
 import argparse
 import os
