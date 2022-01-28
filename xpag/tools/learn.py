@@ -1,14 +1,15 @@
 import os
 import torch
 import numpy as np
-import jax
-import jax.numpy as jnp
 from xpag.agents.agent import Agent
 from xpag.buffers.buffer import Buffer
 from xpag.samplers.sampler import Sampler
 from xpag.tools.utils import DataType, define_step_data, \
-    step_data_select, reshape_func, hstack_func, max_func, datatype_convert
+    step_data_select, reshape_func, hstack_func, max_func, datatype_convert, \
+    register_step_in_episode
 import gym
+from xpag.buffers.buffer import DefaultBuffer
+
 from IPython import embed
 
 
@@ -61,6 +62,50 @@ class SaveEpisode:
         self.qrot = []
         self.qvel = []
         self.qang = []
+
+
+def default_replay_buffer(buffer_size: int, episode_max_length: int,
+                          env, is_goalenv: bool, datatype: DataType,
+                          device: str = 'cpu'):
+    action_dim = env.action_space.shape[-1]
+    observation_dim = env.observation_space['observation'].shape[-1] if is_goalenv \
+        else env.observation_space.shape[-1]
+    achieved_goal_dim = env.observation_space['achieved_goal'].shape[-1] if is_goalenv \
+        else None
+    desired_goal_dim = env.observation_space['desired_goal'].shape[-1] if is_goalenv \
+        else None
+    if is_goalenv:
+        replay_buffer = DefaultBuffer(
+            {
+                "obs": observation_dim,
+                "obs_next": observation_dim,
+                "ag": achieved_goal_dim,
+                "ag_next": achieved_goal_dim,
+                "g": desired_goal_dim,
+                "g_next": desired_goal_dim,
+                "actions": action_dim,
+                "terminals": 1,
+            },
+            episode_max_length,
+            buffer_size,
+            datatype=datatype,
+            device=device,
+        )
+    else:
+        replay_buffer = DefaultBuffer(
+            {
+                'obs': observation_dim,
+                'obs_next': observation_dim,
+                'actions': action_dim,
+                'r': 1,
+                'terminals': 1,
+            },
+            episode_max_length,
+            buffer_size,
+            datatype=datatype,
+            device=device,
+        )
+    return replay_buffer
 
 
 def learn(
@@ -223,30 +268,22 @@ def learn(
 
         reward = reshape_func(reward, (num_envs, 1))
         done = reshape_func(done, (num_envs, 1))
-        episode.terminals[:, episode_t, :] = done
-        episode.actions[:, episode_t, :] = reshape_func(
-            action, (num_envs, episode.actions.shape[-1]))
+
+        register_step_in_episode(
+            episode,
+            episode_t,
+            is_goalenv,
+            num_envs,
+            o,
+            action,
+            new_o,
+            reward,
+            done
+        )
+
         if is_goalenv:
-            episode.obs[:, episode_t, :] = reshape_func(
-                o['observation'], (num_envs, episode.obs.shape[-1]))
-            episode.obs_next[:, episode_t, :] = reshape_func(
-                new_o['observation'], (num_envs, episode.obs_next.shape[-1]))
-            episode.ag[:, episode_t, :] = reshape_func(
-                o['achieved_goal'], (num_envs, episode.ag.shape[-1]))
-            episode.ag_next[:, episode_t, :] = reshape_func(
-                new_o['achieved_goal'], (num_envs, episode.ag_next.shape[-1]))
-            episode.g[:, episode_t, :] = reshape_func(
-                o['desired_goal'], (num_envs, episode.g.shape[-1]))
-            episode.g_next[:, episode_t, :] = reshape_func(
-                new_o['desired_goal'], (num_envs, episode.g_next.shape[-1]))
             episode_success = max_func(episode_success, reshape_func(
                 info['is_success'], (num_envs, 1)))
-        else:
-            episode.r[:, episode_t, :] = reward
-            episode.obs[:, episode_t, :] = reshape_func(
-                o, (num_envs, episode.obs.shape[-1]))
-            episode.obs_next[:, episode_t, :] = reshape_func(
-                new_o, (num_envs, episode.obs_next.shape[-1]))
 
         episode_mean_reward += reward.mean()
         episode_rewards += reward

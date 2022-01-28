@@ -4,7 +4,6 @@ import collections
 import functools
 import torch
 import numpy as np
-import jax
 from jaxlib.xla_extension import DeviceArray
 import jax.numpy as jnp
 
@@ -34,11 +33,10 @@ def define_step_data(is_goalenv: bool,
         fields = ('obs', 'obs_next', 'actions', 'r', 'terminals')
         sizes = [observation_dim, observation_dim, action_dim, 1, 1]
 
+    empty_func = None
     if datatype == DataType.TORCH:
         empty_func = functools.partial(torch.empty, device=device)
-    elif datatype == DataType.JAX:
-        empty_func = jnp.empty
-    else:
+    elif datatype == DataType.NUMPY:
         empty_func = np.empty
 
     def defaults(k):
@@ -54,7 +52,6 @@ def define_step_data(is_goalenv: bool,
 def register_step_in_episode(
         episode,
         episode_t,
-        datatype,
         is_goalenv,
         num_envs,
         o,
@@ -62,52 +59,28 @@ def register_step_in_episode(
         new_o,
         reward,
         done):
-    if datatype == DataType.JAX:
-        episode.terminals.at[:, episode_t, :].set(done)
-        episode.actions.at[:, episode_t, :].set(reshape_func(
-            action, (num_envs, episode.actions.shape[-1])))
-        if is_goalenv:
-            episode.obs.at[:, episode_t, :].set(reshape_func(
-                o['observation'], (num_envs, episode.obs.shape[-1])))
-            episode.obs_next.at[:, episode_t, :].set(reshape_func(
-                new_o['observation'], (num_envs, episode.obs_next.shape[-1])))
-            episode.ag.at[:, episode_t, :].set(reshape_func(
-                o['achieved_goal'], (num_envs, episode.ag.shape[-1])))
-            episode.ag_next.at[:, episode_t, :].set(reshape_func(
-                new_o['achieved_goal'], (num_envs, episode.ag_next.shape[-1])))
-            episode.g.at[:, episode_t, :].set(reshape_func(
-                o['desired_goal'], (num_envs, episode.g.shape[-1])))
-            episode.g_next.at[:, episode_t, :].set(reshape_func(
-                new_o['desired_goal'], (num_envs, episode.g_next.shape[-1])))
-        else:
-            episode.r.at[:, episode_t, :].set(reward)
-            episode.obs.at[:, episode_t, :].set(reshape_func(
-                o, (num_envs, episode.obs.shape[-1])))
-            episode.obs_next.at[:, episode_t, :].set(reshape_func(
-                new_o, (num_envs, episode.obs_next.shape[-1])))
+    episode.terminals[:, episode_t, :] = done
+    episode.actions[:, episode_t, :] = reshape_func(
+        action, (num_envs, episode.actions.shape[-1]))
+    if is_goalenv:
+        episode.obs[:, episode_t, :] = reshape_func(
+            o['observation'], (num_envs, episode.obs.shape[-1]))
+        episode.obs_next[:, episode_t, :] = reshape_func(
+            new_o['observation'], (num_envs, episode.obs_next.shape[-1]))
+        episode.ag[:, episode_t, :] = reshape_func(
+            o['achieved_goal'], (num_envs, episode.ag.shape[-1]))
+        episode.ag_next[:, episode_t, :] = reshape_func(
+            new_o['achieved_goal'], (num_envs, episode.ag_next.shape[-1]))
+        episode.g[:, episode_t, :] = reshape_func(
+            o['desired_goal'], (num_envs, episode.g.shape[-1]))
+        episode.g_next[:, episode_t, :] = reshape_func(
+            new_o['desired_goal'], (num_envs, episode.g_next.shape[-1]))
     else:
-        episode.terminals[:, episode_t, :] = done
-        episode.actions[:, episode_t, :] = reshape_func(
-            action, (num_envs, episode.actions.shape[-1]))
-        if is_goalenv:
-            episode.obs[:, episode_t, :] = reshape_func(
-                o['observation'], (num_envs, episode.obs.shape[-1]))
-            episode.obs_next[:, episode_t, :] = reshape_func(
-                new_o['observation'], (num_envs, episode.obs_next.shape[-1]))
-            episode.ag[:, episode_t, :] = reshape_func(
-                o['achieved_goal'], (num_envs, episode.ag.shape[-1]))
-            episode.ag_next[:, episode_t, :] = reshape_func(
-                new_o['achieved_goal'], (num_envs, episode.ag_next.shape[-1]))
-            episode.g[:, episode_t, :] = reshape_func(
-                o['desired_goal'], (num_envs, episode.g.shape[-1]))
-            episode.g_next[:, episode_t, :] = reshape_func(
-                new_o['desired_goal'], (num_envs, episode.g_next.shape[-1]))
-        else:
-            episode.r[:, episode_t, :] = reward
-            episode.obs[:, episode_t, :] = reshape_func(
-                o, (num_envs, episode.obs.shape[-1]))
-            episode.obs_next[:, episode_t, :] = reshape_func(
-                new_o, (num_envs, episode.obs_next.shape[-1]))
+        episode.r[:, episode_t, :] = reward
+        episode.obs[:, episode_t, :] = reshape_func(
+            o, (num_envs, episode.obs.shape[-1]))
+        episode.obs_next[:, episode_t, :] = reshape_func(
+            new_o, (num_envs, episode.obs_next.shape[-1]))
 
 
 def step_data_select(sd_one: collections.namedtuple, sd_m: collections.namedtuple,
@@ -127,11 +100,13 @@ def reshape_func(
 
 
 def hstack_func(
-        x: Union[torch.Tensor, np.ndarray],
-        y: Union[torch.Tensor, np.ndarray]
-) -> Union[torch.Tensor, np.ndarray]:
+        x: Union[torch.Tensor, np.ndarray, DeviceArray],
+        y: Union[torch.Tensor, np.ndarray, DeviceArray]
+) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
     if torch.is_tensor(x) and torch.is_tensor(y):
         return torch.hstack((x, y))
+    elif type(x) == DeviceArray and type(y) == DeviceArray:
+        return jnp.hstack((x, y))
     else:
         return np.hstack((x, y))
 
@@ -142,6 +117,8 @@ def max_func(
 ) -> Union[torch.Tensor, np.ndarray]:
     if torch.is_tensor(x) and torch.is_tensor(y):
         return torch.maximum(x, y)
+    elif type(x) == DeviceArray and type(y) == DeviceArray:
+        return jnp.maximum((x, y))
     else:
         return np.maximum(x, y)
 

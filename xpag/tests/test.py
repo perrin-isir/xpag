@@ -14,7 +14,7 @@ import brax
 from brax import envs
 from brax.envs import to_torch
 from brax.io import metrics
-from brax.io import torch
+# from brax.io import torch
 from IPython import embed
 import argparse
 import os
@@ -198,8 +198,10 @@ args = get_args('')
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 episode_max_length = 1000
-num_envs = 1
-env = gym.make('HalfCheetah-v3')
+num_envs = 3
+# gym.vector.make("CartPole-v1", num_envs=3)
+# env = gym.make('HalfCheetah-v3')
+env = gym.vector.make('HalfCheetah-v3', num_envs=num_envs)
 version = 'numpy'
 datatype = xpag.tl.DataType.NUMPY
 
@@ -217,47 +219,59 @@ else:
 
 is_goalenv = issubclass(env_class, gym.core.GoalEnv)
 
+embed()
 action_dim = env.action_space.shape[-1]
 max_action = env.action_space.high
 
 observation_dim = env.observation_space['observation'].shape[-1] if is_goalenv \
     else env.observation_space.shape[-1]
-achieved_goal_dim = env.observation_space['achieved_goal'].shape[-1] if is_goalenv \
-    else None
-desired_goal_dim = env.observation_space['desired_goal'].shape[-1] if is_goalenv \
-    else None
 
-if is_goalenv:
-    replay_buffer = xpag.bf.DefaultBuffer(
-        {
-            "obs": observation_dim,
-            "obs_next": observation_dim,
-            "ag": achieved_goal_dim,
-            "ag_next": achieved_goal_dim,
-            "g": desired_goal_dim,
-            "g_next": desired_goal_dim,
-            "actions": action_dim,
-            "terminals": 1,
-        },
-        episode_max_length,
-        args.buffer_size,
-        datatype=datatype,
-        device=device,
-    )
-else:
-    replay_buffer = xpag.bf.DefaultBuffer(
-        {
-            'obs': observation_dim,
-            'obs_next': observation_dim,
-            'actions': action_dim,
-            'r': 1,
-            'terminals': 1,
-        },
-        episode_max_length,
-        args.buffer_size,
-        datatype=datatype,
-        device=device,
-    )
+replay_buffer = xpag.tl.default_replay_buffer(
+    args.buffer_size,
+    episode_max_length,
+    env,
+    is_goalenv,
+    datatype,
+    device
+)
+
+
+# achieved_goal_dim = env.observation_space['achieved_goal'].shape[-1] if is_goalenv \
+#     else None
+# desired_goal_dim = env.observation_space['desired_goal'].shape[-1] if is_goalenv \
+#     else None
+
+# if is_goalenv:
+#     replay_buffer = xpag.bf.DefaultBuffer(
+#         {
+#             "obs": observation_dim,
+#             "obs_next": observation_dim,
+#             "ag": achieved_goal_dim,
+#             "ag_next": achieved_goal_dim,
+#             "g": desired_goal_dim,
+#             "g_next": desired_goal_dim,
+#             "actions": action_dim,
+#             "terminals": 1,
+#         },
+#         episode_max_length,
+#         args.buffer_size,
+#         datatype=datatype,
+#         device=device,
+#     )
+# else:
+#     replay_buffer = xpag.bf.DefaultBuffer(
+#         {
+#             'obs': observation_dim,
+#             'obs_next': observation_dim,
+#             'actions': action_dim,
+#             'r': 1,
+#             'terminals': 1,
+#         },
+#         episode_max_length,
+#         args.buffer_size,
+#         datatype=datatype,
+#         device=device,
+#     )
 
 if is_goalenv:
     sampler = xpag.sa.HER(env.compute_reward, datatype=datatype)
@@ -282,7 +296,7 @@ plot_episode = functools.partial(
 max_t = int(1e6)
 train_ratio = 1.
 batch_size = 256
-start_random_t = 0
+start_random_t = 10_000
 # eval_freq = 50 * 7
 eval_freq = 1000 * 5
 eval_episodes = 5
@@ -291,4 +305,4 @@ save_freq = 0
 xpag.tl.learn(agent, env, num_envs, episode_max_length,
               max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_episodes,
               save_freq, replay_buffer, sampler, datatype, device, save_dir=save_dir,
-              save_episode=True, plot_function=plot_episode)
+              save_episode=False, plot_function=plot_episode)
