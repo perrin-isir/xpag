@@ -64,16 +64,48 @@ class SaveEpisode:
         self.qang = []
 
 
+def check_goalenv(env) -> bool:
+    if isinstance(env, gym.Wrapper):
+        env_class = env.unwrapped.__class__
+    else:
+        env_class = env.__class__
+    return issubclass(env_class, gym.core.GoalEnv)
+
+
+def get_dimensions(env) -> dict:
+    is_goalenv = check_goalenv(env)
+    if hasattr(env, "is_vector_env"):
+        gym_vec_env = env.is_vector_env
+    else:
+        gym_vec_env = False
+    dims = {}
+    if gym_vec_env:
+        dims['action_dim'] = env.single_action_space.shape[-1]
+        dims['observation_dim'] = env.single_observation_space['observation'].shape[
+            -1] if is_goalenv else env.single_observation_space.shape[-1]
+        dims['achieved_goal_dim'] = env.single_observation_space['achieved_goal'].shape[
+            -1] if is_goalenv else None
+        dims['desired_goal_dim'] = env.single_observation_space['desired_goal'].shape[
+            -1] if is_goalenv else None
+    else:
+        dims['action_dim'] = env.action_space.shape[-1]
+        dims['observation_dim'] = env.observation_space['observation'].shape[
+            -1] if is_goalenv else env.observation_space.shape[-1]
+        dims['achieved_goal_dim'] = env.observation_space['achieved_goal'].shape[
+            -1] if is_goalenv else None
+        dims['desired_goal_dim'] = env.observation_space['desired_goal'].shape[
+            -1] if is_goalenv else None
+    return dims
+
+
 def default_replay_buffer(buffer_size: int, episode_max_length: int,
-                          env, is_goalenv: bool, datatype: DataType,
-                          device: str = 'cpu'):
-    action_dim = env.action_space.shape[-1]
-    observation_dim = env.observation_space['observation'].shape[-1] if is_goalenv \
-        else env.observation_space.shape[-1]
-    achieved_goal_dim = env.observation_space['achieved_goal'].shape[-1] if is_goalenv \
-        else None
-    desired_goal_dim = env.observation_space['desired_goal'].shape[-1] if is_goalenv \
-        else None
+                          env, datatype: DataType, device: str = 'cpu'):
+    is_goalenv = check_goalenv(env)
+    dims = get_dimensions(env)
+    action_dim = dims['action_dim']
+    observation_dim = dims['observation_dim']
+    achieved_goal_dim = dims['achieved_goal_dim']
+    desired_goal_dim = dims['desired_goal_dim']
     if is_goalenv:
         replay_buffer = DefaultBuffer(
             {
@@ -139,18 +171,13 @@ def learn(
     else:
         save_ep = None
 
-    is_goalenv = issubclass(env.unwrapped.__class__ if isinstance(env, gym.Wrapper)
-                            else env.__class__, gym.core.GoalEnv)
+    is_goalenv = check_goalenv(env)
+    dimensions = get_dimensions(env)
 
     StepDataUnique, StepDataMultiple = define_step_data(
-        is_goalenv, num_envs,
-        env.observation_space['observation'].shape[
-            -1] if is_goalenv else agent.observation_dim,
-        env.observation_space['achieved_goal'].shape[
-            -1] if is_goalenv else 0,
-        env.observation_space['desired_goal'].shape[
-            -1] if is_goalenv else 0,
-        agent.action_dim, episode_max_length,
+        is_goalenv, num_envs, dimensions['observation_dim'],
+        dimensions['achieved_goal_dim'], dimensions['desired_goal_dim'],
+        dimensions['action_dim'], episode_max_length,
         datatype, device)
 
     total_t = 0

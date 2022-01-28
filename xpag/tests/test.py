@@ -165,7 +165,7 @@ args = get_args('')
 # env_name = 'halfcheetah'
 # device = 'cuda'
 # episode_max_length = 1000
-# num_envs = 128
+# num_envs = 3
 # gym_name = f'brax-{env_name}-v0'
 # if gym_name not in gym.envs.registry.env_specs:
 #     entry_point = functools.partial(envs.create_gym_env, env_name=env_name)
@@ -198,13 +198,12 @@ args = get_args('')
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 episode_max_length = 1000
-num_envs = 3
+num_envs = 1
 # gym.vector.make("CartPole-v1", num_envs=3)
-# env = gym.make('HalfCheetah-v3')
-env = gym.vector.make('HalfCheetah-v3', num_envs=num_envs)
+env = gym.make('HalfCheetah-v3')
+# env = gym.vector.make('HalfCheetah-v3', num_envs=num_envs)
 version = 'numpy'
 datatype = xpag.tl.DataType.NUMPY
-
 
 # Set seeds
 if args.seed is not None:
@@ -212,29 +211,29 @@ if args.seed is not None:
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
-if isinstance(env, gym.Wrapper):
-    env_class = env.unwrapped.__class__
-else:
-    env_class = env.__class__
+# if isinstance(env, gym.Wrapper):
+#     env_class = env.unwrapped.__class__
+# else:
+#     env_class = env.__class__
+#
+# is_goalenv = issubclass(env_class, gym.core.GoalEnv)
+is_goalenv = xpag.tl.check_goalenv(env)
 
-is_goalenv = issubclass(env_class, gym.core.GoalEnv)
+dimensions = xpag.tl.get_dimensions(env)
 
-embed()
-action_dim = env.action_space.shape[-1]
-max_action = env.action_space.high
+# action_dim = env.action_space.shape[-1]
+# max_action = env.action_space.high
 
-observation_dim = env.observation_space['observation'].shape[-1] if is_goalenv \
-    else env.observation_space.shape[-1]
+# observation_dim = env.observation_space['observation'].shape[-1] if is_goalenv \
+#     else env.observation_space.shape[-1]
 
 replay_buffer = xpag.tl.default_replay_buffer(
     args.buffer_size,
     episode_max_length,
     env,
-    is_goalenv,
     datatype,
     device
 )
-
 
 # achieved_goal_dim = env.observation_space['achieved_goal'].shape[-1] if is_goalenv \
 #     else None
@@ -279,9 +278,16 @@ else:
     sampler = xpag.sa.DefaultSampler(datatype=datatype)
 
 if is_goalenv:
-    agent = xpag.ag.SAC(observation_dim + action_dim, action_dim, device, params=None)
+    agent = xpag.ag.SAC(
+        dimensions['observation_dim'] + dimensions['action_dim'],
+        dimensions['action_dim'], device, params=None)
 else:
-    agent = xpag.ag.SAC(observation_dim, action_dim, device, params=None)
+    # agent = xpag.ag.SAC(dimensions['observation_dim'],
+    #                     dimensions['action_dim'], device,
+    #                     params=None)
+    agent = xpag.ag.SACJAX(dimensions['observation_dim'],
+                           dimensions['action_dim'], device,
+                           params=None)
 
 save_dir = os.path.join(os.path.expanduser("~"),
                         "results",
@@ -296,7 +302,7 @@ plot_episode = functools.partial(
 max_t = int(1e6)
 train_ratio = 1.
 batch_size = 256
-start_random_t = 10_000
+start_random_t = 0
 # eval_freq = 50 * 7
 eval_freq = 1000 * 5
 eval_episodes = 5
