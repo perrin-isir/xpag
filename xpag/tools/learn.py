@@ -1,11 +1,14 @@
 import os
 import torch
 import numpy as np
+import jax
+import jax.numpy as jnp
 from xpag.agents.agent import Agent
 from xpag.buffers.buffer import Buffer
 from xpag.samplers.sampler import Sampler
 from xpag.tools.utils import DataType, define_step_data, \
-    step_data_select, reshape_func, hstack_func, max_func, datatype_convert
+    step_data_select, reshape_func, hstack_func, max_func, datatype_convert,\
+    register_step_in_episode
 import gym
 from IPython import embed
 
@@ -86,6 +89,8 @@ def learn(
             return value * torch.ones(num_envs, device=device)
         elif datatype == DataType.NUMPY:
             return value * np.ones(num_envs)
+        elif datatype == DataType.JAX:
+            return value * jnp.ones(num_envs)
 
     if save_episode:
         save_ep = SaveEpisode(env, num_envs)
@@ -221,31 +226,25 @@ def learn(
 
         reward = reshape_func(reward, (num_envs, 1))
         done = reshape_func(done, (num_envs, 1))
-        episode.terminals[:, episode_t, :] = done
-        episode.actions[:, episode_t, :] = reshape_func(
-            action, (num_envs, episode.actions.shape[-1]))
+
+        register_step_in_episode(
+            episode,
+            episode_t,
+            datatype,
+            is_goalenv,
+            num_envs,
+            o,
+            action,
+            new_o,
+            reward,
+            done
+        )
+
+        embed()
+
         if is_goalenv:
-            episode.obs[:, episode_t, :] = reshape_func(
-                o['observation'], (num_envs, episode.obs.shape[-1]))
-            episode.obs_next[:, episode_t, :] = reshape_func(
-                new_o['observation'], (num_envs, episode.obs_next.shape[-1]))
-            episode.ag[:, episode_t, :] = reshape_func(
-                o['achieved_goal'], (num_envs, episode.ag.shape[-1]))
-            episode.ag_next[:, episode_t, :] = reshape_func(
-                new_o['achieved_goal'], (num_envs, episode.ag_next.shape[-1]))
-            episode.g[:, episode_t, :] = reshape_func(
-                o['desired_goal'], (num_envs, episode.g.shape[-1]))
-            episode.g_next[:, episode_t, :] = reshape_func(
-                new_o['desired_goal'], (num_envs, episode.g_next.shape[-1]))
             episode_success = max_func(episode_success, reshape_func(
                 info['is_success'], (num_envs, 1)))
-        else:
-            episode.r[:, episode_t, :] = reward
-            episode.obs[:, episode_t, :] = reshape_func(
-                o, (num_envs, episode.obs.shape[-1]))
-            episode.obs_next[:, episode_t, :] = reshape_func(
-                new_o, (num_envs, episode.obs_next.shape[-1]))
-
         episode_mean_reward += reward.mean()
         episode_rewards += reward
         episode_t += 1
