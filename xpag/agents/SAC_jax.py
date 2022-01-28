@@ -546,79 +546,79 @@ def train(
     #         rewarder_state=new_rewarder_state)
     #     return new_state, metrics
 
-    def collect_data(training_state: TrainingState, state):
-        key, key_sample = jax.random.split(training_state.key)
-        normalized_obs = obs_normalizer_apply_fn(training_state.normalizer_params,
-                                                 state.obs)
-        logits = policy_model.apply(training_state.policy_params, normalized_obs)
-        actions = parametric_action_distribution.sample_no_postprocessing(
-            logits, key_sample)
-        postprocessed_actions = parametric_action_distribution.postprocess(actions)
-        nstate = step_fn(state, postprocessed_actions)
+    # def collect_data(training_state: TrainingState, state):
+    #     key, key_sample = jax.random.split(training_state.key)
+    #     normalized_obs = obs_normalizer_apply_fn(training_state.normalizer_params,
+    #                                              state.obs)
+    #     logits = policy_model.apply(training_state.policy_params, normalized_obs)
+    #     actions = parametric_action_distribution.sample_no_postprocessing(
+    #         logits, key_sample)
+    #     postprocessed_actions = parametric_action_distribution.postprocess(actions)
+    #     nstate = step_fn(state, postprocessed_actions)
+    #
+    #     normalizer_params = obs_normalizer_update_fn(
+    #         training_state.normalizer_params, state.obs)
+    #
+    #     training_state = training_state.replace(
+    #         key=key, normalizer_params=normalizer_params)
+    #
+    #     # Concatenating data into a single data blob performs faster than 5
+    #     # separate tensors.
+    #     concatenated_data = jnp.concatenate([
+    #         state.obs,
+    #         nstate.obs,
+    #         postprocessed_actions,
+    #         jnp.expand_dims(nstate.reward, axis=-1),
+    #         jnp.expand_dims(1 - nstate.done, axis=-1),
+    #         jnp.expand_dims(nstate.info['truncation'], axis=-1),
+    #     ],
+    #         axis=-1)
+    #
+    #     return training_state, nstate, concatenated_data
 
-        normalizer_params = obs_normalizer_update_fn(
-            training_state.normalizer_params, state.obs)
+    # def collect_and_update_buffer(training_state, state, replay_buffer):
+    #     training_state, state, newdata = collect_data(training_state, state)
+    #     new_replay_data = jax.tree_multimap(
+    #         lambda x, y: jax.lax.dynamic_update_slice_in_dim(
+    #             x,
+    #             y,
+    #             replay_buffer.current_position,
+    #             axis=0),
+    #         replay_buffer.data,
+    #         newdata)
+    #     new_position = (replay_buffer.current_position +
+    #                     num_envs // local_devices_to_use) % max_replay_size
+    #     new_size = jnp.minimum(
+    #         replay_buffer.current_size + num_envs // local_devices_to_use,
+    #         max_replay_size)
+    #     return training_state, state, ReplayBuffer(
+    #         data=new_replay_data,
+    #         current_position=new_position,
+    #         current_size=new_size)
 
-        training_state = training_state.replace(
-            key=key, normalizer_params=normalizer_params)
+    # def init_replay_buffer(training_state, state, replay_buffer):
+    #
+    #     (training_state, state, replay_buffer), _ = jax.lax.scan(
+    #         (lambda a, b: (collect_and_update_buffer(*a),
+    #                        ())), (training_state, state, replay_buffer), (),
+    #         length=min_replay_size // (num_envs // local_devices_to_use))
+    #     return training_state, state, replay_buffer
+    #
+    # init_replay_buffer = jax.pmap(init_replay_buffer, axis_name='i')
+    #
+    # num_updates = int(num_envs * grad_updates_per_step)
 
-        # Concatenating data into a single data blob performs faster than 5
-        # separate tensors.
-        concatenated_data = jnp.concatenate([
-            state.obs,
-            nstate.obs,
-            postprocessed_actions,
-            jnp.expand_dims(nstate.reward, axis=-1),
-            jnp.expand_dims(1 - nstate.done, axis=-1),
-            jnp.expand_dims(nstate.info['truncation'], axis=-1),
-        ],
-            axis=-1)
-
-        return training_state, nstate, concatenated_data
-
-    def collect_and_update_buffer(training_state, state, replay_buffer):
-        training_state, state, newdata = collect_data(training_state, state)
-        new_replay_data = jax.tree_multimap(
-            lambda x, y: jax.lax.dynamic_update_slice_in_dim(
-                x,
-                y,
-                replay_buffer.current_position,
-                axis=0),
-            replay_buffer.data,
-            newdata)
-        new_position = (replay_buffer.current_position +
-                        num_envs // local_devices_to_use) % max_replay_size
-        new_size = jnp.minimum(
-            replay_buffer.current_size + num_envs // local_devices_to_use,
-            max_replay_size)
-        return training_state, state, ReplayBuffer(
-            data=new_replay_data,
-            current_position=new_position,
-            current_size=new_size)
-
-    def init_replay_buffer(training_state, state, replay_buffer):
-
-        (training_state, state, replay_buffer), _ = jax.lax.scan(
-            (lambda a, b: (collect_and_update_buffer(*a),
-                           ())), (training_state, state, replay_buffer), (),
-            length=min_replay_size // (num_envs // local_devices_to_use))
-        return training_state, state, replay_buffer
-
-    init_replay_buffer = jax.pmap(init_replay_buffer, axis_name='i')
-
-    num_updates = int(num_envs * grad_updates_per_step)
-
-    def sample_data(training_state, replay_buffer):
-        key1, key2 = jax.random.split(training_state.key)
-        idx = jax.random.randint(
-            key2, (batch_size * num_updates // local_devices_to_use,),
-            minval=0,
-            maxval=replay_buffer.current_size)
-        transitions = jnp.take(replay_buffer.data, idx, axis=0, mode='clip')
-        transitions = jnp.reshape(transitions,
-                                  [num_updates, -1] + list(transitions.shape[1:]))
-        training_state = training_state.replace(key=key1)
-        return training_state, transitions
+    # def sample_data(training_state, replay_buffer):
+    #     key1, key2 = jax.random.split(training_state.key)
+    #     idx = jax.random.randint(
+    #         key2, (batch_size * num_updates // local_devices_to_use,),
+    #         minval=0,
+    #         maxval=replay_buffer.current_size)
+    #     transitions = jnp.take(replay_buffer.data, idx, axis=0, mode='clip')
+    #     transitions = jnp.reshape(transitions,
+    #                               [num_updates, -1] + list(transitions.shape[1:]))
+    #     training_state = training_state.replace(key=key1)
+    #     return training_state, transitions
 
     def run_one_sac_epoch(carry, unused_t):
         training_state, state, replay_buffer = carry
