@@ -269,6 +269,79 @@ class SACJAX(Agent, ABC):
 
         self.select_action_probabilistic = jax.jit(select_action_probabilistic)
 
+        def update_step(
+                state: TrainingState,
+                observations,
+                actions,
+                rewards,
+                new_observations,
+                done
+        ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
+            (key, key_alpha, key_critic, key_actor,
+             key_rewarder) = jax.random.split(state.key, 5)
+
+            new_rewarder_state = state.rewarder_state
+            rewarder_metrics = {}
+
+            alpha_loss, alpha_grads = self.alpha_grad(state.alpha_params,
+                                                      state.policy_params,
+                                                      observations, key_alpha)
+            alpha = jnp.exp(state.alpha_params)
+            critic_loss, critic_grads = self.critic_grad(state.q_params,
+                                                         state.policy_params,
+                                                         state.target_q_params, alpha,
+                                                         observations,
+                                                         actions,
+                                                         new_observations,
+                                                         rewards,
+                                                         done, key_critic)
+            actor_loss, actor_grads = self.actor_grad(state.policy_params,
+                                                      state.q_params,
+                                                      alpha, observations,
+                                                      key_actor)
+            # embed()
+            # alpha_grads = jax.lax.pmean(alpha_grads, axis_name='i')
+            # critic_grads = jax.lax.pmean(critic_grads, axis_name='i')
+            # actor_grads = jax.lax.pmean(actor_grads, axis_name='i')
+
+            policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
+                actor_grads, state.policy_optimizer_state)
+            policy_params = optax.apply_updates(state.policy_params,
+                                                policy_params_update)
+            q_params_update, q_optimizer_state = self.q_optimizer.update(
+                critic_grads, state.q_optimizer_state)
+            q_params = optax.apply_updates(state.q_params, q_params_update)
+            alpha_params_update, alpha_optimizer_state = self.alpha_optimizer.update(
+                alpha_grads, state.alpha_optimizer_state)
+            alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
+            new_target_q_params = jax.tree_multimap(
+                lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
+                state.target_q_params, q_params)
+
+            metrics = {
+                'critic_loss': critic_loss,
+                'actor_loss': actor_loss,
+                'alpha_loss': alpha_loss,
+                'alpha': jnp.exp(alpha_params),
+                **rewarder_metrics
+            }
+
+            new_state = TrainingState(
+                policy_optimizer_state=policy_optimizer_state,
+                policy_params=policy_params,
+                q_optimizer_state=q_optimizer_state,
+                q_params=q_params,
+                target_q_params=new_target_q_params,
+                key=key,
+                steps=state.steps + 1,
+                alpha_optimizer_state=alpha_optimizer_state,
+                alpha_params=alpha_params,
+                normalizer_params=state.normalizer_params,
+                rewarder_state=new_rewarder_state)
+            return new_state, metrics
+
+        self.update_step = jax.jit(update_step)
+
         self.training_state = TrainingState(
             policy_optimizer_state=self.policy_optimizer_state,
             policy_params=self.policy_params,
@@ -295,78 +368,6 @@ class SACJAX(Agent, ABC):
     #     batch['r']), jax.numpy.array(batch['obs_next']), jax.numpy.arr
     #                                                          ...: ay(
     #     batch['terminals']))
-
-    # @jax.jit
-    def update_step(
-            self,
-            state: TrainingState,
-            observations,
-            actions,
-            rewards,
-            new_observations,
-            done
-    ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
-        (key, key_alpha, key_critic, key_actor,
-         key_rewarder) = jax.random.split(state.key, 5)
-
-        new_rewarder_state = state.rewarder_state
-        rewarder_metrics = {}
-
-        alpha_loss, alpha_grads = self.alpha_grad(state.alpha_params,
-                                                  state.policy_params,
-                                                  observations, key_alpha)
-        alpha = jnp.exp(state.alpha_params)
-        critic_loss, critic_grads = self.critic_grad(state.q_params,
-                                                     state.policy_params,
-                                                     state.target_q_params, alpha,
-                                                     observations,
-                                                     actions,
-                                                     new_observations,
-                                                     rewards,
-                                                     done, key_critic)
-        actor_loss, actor_grads = self.actor_grad(state.policy_params, state.q_params,
-                                                  alpha, observations,
-                                                  key_actor)
-        # embed()
-        # alpha_grads = jax.lax.pmean(alpha_grads, axis_name='i')
-        # critic_grads = jax.lax.pmean(critic_grads, axis_name='i')
-        # actor_grads = jax.lax.pmean(actor_grads, axis_name='i')
-
-        policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
-            actor_grads, state.policy_optimizer_state)
-        policy_params = optax.apply_updates(state.policy_params,
-                                            policy_params_update)
-        q_params_update, q_optimizer_state = self.q_optimizer.update(
-            critic_grads, state.q_optimizer_state)
-        q_params = optax.apply_updates(state.q_params, q_params_update)
-        alpha_params_update, alpha_optimizer_state = self.alpha_optimizer.update(
-            alpha_grads, state.alpha_optimizer_state)
-        alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
-        new_target_q_params = jax.tree_multimap(
-            lambda x, y: x * (1 - self.soft_target_tau) + y * self.soft_target_tau,
-            state.target_q_params, q_params)
-
-        metrics = {
-            'critic_loss': critic_loss,
-            'actor_loss': actor_loss,
-            'alpha_loss': alpha_loss,
-            'alpha': jnp.exp(alpha_params),
-            **rewarder_metrics
-        }
-
-        new_state = TrainingState(
-            policy_optimizer_state=policy_optimizer_state,
-            policy_params=policy_params,
-            q_optimizer_state=q_optimizer_state,
-            q_params=q_params,
-            target_q_params=new_target_q_params,
-            key=key,
-            steps=state.steps + 1,
-            alpha_optimizer_state=alpha_optimizer_state,
-            alpha_params=alpha_params,
-            normalizer_params=state.normalizer_params,
-            rewarder_state=new_rewarder_state)
-        return new_state, metrics
 
     def save(self, directory):
         pass
