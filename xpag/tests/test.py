@@ -11,6 +11,7 @@ import random
 import time
 from datetime import datetime
 import brax
+import jax
 from brax import envs
 from brax.envs import to_torch
 from brax.io import metrics

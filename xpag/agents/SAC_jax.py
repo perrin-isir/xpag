@@ -36,6 +36,7 @@ import jax.numpy as jnp
 import numpy as onp
 import optax
 from xpag.agents.agent import Agent
+from IPython import embed
 
 Metrics = Mapping[str, jnp.ndarray]
 
@@ -164,30 +165,30 @@ class SACJAX(Agent, ABC):
         key_models, key_rewarder = jax.random.split(global_key, 2)
         local_key, key_env, key_eval = jax.random.split(local_key, 3)
 
-        parametric_action_distribution = distribution.NormalTanhDistribution(
+        self.parametric_action_distribution = distribution.NormalTanhDistribution(
             event_size=action_dim)
 
-        policy_model, value_model = make_sac_networks(
-                parametric_action_distribution.param_size, observation_dim, action_dim)
+        self.policy_model, self.value_model = make_sac_networks(
+            self.parametric_action_distribution.param_size, observation_dim, action_dim)
 
         self.log_alpha = jnp.asarray(0., dtype=jnp.float32)
-        alpha_optimizer = optax.adam(learning_rate=3e-4)
-        alpha_optimizer_state = alpha_optimizer.init(self.log_alpha)
+        self.alpha_optimizer = optax.adam(learning_rate=3e-4)
+        self.alpha_optimizer_state = self.alpha_optimizer.init(self.log_alpha)
 
-        policy_optimizer = optax.adam(learning_rate=policy_lr)
-        q_optimizer = optax.adam(learning_rate=critic_lr)
+        self.policy_optimizer = optax.adam(learning_rate=policy_lr)
+        self.q_optimizer = optax.adam(learning_rate=critic_lr)
         key_policy, key_q = jax.random.split(key_models)
-        self.policy_params = policy_model.init(key_policy)
-        policy_optimizer_state = policy_optimizer.init(self.policy_params)
-        q_params = value_model.init(key_q)
-        q_optimizer_state = q_optimizer.init(q_params)
+        self.policy_params = self.policy_model.init(key_policy)
+        self.policy_optimizer_state = self.policy_optimizer.init(self.policy_params)
+        self.q_params = self.value_model.init(key_q)
+        self.q_optimizer_state = self.q_optimizer.init(self.q_params)
 
-        policy_optimizer_state, self.policy_params = pmap.bcast_local_devices(
-            (policy_optimizer_state, self.policy_params), local_devices_to_use)
-        q_optimizer_state, q_params = pmap.bcast_local_devices(
-            (q_optimizer_state, q_params), local_devices_to_use)
-        alpha_optimizer_state, self.log_alpha = pmap.bcast_local_devices(
-            (alpha_optimizer_state, self.log_alpha), local_devices_to_use)
+        # self.policy_optimizer_state, self.policy_params = pmap.bcast_local_devices(
+        #     (self.policy_optimizer_state, self.policy_params), local_devices_to_use)
+        # self.q_optimizer_state, self.q_params = pmap.bcast_local_devices(
+        #     (self.q_optimizer_state, self.q_params), local_devices_to_use)
+        # self.alpha_optimizer_state, self.log_alpha = pmap.bcast_local_devices(
+        #     (self.alpha_optimizer_state, self.log_alpha), local_devices_to_use)
 
         normalizer_params, obs_normalizer_update_fn, obs_normalizer_apply_fn = (
             normalization.create_observation_normalizer(
@@ -203,10 +204,10 @@ class SACJAX(Agent, ABC):
         def alpha_loss(log_alpha: jnp.ndarray, policy_params: Params,
                        observations, key: PRNGKey) -> jnp.ndarray:
             """Eq 18 from https://arxiv.org/pdf/1812.05905.pdf."""
-            dist_params = policy_model.apply(policy_params, observations)
-            action = parametric_action_distribution.sample_no_postprocessing(
+            dist_params = self.policy_model.apply(policy_params, observations)
+            action = self.parametric_action_distribution.sample_no_postprocessing(
                 dist_params, key)
-            log_prob = parametric_action_distribution.log_prob(dist_params, action)
+            log_prob = self.parametric_action_distribution.log_prob(dist_params, action)
             alpha = jnp.exp(log_alpha)
             alpha_loss = alpha * jax.lax.stop_gradient(-log_prob - target_entropy)
             return jnp.mean(alpha_loss)
@@ -219,18 +220,20 @@ class SACJAX(Agent, ABC):
                         rewards,
                         done,
                         key: PRNGKey) -> jnp.ndarray:
-            q_old_action = value_model.apply(q_params, observations,
-                                             actions)
-            next_dist_params = policy_model.apply(policy_params, new_observations)
-            next_action = parametric_action_distribution.sample_no_postprocessing(
+            q_old_action = self.value_model.apply(q_params, observations,
+                                                  actions)
+            next_dist_params = self.policy_model.apply(policy_params, new_observations)
+            next_action = self.parametric_action_distribution.sample_no_postprocessing(
                 next_dist_params, key)
-            next_log_prob = parametric_action_distribution.log_prob(
+            next_log_prob = self.parametric_action_distribution.log_prob(
                 next_dist_params, next_action)
-            next_action = parametric_action_distribution.postprocess(next_action)
-            next_q = value_model.apply(target_q_params, new_observations, next_action)
+            next_action = self.parametric_action_distribution.postprocess(next_action)
+            next_q = self.value_model.apply(target_q_params, new_observations,
+                                            next_action)
             next_v = jnp.min(next_q, axis=-1) - alpha * next_log_prob
-            target_q = jax.lax.stop_gradient(rewards * self.reward_scale + discounting * next_v)
-                                             # transitions.d_t * discounting * next_v)
+            target_q = jax.lax.stop_gradient(
+                rewards * self.reward_scale + discount * next_v)
+            # transitions.d_t * discounting * next_v)
             q_error = q_old_action - jnp.expand_dims(target_q, -1)
 
             # Better bootstrapping for truncated episodes.
@@ -241,108 +244,129 @@ class SACJAX(Agent, ABC):
             return q_loss
 
         def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
-                      observations, key: PRNGKey) -> jnp.ndarray:
-            dist_params = policy_model.apply(policy_params, observations)
-            action = parametric_action_distribution.sample_no_postprocessing(
+                       observations, key: PRNGKey) -> jnp.ndarray:
+            dist_params = self.policy_model.apply(policy_params, observations)
+            action = self.parametric_action_distribution.sample_no_postprocessing(
                 dist_params, key)
-            log_prob = parametric_action_distribution.log_prob(dist_params, action)
-            action = parametric_action_distribution.postprocess(action)
-            q_action = value_model.apply(q_params, observations, action)
+            log_prob = self.parametric_action_distribution.log_prob(dist_params, action)
+            action = self.parametric_action_distribution.postprocess(action)
+            q_action = self.value_model.apply(q_params, observations, action)
             min_q = jnp.min(q_action, axis=-1)
             actor_loss = alpha * log_prob - min_q
             return jnp.mean(actor_loss)
 
-        alpha_grad = jax.jit(jax.value_and_grad(alpha_loss))
-        critic_grad = jax.jit(jax.value_and_grad(critic_loss))
-        actor_grad = jax.jit(jax.value_and_grad(actor_loss))
+        self.alpha_grad = jax.jit(jax.value_and_grad(alpha_loss))
+        self.critic_grad = jax.jit(jax.value_and_grad(critic_loss))
+        self.actor_grad = jax.jit(jax.value_and_grad(actor_loss))
 
-        @jax.jit
-        def update_step(
-                state: TrainingState,
-                observations,
-                actions,
-                rewards,
-                new_observations,
-                done
-        ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
-                # o_tm1=obs_normalizer_apply_fn(state.normalizer_params,
-                #                               transitions[:, :obs_size]),
-                # o_t=obs_normalizer_apply_fn(state.normalizer_params,
-                #                             transitions[:, obs_size:2 * obs_size]),
-                # a_tm1=transitions[:, 2 * obs_size:2 * obs_size + core_env.action_size],
-                # r_t=transitions[:, -3],
-                # d_t=transitions[:, -2],
-                # truncation_t=transitions[:, -1])
+        self.key = jax.random.PRNGKey(seed)
 
-            (key, key_alpha, key_critic, key_actor,
-             key_rewarder) = jax.random.split(state.key, 5)
+        def select_action_probabilistic(observation, policy_params, key_):
+            logits = self.policy_model.apply(policy_params, observation)
+            actions = self.parametric_action_distribution.sample_no_postprocessing(
+                logits, key_)
+            return actions
 
-            # if compute_reward is not None:
-            #     new_rewarder_state, rewards, rewarder_metrics = compute_reward(
-            #         state.rewarder_state, normalized_transitions, key_rewarder)
-            #     # Assertion prevents building errors.
-            #     assert hasattr(normalized_transitions, 'replace')
-            #     normalized_transitions = normalized_transitions.replace(r_t=rewards)
-            # else:
-            new_rewarder_state = state.rewarder_state
-            rewarder_metrics = {}
+        self.select_action_probabilistic = jax.jit(select_action_probabilistic)
 
-            alpha_loss, alpha_grads = alpha_grad(state.alpha_params,
-                                                 state.policy_params,
-                                                 observations, key_alpha)
-            alpha = jnp.exp(state.alpha_params)
-            critic_loss, critic_grads = critic_grad(state.q_params, state.policy_params,
-                                                    state.target_q_params, alpha,
-                                                    observations,
-                                                    actions,
-                                                    new_observations,
-                                                    rewards,
-                                                    done, key_critic)
-            actor_loss, actor_grads = actor_grad(state.policy_params, state.q_params,
-                                                 alpha, observations,
-                                                 key_actor)
-            alpha_grads = jax.lax.pmean(alpha_grads, axis_name='i')
-            critic_grads = jax.lax.pmean(critic_grads, axis_name='i')
-            actor_grads = jax.lax.pmean(actor_grads, axis_name='i')
+        self.training_state = TrainingState(
+            policy_optimizer_state=self.policy_optimizer_state,
+            policy_params=self.policy_params,
+            q_optimizer_state=self.q_optimizer_state,
+            q_params=self.q_params,
+            target_q_params=self.q_params,
+            # key=jnp.stack(jax.random.split(local_key, local_devices_to_use)),
+            key=local_key,
+            steps=jnp.zeros((local_devices_to_use,)),
+            alpha_optimizer_state=self.alpha_optimizer_state,
+            alpha_params=self.log_alpha,
+            normalizer_params=normalizer_params,
+            rewarder_state=rewarder_state)
 
-            policy_params_update, policy_optimizer_state = policy_optimizer.update(
-                actor_grads, state.policy_optimizer_state)
-            policy_params = optax.apply_updates(state.policy_params,
-                                                policy_params_update)
-            q_params_update, q_optimizer_state = q_optimizer.update(
-                critic_grads, state.q_optimizer_state)
-            q_params = optax.apply_updates(state.q_params, q_params_update)
-            alpha_params_update, alpha_optimizer_state = alpha_optimizer.update(
-                alpha_grads, state.alpha_optimizer_state)
-            alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
-            new_target_q_params = jax.tree_multimap(
-                lambda x, y: x * (1 - self.soft_target_tau) + y * self.soft_target_tau,
-                state.target_q_params, q_params)
+    def select_action(self, observation, deterministic=True):
+        self.key, key_sample = jax.random.split(self.key)
+        return self.select_action_probabilistic(observation,
+                                                self.training_state.policy_params,
+                                                key_sample)
 
-            metrics = {
-                'critic_loss': critic_loss,
-                'actor_loss': actor_loss,
-                'alpha_loss': alpha_loss,
-                'alpha': jnp.exp(alpha_params),
-                **rewarder_metrics
-            }
+    # agent.update_step(agent.training_state, jax.numpy.array(batch['obs']),
+    #                   jax.numpy.array(batch
+    #                                   ...: ['actions']), jax.numpy.array(
+    #     batch['r']), jax.numpy.array(batch['obs_next']), jax.numpy.arr
+    #                                                          ...: ay(
+    #     batch['terminals']))
 
-            new_state = TrainingState(
-                policy_optimizer_state=policy_optimizer_state,
-                policy_params=policy_params,
-                q_optimizer_state=q_optimizer_state,
-                q_params=q_params,
-                target_q_params=new_target_q_params,
-                key=key,
-                steps=state.steps + 1,
-                alpha_optimizer_state=alpha_optimizer_state,
-                alpha_params=alpha_params,
-                normalizer_params=state.normalizer_params,
-                rewarder_state=new_rewarder_state)
-            return new_state, metrics
+    # @jax.jit
+    def update_step(
+            self,
+            state: TrainingState,
+            observations,
+            actions,
+            rewards,
+            new_observations,
+            done
+    ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
+        (key, key_alpha, key_critic, key_actor,
+         key_rewarder) = jax.random.split(state.key, 5)
 
-        from IPython import embed
-        embed()
+        new_rewarder_state = state.rewarder_state
+        rewarder_metrics = {}
+
+        alpha_loss, alpha_grads = self.alpha_grad(state.alpha_params,
+                                                  state.policy_params,
+                                                  observations, key_alpha)
+        alpha = jnp.exp(state.alpha_params)
+        critic_loss, critic_grads = self.critic_grad(state.q_params,
+                                                     state.policy_params,
+                                                     state.target_q_params, alpha,
+                                                     observations,
+                                                     actions,
+                                                     new_observations,
+                                                     rewards,
+                                                     done, key_critic)
+        actor_loss, actor_grads = self.actor_grad(state.policy_params, state.q_params,
+                                                  alpha, observations,
+                                                  key_actor)
+        # embed()
+        # alpha_grads = jax.lax.pmean(alpha_grads, axis_name='i')
+        # critic_grads = jax.lax.pmean(critic_grads, axis_name='i')
+        # actor_grads = jax.lax.pmean(actor_grads, axis_name='i')
+
+        policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
+            actor_grads, state.policy_optimizer_state)
+        policy_params = optax.apply_updates(state.policy_params,
+                                            policy_params_update)
+        q_params_update, q_optimizer_state = self.q_optimizer.update(
+            critic_grads, state.q_optimizer_state)
+        q_params = optax.apply_updates(state.q_params, q_params_update)
+        alpha_params_update, alpha_optimizer_state = self.alpha_optimizer.update(
+            alpha_grads, state.alpha_optimizer_state)
+        alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
+        new_target_q_params = jax.tree_multimap(
+            lambda x, y: x * (1 - self.soft_target_tau) + y * self.soft_target_tau,
+            state.target_q_params, q_params)
+
+        metrics = {
+            'critic_loss': critic_loss,
+            'actor_loss': actor_loss,
+            'alpha_loss': alpha_loss,
+            'alpha': jnp.exp(alpha_params),
+            **rewarder_metrics
+        }
+
+        new_state = TrainingState(
+            policy_optimizer_state=policy_optimizer_state,
+            policy_params=policy_params,
+            q_optimizer_state=q_optimizer_state,
+            q_params=q_params,
+            target_q_params=new_target_q_params,
+            key=key,
+            steps=state.steps + 1,
+            alpha_optimizer_state=alpha_optimizer_state,
+            alpha_params=alpha_params,
+            normalizer_params=state.normalizer_params,
+            rewarder_state=new_rewarder_state)
+        return new_state, metrics
 
     def save(self, directory):
         pass
@@ -350,428 +374,432 @@ class SACJAX(Agent, ABC):
     def load(self, directory):
         pass
 
-    def select_action(self, observation, deterministic=True):
-        pass
-
     def train(self, pre_sample, sampler, batch_size):
-        pass
+        batch = sampler.sample(pre_sample, batch_size)
+        self.train_on_batch(batch)
 
+    def train_on_batch(self, batch):
+        self.training_state, _ = self.update_step(
+            self.training_state,
+            jax.numpy.array(batch['obs']),
+            jax.numpy.array(batch['actions']),
+            jax.numpy.array(batch['r']),
+            jax.numpy.array(batch['obs_next']),
+            jax.numpy.array(batch['terminals']))
+#
+# def train(
+#         environment_fn: Callable[..., envs.Env],
+#         num_timesteps,
+#         episode_length: int,
+#         action_repeat: int = 1,
+#         num_envs: int = 1,
+#         num_eval_envs: int = 128,
+#         learning_rate: float = 1e-4,
+#         discounting: float = 0.9,
+#         seed: int = 0,
+#         batch_size: int = 256,
+#         log_frequency: int = 10000,
+#         normalize_observations: bool = False,
+#         max_devices_per_host: Optional[int] = None,
+#         reward_scaling: float = 1.,
+#         tau: float = 0.005,
+#         min_replay_size: int = 8192,
+#         max_replay_size: int = 1048576,
+#         grad_updates_per_step: float = 1,
+#         progress_fn: Optional[Callable[[int, Dict[str, Any]], None]] = None,
+#         # The rewarder is an init function and a compute_reward function.
+#         # It is used to change the reward before the learner trains on it.
+#         # make_rewarder: Optional[Callable[[], Rewarder]] = None,
+#         make_rewarder=None,
+#         checkpoint_logdir: Optional[str] = None):
+#     """SAC training."""
+#     assert min_replay_size % num_envs == 0
+#     assert max_replay_size % min_replay_size == 0
+#     # jax.config.update('jax_log_compiles', True)
+#
+#     #
+#     #
+#     # key = jax.random.PRNGKey(seed)
+#     # global_key, local_key = jax.random.split(key)
+#     # del key
+#     # local_key = jax.random.fold_in(local_key, process_id)
+#     # key_models, key_rewarder = jax.random.split(global_key, 2)
+#     # local_key, key_env, key_eval = jax.random.split(local_key, 3)
+#
+#     # eval_env = environment_fn(
+#     #     action_repeat=action_repeat,
+#     #     batch_size=num_eval_envs,
+#     #     episode_length=episode_length, eval_metrics=True)
+#     # eval_step_fn = jax.jit(eval_env.step)
+#     # eval_first_state = jax.jit(eval_env.reset)(key_eval)
+#
+#     # parametric_action_distribution = distribution.NormalTanhDistribution(
+#     #     event_size=core_env.action_size)
+#
+#     # _, obs_size = eval_first_state.obs.shape
+#     #
+#     # policy_model, value_model = make_sac_networks(
+#     #     parametric_action_distribution.param_size, obs_size, core_env.action_size)
+#
+#     # log_alpha = jnp.asarray(0., dtype=jnp.float32)
+#     # alpha_optimizer = optax.adam(learning_rate=3e-4)
+#     # alpha_optimizer_state = alpha_optimizer.init(log_alpha)
+#     #
+#     # policy_optimizer = optax.adam(learning_rate=learning_rate)
+#     # q_optimizer = optax.adam(learning_rate=learning_rate)
+#     # key_policy, key_q = jax.random.split(key_models)
+#     # policy_params = policy_model.init(key_policy)
+#     # policy_optimizer_state = policy_optimizer.init(policy_params)
+#     # q_params = value_model.init(key_q)
+#     # q_optimizer_state = q_optimizer.init(q_params)
+#     #
+#     # policy_optimizer_state, policy_params = pmap.bcast_local_devices(
+#     #     (policy_optimizer_state, policy_params), local_devices_to_use)
+#     # q_optimizer_state, q_params = pmap.bcast_local_devices(
+#     #     (q_optimizer_state, q_params), local_devices_to_use)
+#     # alpha_optimizer_state, log_alpha = pmap.bcast_local_devices(
+#     #     (alpha_optimizer_state, log_alpha), local_devices_to_use)
+#     #
+#     # normalizer_params, obs_normalizer_update_fn, obs_normalizer_apply_fn = (
+#     #     normalization.create_observation_normalizer(
+#     #         obs_size,
+#     #         normalize_observations,
+#     #         pmap_to_devices=local_devices_to_use))
+#
+#     if make_rewarder is not None:
+#         init, compute_reward = make_rewarder()
+#         rewarder_state = init(obs_size, key_rewarder)
+#         rewarder_state = pmap.bcast_local_devices(rewarder_state,
+#                                                   local_devices_to_use)
+#     else:
+#         rewarder_state = None
+#         compute_reward = None
+#
+#     key_debug = jax.random.PRNGKey(seed + 666)
+#
+#     # EVAL
+#     def do_one_step_eval(carry, unused_target_t):
+#         state, policy_params, normalizer_params, key = carry
+#         key, key_sample = jax.random.split(key)
+#         obs = obs_normalizer_apply_fn(normalizer_params, state.obs)
+#         logits = policy_model.apply(policy_params, obs)
+#         actions = parametric_action_distribution.sample(logits, key_sample)
+#         nstate = eval_step_fn(state, actions)
+#         return (nstate, policy_params, normalizer_params, key), ()
+#
+#     @jax.jit
+#     def run_eval(state, key, policy_params,
+#                  normalizer_params) -> Tuple[envs.State, PRNGKey]:
+#         policy_params, normalizer_params = jax.tree_map(
+#             lambda x: x[0], (policy_params, normalizer_params))
+#         (state, _, _, key), _ = jax.lax.scan(
+#             do_one_step_eval, (state, policy_params, normalizer_params, key), (),
+#             length=episode_length // action_repeat)
+#         return state, key
 
-def train(
-        environment_fn: Callable[..., envs.Env],
-        num_timesteps,
-        episode_length: int,
-        action_repeat: int = 1,
-        num_envs: int = 1,
-        num_eval_envs: int = 128,
-        learning_rate: float = 1e-4,
-        discounting: float = 0.9,
-        seed: int = 0,
-        batch_size: int = 256,
-        log_frequency: int = 10000,
-        normalize_observations: bool = False,
-        max_devices_per_host: Optional[int] = None,
-        reward_scaling: float = 1.,
-        tau: float = 0.005,
-        min_replay_size: int = 8192,
-        max_replay_size: int = 1048576,
-        grad_updates_per_step: float = 1,
-        progress_fn: Optional[Callable[[int, Dict[str, Any]], None]] = None,
-        # The rewarder is an init function and a compute_reward function.
-        # It is used to change the reward before the learner trains on it.
-        make_rewarder: Optional[Callable[[], Rewarder]] = None,
-        checkpoint_logdir: Optional[str] = None):
-    """SAC training."""
-    assert min_replay_size % num_envs == 0
-    assert max_replay_size % min_replay_size == 0
-    # jax.config.update('jax_log_compiles', True)
+# @jax.jit
+# def update_step(
+#         state: TrainingState,
+#         transitions: jnp.ndarray,
+# ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
+#     normalized_transitions = Transition(
+#         o_tm1=obs_normalizer_apply_fn(state.normalizer_params,
+#                                       transitions[:, :obs_size]),
+#         o_t=obs_normalizer_apply_fn(state.normalizer_params,
+#                                     transitions[:, obs_size:2 * obs_size]),
+#         a_tm1=transitions[:, 2 * obs_size:2 * obs_size + core_env.action_size],
+#         r_t=transitions[:, -3],
+#         d_t=transitions[:, -2],
+#         truncation_t=transitions[:, -1])
+#
+#     (key, key_alpha, key_critic, key_actor,
+#      key_rewarder) = jax.random.split(state.key, 5)
+#
+#     if compute_reward is not None:
+#         new_rewarder_state, rewards, rewarder_metrics = compute_reward(
+#             state.rewarder_state, normalized_transitions, key_rewarder)
+#         # Assertion prevents building errors.
+#         assert hasattr(normalized_transitions, 'replace')
+#         normalized_transitions = normalized_transitions.replace(r_t=rewards)
+#     else:
+#         new_rewarder_state = state.rewarder_state
+#         rewarder_metrics = {}
+#
+#     alpha_loss, alpha_grads = alpha_grad(state.alpha_params,
+#                                          state.policy_params,
+#                                          normalized_transitions, key_alpha)
+#     alpha = jnp.exp(state.alpha_params)
+#     critic_loss, critic_grads = critic_grad(state.q_params, state.policy_params,
+#                                             state.target_q_params, alpha,
+#                                             normalized_transitions, key_critic)
+#     actor_loss, actor_grads = actor_grad(state.policy_params, state.q_params,
+#                                          alpha, normalized_transitions,
+#                                          key_actor)
+#     alpha_grads = jax.lax.pmean(alpha_grads, axis_name='i')
+#     critic_grads = jax.lax.pmean(critic_grads, axis_name='i')
+#     actor_grads = jax.lax.pmean(actor_grads, axis_name='i')
+#
+#     policy_params_update, policy_optimizer_state = policy_optimizer.update(
+#         actor_grads, state.policy_optimizer_state)
+#     policy_params = optax.apply_updates(state.policy_params,
+#                                         policy_params_update)
+#     q_params_update, q_optimizer_state = q_optimizer.update(
+#         critic_grads, state.q_optimizer_state)
+#     q_params = optax.apply_updates(state.q_params, q_params_update)
+#     alpha_params_update, alpha_optimizer_state = alpha_optimizer.update(
+#         alpha_grads, state.alpha_optimizer_state)
+#     alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
+#     new_target_q_params = jax.tree_multimap(
+#         lambda x, y: x * (1 - tau) + y * tau, state.target_q_params, q_params)
+#
+#     metrics = {
+#         'critic_loss': critic_loss,
+#         'actor_loss': actor_loss,
+#         'alpha_loss': alpha_loss,
+#         'alpha': jnp.exp(alpha_params),
+#         **rewarder_metrics
+#     }
+#
+#     new_state = TrainingState(
+#         policy_optimizer_state=policy_optimizer_state,
+#         policy_params=policy_params,
+#         q_optimizer_state=q_optimizer_state,
+#         q_params=q_params,
+#         target_q_params=new_target_q_params,
+#         key=key,
+#         steps=state.steps + 1,
+#         alpha_optimizer_state=alpha_optimizer_state,
+#         alpha_params=alpha_params,
+#         normalizer_params=state.normalizer_params,
+#         rewarder_state=new_rewarder_state)
+#     return new_state, metrics
 
+# def collect_data(training_state: TrainingState, state):
+#     key, key_sample = jax.random.split(training_state.key)
+#     normalized_obs = obs_normalizer_apply_fn(training_state.normalizer_params,
+#                                              state.obs)
+#     logits = policy_model.apply(training_state.policy_params, normalized_obs)
+#     actions = parametric_action_distribution.sample_no_postprocessing(
+#         logits, key_sample)
+#     postprocessed_actions = parametric_action_distribution.postprocess(actions)
+#     nstate = step_fn(state, postprocessed_actions)
+#
+#     normalizer_params = obs_normalizer_update_fn(
+#         training_state.normalizer_params, state.obs)
+#
+#     training_state = training_state.replace(
+#         key=key, normalizer_params=normalizer_params)
+#
+#     # Concatenating data into a single data blob performs faster than 5
+#     # separate tensors.
+#     concatenated_data = jnp.concatenate([
+#         state.obs,
+#         nstate.obs,
+#         postprocessed_actions,
+#         jnp.expand_dims(nstate.reward, axis=-1),
+#         jnp.expand_dims(1 - nstate.done, axis=-1),
+#         jnp.expand_dims(nstate.info['truncation'], axis=-1),
+#     ],
+#         axis=-1)
+#
+#     return training_state, nstate, concatenated_data
 
-    #
-    #
-    # key = jax.random.PRNGKey(seed)
-    # global_key, local_key = jax.random.split(key)
-    # del key
-    # local_key = jax.random.fold_in(local_key, process_id)
-    # key_models, key_rewarder = jax.random.split(global_key, 2)
-    # local_key, key_env, key_eval = jax.random.split(local_key, 3)
+# def collect_and_update_buffer(training_state, state, replay_buffer):
+#     training_state, state, newdata = collect_data(training_state, state)
+#     new_replay_data = jax.tree_multimap(
+#         lambda x, y: jax.lax.dynamic_update_slice_in_dim(
+#             x,
+#             y,
+#             replay_buffer.current_position,
+#             axis=0),
+#         replay_buffer.data,
+#         newdata)
+#     new_position = (replay_buffer.current_position +
+#                     num_envs // local_devices_to_use) % max_replay_size
+#     new_size = jnp.minimum(
+#         replay_buffer.current_size + num_envs // local_devices_to_use,
+#         max_replay_size)
+#     return training_state, state, ReplayBuffer(
+#         data=new_replay_data,
+#         current_position=new_position,
+#         current_size=new_size)
 
+# def init_replay_buffer(training_state, state, replay_buffer):
+#
+#     (training_state, state, replay_buffer), _ = jax.lax.scan(
+#         (lambda a, b: (collect_and_update_buffer(*a),
+#                        ())), (training_state, state, replay_buffer), (),
+#         length=min_replay_size // (num_envs // local_devices_to_use))
+#     return training_state, state, replay_buffer
+#
+# init_replay_buffer = jax.pmap(init_replay_buffer, axis_name='i')
+#
+# num_updates = int(num_envs * grad_updates_per_step)
 
-
-    # eval_env = environment_fn(
-    #     action_repeat=action_repeat,
-    #     batch_size=num_eval_envs,
-    #     episode_length=episode_length, eval_metrics=True)
-    # eval_step_fn = jax.jit(eval_env.step)
-    # eval_first_state = jax.jit(eval_env.reset)(key_eval)
-
-    # parametric_action_distribution = distribution.NormalTanhDistribution(
-    #     event_size=core_env.action_size)
-
-    # _, obs_size = eval_first_state.obs.shape
-    #
-    # policy_model, value_model = make_sac_networks(
-    #     parametric_action_distribution.param_size, obs_size, core_env.action_size)
-
-    # log_alpha = jnp.asarray(0., dtype=jnp.float32)
-    # alpha_optimizer = optax.adam(learning_rate=3e-4)
-    # alpha_optimizer_state = alpha_optimizer.init(log_alpha)
-    #
-    # policy_optimizer = optax.adam(learning_rate=learning_rate)
-    # q_optimizer = optax.adam(learning_rate=learning_rate)
-    # key_policy, key_q = jax.random.split(key_models)
-    # policy_params = policy_model.init(key_policy)
-    # policy_optimizer_state = policy_optimizer.init(policy_params)
-    # q_params = value_model.init(key_q)
-    # q_optimizer_state = q_optimizer.init(q_params)
-    #
-    # policy_optimizer_state, policy_params = pmap.bcast_local_devices(
-    #     (policy_optimizer_state, policy_params), local_devices_to_use)
-    # q_optimizer_state, q_params = pmap.bcast_local_devices(
-    #     (q_optimizer_state, q_params), local_devices_to_use)
-    # alpha_optimizer_state, log_alpha = pmap.bcast_local_devices(
-    #     (alpha_optimizer_state, log_alpha), local_devices_to_use)
-    #
-    # normalizer_params, obs_normalizer_update_fn, obs_normalizer_apply_fn = (
-    #     normalization.create_observation_normalizer(
-    #         obs_size,
-    #         normalize_observations,
-    #         pmap_to_devices=local_devices_to_use))
-
-    if make_rewarder is not None:
-        init, compute_reward = make_rewarder()
-        rewarder_state = init(obs_size, key_rewarder)
-        rewarder_state = pmap.bcast_local_devices(rewarder_state,
-                                                  local_devices_to_use)
-    else:
-        rewarder_state = None
-        compute_reward = None
-
-    key_debug = jax.random.PRNGKey(seed + 666)
-
-    # EVAL
-    def do_one_step_eval(carry, unused_target_t):
-        state, policy_params, normalizer_params, key = carry
-        key, key_sample = jax.random.split(key)
-        obs = obs_normalizer_apply_fn(normalizer_params, state.obs)
-        logits = policy_model.apply(policy_params, obs)
-        actions = parametric_action_distribution.sample(logits, key_sample)
-        nstate = eval_step_fn(state, actions)
-        return (nstate, policy_params, normalizer_params, key), ()
-
-    @jax.jit
-    def run_eval(state, key, policy_params,
-                 normalizer_params) -> Tuple[envs.State, PRNGKey]:
-        policy_params, normalizer_params = jax.tree_map(
-            lambda x: x[0], (policy_params, normalizer_params))
-        (state, _, _, key), _ = jax.lax.scan(
-            do_one_step_eval, (state, policy_params, normalizer_params, key), (),
-            length=episode_length // action_repeat)
-        return state, key
-
-    # @jax.jit
-    # def update_step(
-    #         state: TrainingState,
-    #         transitions: jnp.ndarray,
-    # ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
-    #     normalized_transitions = Transition(
-    #         o_tm1=obs_normalizer_apply_fn(state.normalizer_params,
-    #                                       transitions[:, :obs_size]),
-    #         o_t=obs_normalizer_apply_fn(state.normalizer_params,
-    #                                     transitions[:, obs_size:2 * obs_size]),
-    #         a_tm1=transitions[:, 2 * obs_size:2 * obs_size + core_env.action_size],
-    #         r_t=transitions[:, -3],
-    #         d_t=transitions[:, -2],
-    #         truncation_t=transitions[:, -1])
-    #
-    #     (key, key_alpha, key_critic, key_actor,
-    #      key_rewarder) = jax.random.split(state.key, 5)
-    #
-    #     if compute_reward is not None:
-    #         new_rewarder_state, rewards, rewarder_metrics = compute_reward(
-    #             state.rewarder_state, normalized_transitions, key_rewarder)
-    #         # Assertion prevents building errors.
-    #         assert hasattr(normalized_transitions, 'replace')
-    #         normalized_transitions = normalized_transitions.replace(r_t=rewards)
-    #     else:
-    #         new_rewarder_state = state.rewarder_state
-    #         rewarder_metrics = {}
-    #
-    #     alpha_loss, alpha_grads = alpha_grad(state.alpha_params,
-    #                                          state.policy_params,
-    #                                          normalized_transitions, key_alpha)
-    #     alpha = jnp.exp(state.alpha_params)
-    #     critic_loss, critic_grads = critic_grad(state.q_params, state.policy_params,
-    #                                             state.target_q_params, alpha,
-    #                                             normalized_transitions, key_critic)
-    #     actor_loss, actor_grads = actor_grad(state.policy_params, state.q_params,
-    #                                          alpha, normalized_transitions,
-    #                                          key_actor)
-    #     alpha_grads = jax.lax.pmean(alpha_grads, axis_name='i')
-    #     critic_grads = jax.lax.pmean(critic_grads, axis_name='i')
-    #     actor_grads = jax.lax.pmean(actor_grads, axis_name='i')
-    #
-    #     policy_params_update, policy_optimizer_state = policy_optimizer.update(
-    #         actor_grads, state.policy_optimizer_state)
-    #     policy_params = optax.apply_updates(state.policy_params,
-    #                                         policy_params_update)
-    #     q_params_update, q_optimizer_state = q_optimizer.update(
-    #         critic_grads, state.q_optimizer_state)
-    #     q_params = optax.apply_updates(state.q_params, q_params_update)
-    #     alpha_params_update, alpha_optimizer_state = alpha_optimizer.update(
-    #         alpha_grads, state.alpha_optimizer_state)
-    #     alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
-    #     new_target_q_params = jax.tree_multimap(
-    #         lambda x, y: x * (1 - tau) + y * tau, state.target_q_params, q_params)
-    #
-    #     metrics = {
-    #         'critic_loss': critic_loss,
-    #         'actor_loss': actor_loss,
-    #         'alpha_loss': alpha_loss,
-    #         'alpha': jnp.exp(alpha_params),
-    #         **rewarder_metrics
-    #     }
-    #
-    #     new_state = TrainingState(
-    #         policy_optimizer_state=policy_optimizer_state,
-    #         policy_params=policy_params,
-    #         q_optimizer_state=q_optimizer_state,
-    #         q_params=q_params,
-    #         target_q_params=new_target_q_params,
-    #         key=key,
-    #         steps=state.steps + 1,
-    #         alpha_optimizer_state=alpha_optimizer_state,
-    #         alpha_params=alpha_params,
-    #         normalizer_params=state.normalizer_params,
-    #         rewarder_state=new_rewarder_state)
-    #     return new_state, metrics
-
-    # def collect_data(training_state: TrainingState, state):
-    #     key, key_sample = jax.random.split(training_state.key)
-    #     normalized_obs = obs_normalizer_apply_fn(training_state.normalizer_params,
-    #                                              state.obs)
-    #     logits = policy_model.apply(training_state.policy_params, normalized_obs)
-    #     actions = parametric_action_distribution.sample_no_postprocessing(
-    #         logits, key_sample)
-    #     postprocessed_actions = parametric_action_distribution.postprocess(actions)
-    #     nstate = step_fn(state, postprocessed_actions)
-    #
-    #     normalizer_params = obs_normalizer_update_fn(
-    #         training_state.normalizer_params, state.obs)
-    #
-    #     training_state = training_state.replace(
-    #         key=key, normalizer_params=normalizer_params)
-    #
-    #     # Concatenating data into a single data blob performs faster than 5
-    #     # separate tensors.
-    #     concatenated_data = jnp.concatenate([
-    #         state.obs,
-    #         nstate.obs,
-    #         postprocessed_actions,
-    #         jnp.expand_dims(nstate.reward, axis=-1),
-    #         jnp.expand_dims(1 - nstate.done, axis=-1),
-    #         jnp.expand_dims(nstate.info['truncation'], axis=-1),
-    #     ],
-    #         axis=-1)
-    #
-    #     return training_state, nstate, concatenated_data
-
-    # def collect_and_update_buffer(training_state, state, replay_buffer):
-    #     training_state, state, newdata = collect_data(training_state, state)
-    #     new_replay_data = jax.tree_multimap(
-    #         lambda x, y: jax.lax.dynamic_update_slice_in_dim(
-    #             x,
-    #             y,
-    #             replay_buffer.current_position,
-    #             axis=0),
-    #         replay_buffer.data,
-    #         newdata)
-    #     new_position = (replay_buffer.current_position +
-    #                     num_envs // local_devices_to_use) % max_replay_size
-    #     new_size = jnp.minimum(
-    #         replay_buffer.current_size + num_envs // local_devices_to_use,
-    #         max_replay_size)
-    #     return training_state, state, ReplayBuffer(
-    #         data=new_replay_data,
-    #         current_position=new_position,
-    #         current_size=new_size)
-
-    # def init_replay_buffer(training_state, state, replay_buffer):
-    #
-    #     (training_state, state, replay_buffer), _ = jax.lax.scan(
-    #         (lambda a, b: (collect_and_update_buffer(*a),
-    #                        ())), (training_state, state, replay_buffer), (),
-    #         length=min_replay_size // (num_envs // local_devices_to_use))
-    #     return training_state, state, replay_buffer
-    #
-    # init_replay_buffer = jax.pmap(init_replay_buffer, axis_name='i')
-    #
-    # num_updates = int(num_envs * grad_updates_per_step)
-
-    # def sample_data(training_state, replay_buffer):
-    #     key1, key2 = jax.random.split(training_state.key)
-    #     idx = jax.random.randint(
-    #         key2, (batch_size * num_updates // local_devices_to_use,),
-    #         minval=0,
-    #         maxval=replay_buffer.current_size)
-    #     transitions = jnp.take(replay_buffer.data, idx, axis=0, mode='clip')
-    #     transitions = jnp.reshape(transitions,
-    #                               [num_updates, -1] + list(transitions.shape[1:]))
-    #     training_state = training_state.replace(key=key1)
-    #     return training_state, transitions
-
-    def run_one_sac_epoch(carry, unused_t):
-        training_state, state, replay_buffer = carry
-
-        training_state, state, replay_buffer = collect_and_update_buffer(
-            training_state, state, replay_buffer)
-
-        training_state, transitions = sample_data(training_state, replay_buffer)
-        training_state, metrics = jax.lax.scan(
-            update_step, training_state, transitions, length=num_updates)
-
-        metrics['buffer_current_size'] = replay_buffer.current_size
-        metrics['buffer_current_position'] = replay_buffer.current_position
-        return (training_state, state, replay_buffer), metrics
-
-    def run_sac_training(training_state, state, replay_buffer):
-        synchro = pmap.is_synchronized(
-            training_state.replace(key=jax.random.PRNGKey(0)), axis_name='i')
-        (training_state, state, replay_buffer), metrics = jax.lax.scan(
-            run_one_sac_epoch, (training_state, state, replay_buffer), (),
-            length=(log_frequency // action_repeat + num_envs - 1) // num_envs)
-        metrics = jax.tree_map(jnp.mean, metrics)
-        return training_state, state, replay_buffer, metrics, synchro
-
-    run_sac_training = jax.pmap(run_sac_training, axis_name='i')
-
-    training_state = TrainingState(
-        policy_optimizer_state=policy_optimizer_state,
-        policy_params=policy_params,
-        q_optimizer_state=q_optimizer_state,
-        q_params=q_params,
-        target_q_params=q_params,
-        key=jnp.stack(jax.random.split(local_key, local_devices_to_use)),
-        steps=jnp.zeros((local_devices_to_use,)),
-        alpha_optimizer_state=alpha_optimizer_state,
-        alpha_params=log_alpha,
-        normalizer_params=normalizer_params,
-        rewarder_state=rewarder_state)
-
-    training_walltime = 0
-    eval_walltime = 0
-    sps = 0
-    eval_sps = 0
-    training_metrics = {}
-    state = first_state
-    metrics = {}
-
-    while True:
-        current_step = int(training_state.normalizer_params[0][0]) * action_repeat
-        logging.info('step %s', current_step)
-        t = time.time()
-
-        if process_id == 0:
-            eval_state, key_debug = run_eval(eval_first_state, key_debug,
-                                             training_state.policy_params,
-                                             training_state.normalizer_params)
-            eval_metrics = eval_state.info['eval_metrics']
-            eval_metrics.completed_episodes.block_until_ready()
-            eval_walltime += time.time() - t
-            eval_sps = (
-                    episode_length * eval_first_state.reward.shape[0] /
-                    (time.time() - t))
-            avg_episode_length = (
-                    eval_metrics.completed_episodes_steps /
-                    eval_metrics.completed_episodes)
-            metrics = dict(
-                dict({
-                    f'eval/episode_{name}': value / eval_metrics.completed_episodes
-                    for name, value in eval_metrics.completed_episodes_metrics.items()
-                }),
-                **dict({
-                    f'training/{name}': onp.mean(value)
-                    for name, value in training_metrics.items()
-                }),
-                **dict({
-                    'eval/completed_episodes': eval_metrics.completed_episodes,
-                    'eval/avg_episode_length': avg_episode_length,
-                    'speed/sps': sps,
-                    'speed/eval_sps': eval_sps,
-                    'speed/training_walltime': training_walltime,
-                    'speed/eval_walltime': eval_walltime,
-                    'training/grad_updates': training_state.steps[0],
-                }),
-            )
-            logging.info(metrics)
-            if progress_fn:
-                progress_fn(current_step, metrics)
-
-            if checkpoint_logdir:
-                # Save current policy.
-                normalizer_params = jax.tree_map(lambda x: x[0],
-                                                 training_state.normalizer_params)
-                policy_params = jax.tree_map(lambda x: x[0],
-                                             training_state.policy_params)
-                params = normalizer_params, policy_params
-                path = f'{checkpoint_logdir}_sac_{current_step}.pkl'
-                model.save_params(path, params)
-
-        if current_step >= num_timesteps:
-            break
-
-        # Create an initialize the replay buffer.
-        if current_step == 0:
-            t = time.time()
-
-            replay_buffer = ReplayBuffer(
-                data=jnp.zeros((local_devices_to_use, max_replay_size,
-                                obs_size * 2 + core_env.action_size + 1 + 1 + 1)),
-                current_size=jnp.zeros((local_devices_to_use,), dtype=jnp.int32),
-                current_position=jnp.zeros((local_devices_to_use,), dtype=jnp.int32))
-
-            training_state, state, replay_buffer = init_replay_buffer(
-                training_state, state, replay_buffer)
-            training_walltime += time.time() - t
-
-        t = time.time()
-        # optimization
-        training_state, state, replay_buffer, training_metrics, synchro = run_sac_training(
-            training_state, state, replay_buffer)
-        assert synchro[0], (current_step, training_state)
-        jax.tree_map(lambda x: x.block_until_ready(), training_metrics)
-        sps = ((training_state.normalizer_params[0][0] * action_repeat -
-                current_step) / (time.time() - t))
-        training_walltime += time.time() - t
-
-    normalizer_params = jax.tree_map(lambda x: x[0],
-                                     training_state.normalizer_params)
-    policy_params = jax.tree_map(lambda x: x[0], training_state.policy_params)
-
-    logging.info('total steps: %s', normalizer_params[0] * action_repeat)
-
-    inference = make_inference_fn(core_env.observation_size, core_env.action_size,
-                                  normalize_observations)
-    params = normalizer_params, policy_params
-
-    pmap.synchronize_hosts()
-    return (inference, params, metrics)
-
-
-def make_inference_fn(observation_size, action_size, normalize_observations):
-    """Creates params and inference function for the SAC agent."""
-    _, obs_normalizer_apply_fn = normalization.make_data_and_apply_fn(
-        observation_size, normalize_observations)
-    parametric_action_distribution = distribution.NormalTanhDistribution(
-        event_size=action_size)
-    policy_model, _ = make_sac_networks(parametric_action_distribution.param_size,
-                                        observation_size, action_size)
-
-    def inference_fn(params, obs, key):
-        normalizer_params, policy_params = params
-        obs = obs_normalizer_apply_fn(normalizer_params, obs)
-        action = parametric_action_distribution.sample(
-            policy_model.apply(policy_params, obs), key)
-        return action
-
-    return inference_fn
+# def sample_data(training_state, replay_buffer):
+#     key1, key2 = jax.random.split(training_state.key)
+#     idx = jax.random.randint(
+#         key2, (batch_size * num_updates // local_devices_to_use,),
+#         minval=0,
+#         maxval=replay_buffer.current_size)
+#     transitions = jnp.take(replay_buffer.data, idx, axis=0, mode='clip')
+#     transitions = jnp.reshape(transitions,
+#                               [num_updates, -1] + list(transitions.shape[1:]))
+#     training_state = training_state.replace(key=key1)
+#     return training_state, transitions
+#
+#     def run_one_sac_epoch(carry, unused_t):
+#         training_state, state, replay_buffer = carry
+#
+#         training_state, state, replay_buffer = collect_and_update_buffer(
+#             training_state, state, replay_buffer)
+#
+#         training_state, transitions = sample_data(training_state, replay_buffer)
+#         training_state, metrics = jax.lax.scan(
+#             update_step, training_state, transitions, length=num_updates)
+#
+#         metrics['buffer_current_size'] = replay_buffer.current_size
+#         metrics['buffer_current_position'] = replay_buffer.current_position
+#         return (training_state, state, replay_buffer), metrics
+#
+#     def run_sac_training(training_state, state, replay_buffer):
+#         synchro = pmap.is_synchronized(
+#             training_state.replace(key=jax.random.PRNGKey(0)), axis_name='i')
+#         (training_state, state, replay_buffer), metrics = jax.lax.scan(
+#             run_one_sac_epoch, (training_state, state, replay_buffer), (),
+#             length=(log_frequency // action_repeat + num_envs - 1) // num_envs)
+#         metrics = jax.tree_map(jnp.mean, metrics)
+#         return training_state, state, replay_buffer, metrics, synchro
+#
+#     run_sac_training = jax.pmap(run_sac_training, axis_name='i')
+#
+#     training_state = TrainingState(
+#         policy_optimizer_state=policy_optimizer_state,
+#         policy_params=policy_params,
+#         q_optimizer_state=q_optimizer_state,
+#         q_params=q_params,
+#         target_q_params=q_params,
+#         key=jnp.stack(jax.random.split(local_key, local_devices_to_use)),
+#         steps=jnp.zeros((local_devices_to_use,)),
+#         alpha_optimizer_state=alpha_optimizer_state,
+#         alpha_params=log_alpha,
+#         normalizer_params=normalizer_params,
+#         rewarder_state=rewarder_state)
+#
+#     training_walltime = 0
+#     eval_walltime = 0
+#     sps = 0
+#     eval_sps = 0
+#     training_metrics = {}
+#     state = first_state
+#     metrics = {}
+#
+#     while True:
+#         current_step = int(training_state.normalizer_params[0][0]) * action_repeat
+#         logging.info('step %s', current_step)
+#         t = time.time()
+#
+#         if process_id == 0:
+#             eval_state, key_debug = run_eval(eval_first_state, key_debug,
+#                                              training_state.policy_params,
+#                                              training_state.normalizer_params)
+#             eval_metrics = eval_state.info['eval_metrics']
+#             eval_metrics.completed_episodes.block_until_ready()
+#             eval_walltime += time.time() - t
+#             eval_sps = (
+#                     episode_length * eval_first_state.reward.shape[0] /
+#                     (time.time() - t))
+#             avg_episode_length = (
+#                     eval_metrics.completed_episodes_steps /
+#                     eval_metrics.completed_episodes)
+#             metrics = dict(
+#                 dict({
+#                     f'eval/episode_{name}': value / eval_metrics.completed_episodes
+#                     for name, value in eval_metrics.completed_episodes_metrics.items()
+#                 }),
+#                 **dict({
+#                     f'training/{name}': onp.mean(value)
+#                     for name, value in training_metrics.items()
+#                 }),
+#                 **dict({
+#                     'eval/completed_episodes': eval_metrics.completed_episodes,
+#                     'eval/avg_episode_length': avg_episode_length,
+#                     'speed/sps': sps,
+#                     'speed/eval_sps': eval_sps,
+#                     'speed/training_walltime': training_walltime,
+#                     'speed/eval_walltime': eval_walltime,
+#                     'training/grad_updates': training_state.steps[0],
+#                 }),
+#             )
+#             logging.info(metrics)
+#             if progress_fn:
+#                 progress_fn(current_step, metrics)
+#
+#             if checkpoint_logdir:
+#                 # Save current policy.
+#                 normalizer_params = jax.tree_map(lambda x: x[0],
+#                                                  training_state.normalizer_params)
+#                 policy_params = jax.tree_map(lambda x: x[0],
+#                                              training_state.policy_params)
+#                 params = normalizer_params, policy_params
+#                 path = f'{checkpoint_logdir}_sac_{current_step}.pkl'
+#                 model.save_params(path, params)
+#
+#         if current_step >= num_timesteps:
+#             break
+#
+#         # Create an initialize the replay buffer.
+#         if current_step == 0:
+#             t = time.time()
+#
+#             replay_buffer = ReplayBuffer(
+#                 data=jnp.zeros((local_devices_to_use, max_replay_size,
+#                                 obs_size * 2 + core_env.action_size + 1 + 1 + 1)),
+#                 current_size=jnp.zeros((local_devices_to_use,), dtype=jnp.int32),
+#                 current_position=jnp.zeros((local_devices_to_use,), dtype=jnp.int32))
+#
+#             training_state, state, replay_buffer = init_replay_buffer(
+#                 training_state, state, replay_buffer)
+#             training_walltime += time.time() - t
+#
+#         t = time.time()
+#         # optimization
+#         training_state, state, replay_buffer, training_metrics, synchro = run_sac_training(
+#             training_state, state, replay_buffer)
+#         assert synchro[0], (current_step, training_state)
+#         jax.tree_map(lambda x: x.block_until_ready(), training_metrics)
+#         sps = ((training_state.normalizer_params[0][0] * action_repeat -
+#                 current_step) / (time.time() - t))
+#         training_walltime += time.time() - t
+#
+#     normalizer_params = jax.tree_map(lambda x: x[0],
+#                                      training_state.normalizer_params)
+#     policy_params = jax.tree_map(lambda x: x[0], training_state.policy_params)
+#
+#     logging.info('total steps: %s', normalizer_params[0] * action_repeat)
+#
+#     inference = make_inference_fn(core_env.observation_size, core_env.action_size,
+#                                   normalize_observations)
+#     params = normalizer_params, policy_params
+#
+#     pmap.synchronize_hosts()
+#     return (inference, params, metrics)
+#
+#
+# def make_inference_fn(observation_size, action_size, normalize_observations):
+#     """Creates params and inference function for the SAC agent."""
+#     _, obs_normalizer_apply_fn = normalization.make_data_and_apply_fn(
+#         observation_size, normalize_observations)
+#     parametric_action_distribution = distribution.NormalTanhDistribution(
+#         event_size=action_size)
+#     policy_model, _ = make_sac_networks(parametric_action_distribution.param_size,
+#                                         observation_size, action_size)
+#
+#     def inference_fn(params, obs, key):
+#         normalizer_params, policy_params = params
+#         obs = obs_normalizer_apply_fn(normalizer_params, obs)
+#         action = parametric_action_distribution.sample(
+#             policy_model.apply(policy_params, obs), key)
+#         return action
+#
+#     return inference_fn
