@@ -24,6 +24,11 @@ class DefaultSampler(Sampler):
     def __init__(self, datatype: DataType = DataType.TORCH):
         super().__init__(datatype)
 
+    @staticmethod
+    def hash(transitions):
+        # return sum([hash(transitions[key].tobytes()) for key in transitions.keys()])
+        return sum([transitions[key].sum() for key in transitions.keys()])
+
     def sample(self,
                buffers: Dict[str, Union[torch.Tensor, np.ndarray]],
                batch_size_in_transitions: int):
@@ -38,4 +43,8 @@ class DefaultSampler(Sampler):
         transitions = {
             key: buffers[key][episode_idxs, t_samples] for key in buffers.keys()
         }
+        print(self.hash(transitions))
+        # from IPython import embed
+        # embed()
+        # quit()
         return transitions

@@ -126,7 +126,7 @@ def make_sac_networks(
     return policy, value
 
 
-class SACJAX(Agent, ABC):
+class SAC_jax(Agent, ABC):
     def __init__(
             self,
             observation_dim,

@@ -207,6 +207,7 @@ version = 'numpy'
 datatype = xpag.tl.DataType.NUMPY
 
 # Set seeds
+args.seed = 0
 if args.seed is not None:
     env.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -283,12 +284,15 @@ if is_goalenv:
         dimensions['observation_dim'] + dimensions['action_dim'],
         dimensions['action_dim'], device, params=None)
 else:
-    # agent = xpag.ag.SAC(dimensions['observation_dim'],
-    #                     dimensions['action_dim'], device,
-    #                     params=None)
-    agent = xpag.ag.SACJAX(dimensions['observation_dim'],
-                           dimensions['action_dim'], device,
-                           params=None)
+    agent = xpag.ag.SAC(dimensions['observation_dim'],
+                        dimensions['action_dim'], device,
+                        params=None)
+    # agent = xpag.ag.SAC_jax(dimensions['observation_dim'],
+    #                        dimensions['action_dim'], device,
+    #                        params=None)
+    # agent = xpag.ag.SACJAX(dimensions['observation_dim'],
+    #                        dimensions['action_dim'], device,
+    #                        params=None)
 
 save_dir = os.path.join(os.path.expanduser("~"),
                         "results",
