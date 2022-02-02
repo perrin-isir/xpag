@@ -210,7 +210,7 @@ def learn(
                     step_data_select(
                         episode_argmax, episode, index
                     )
-                    print(f'best episode out of {num_envs}: ' +
+                    print(f'[{episode_num}] best episode out of {num_envs}: ' +
                           f'reward = {episode_rewards.max()}')
 
                     if save_dir is not None and save_episode:

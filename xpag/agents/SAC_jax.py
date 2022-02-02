@@ -172,7 +172,7 @@ class SACJAX(Agent, ABC):
             self.parametric_action_distribution.param_size, observation_dim, action_dim)
 
         self.log_alpha = jnp.asarray(0., dtype=jnp.float32)
-        self.alpha_optimizer = optax.adam(learning_rate=3e-4)
+        self.alpha_optimizer = optax.adam(learning_rate=alpha_lr)
         self.alpha_optimizer_state = self.alpha_optimizer.init(self.log_alpha)
 
         self.policy_optimizer = optax.adam(learning_rate=policy_lr)
@@ -199,7 +199,7 @@ class SACJAX(Agent, ABC):
         rewarder_state = None
         compute_reward = None
 
-        target_entropy = -0.5 * action_dim
+        target_entropy = -1. * action_dim
 
         def alpha_loss(log_alpha: jnp.ndarray, policy_params: Params,
                        observations, key: PRNGKey) -> jnp.ndarray:
@@ -240,7 +240,8 @@ class SACJAX(Agent, ABC):
             # q_error *= jnp.expand_dims(1 - transitions.truncation_t, -1)
             q_error *= jnp.expand_dims(1 - done, -1)
 
-            q_loss = 0.5 * jnp.mean(jnp.square(q_error))
+            # q_loss = 0.5 * jnp.mean(jnp.square(q_error))
+            q_loss = jnp.mean(jnp.square(q_error))
             return q_loss
 
         def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
