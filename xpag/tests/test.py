@@ -290,9 +290,9 @@ else:
     # agent = xpag.ag.SAC_jax(dimensions['observation_dim'],
     #                        dimensions['action_dim'], device,
     #                        params=None)
-    # agent = xpag.ag.SACJAX(dimensions['observation_dim'],
-    #                        dimensions['action_dim'], device,
-    #                        params=None)
+    agent2 = xpag.ag.SACJAX(dimensions['observation_dim'],
+                           dimensions['action_dim'], device,
+                           params=None)
 
 save_dir = os.path.join(os.path.expanduser("~"),
                         "results",
@@ -313,7 +313,9 @@ eval_freq = 1000 * 5
 eval_episodes = 5
 save_freq = 0
 
-xpag.tl.learn(agent, env, num_envs, episode_max_length,
+embed()
+
+xpag.tl.learn(agent, agent2, env, num_envs, episode_max_length,
               max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_episodes,
               save_freq, replay_buffer, sampler, datatype, device, save_dir=save_dir,
               save_episode=False, plot_function=plot_episode)

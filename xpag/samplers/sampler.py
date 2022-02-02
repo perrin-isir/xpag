@@ -44,7 +44,4 @@ class DefaultSampler(Sampler):
             key: buffers[key][episode_idxs, t_samples] for key in buffers.keys()
         }
         print(self.hash(transitions))
-        # from IPython import embed
-        # embed()
-        # quit()
         return transitions

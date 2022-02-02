@@ -142,6 +142,7 @@ def default_replay_buffer(buffer_size: int, episode_max_length: int,
 
 def learn(
         agent: Agent,
+        agent2: Agent,
         env,
         num_envs: int,
         episode_max_length: int,
@@ -229,6 +230,8 @@ def learn(
 
                     for _ in range(int(train_ratio * episode_t)):
                         pre_sample = replay_buffer.pre_sample()
+                        embed()
+                        quit()
                         agent.train(pre_sample, sampler, batch_size)
 
                 if mode == 'eval':
