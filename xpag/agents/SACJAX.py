@@ -905,14 +905,14 @@ class SACJAX(Agent, ABC):
                 rewards,
                 new_observations,
                 done,
-                # torch_observations,
-                # torch_actions,
-                # torch_rewards,
-                # torch_new_observations,
-                # torch_done,
+                torch_observations,
+                torch_actions,
+                torch_rewards,
+                torch_new_observations,
+                torch_done,
         ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
 
-            trc = False
+            trc = True
 
             ############################################################################
 
@@ -1064,15 +1064,15 @@ class SACJAX(Agent, ABC):
                 alpha_params=alpha_params,
             )
 
-            # print(alpha_loss, torch_alpha_loss)
-            # print(actor_loss, torch_actor_loss)
-            # print(critic_loss, torch_critic_loss)
+            print(alpha_loss, torch_alpha_loss)
+            print(actor_loss, torch_actor_loss)
+            print(critic_loss, torch_critic_loss)
             # embed()
 
             return new_state, metrics
 
-        self.update_step = jax.jit(update_step)
-        # self.update_step = update_step
+        # self.update_step = jax.jit(update_step)
+        self.update_step = update_step
 
         self.training_state = TrainingState(
             policy_optimizer_state=self.policy_optimizer_state,
@@ -1116,9 +1116,9 @@ class SACJAX(Agent, ABC):
             jax.numpy.array(batch['r']),
             jax.numpy.array(batch['obs_next']),
             jax.numpy.array(1.0 - batch['terminals']),
-            # torch.FloatTensor(batch["obs"]).to(self.device),
-            # torch.FloatTensor(batch["actions"]).to(self.device),
-            # torch.FloatTensor(batch["r"]).to(self.device),
-            # torch.FloatTensor(batch["obs_next"]).to(self.device),
-            # torch.FloatTensor(1.0 - batch["terminals"]).to(self.device),
+            torch.FloatTensor(batch["obs"]).to(self.device),
+            torch.FloatTensor(batch["actions"]).to(self.device),
+            torch.FloatTensor(batch["r"]).to(self.device),
+            torch.FloatTensor(batch["obs_next"]).to(self.device),
+            torch.FloatTensor(1.0 - batch["terminals"]).to(self.device),
         )
