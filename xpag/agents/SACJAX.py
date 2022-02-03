@@ -781,15 +781,15 @@ class SACJAX(Agent, ABC):
             alpha_l = log_alpha * jax.lax.stop_gradient(-log_pi - target_entropy)
             return jnp.mean(alpha_l)
 
-        def actor_loss(q_params: Params, alpha: jnp.ndarray, observations, actions,
-                       log_pi: jnp.ndarray) -> jnp.ndarray:
+        def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
+                       observations, actions,
+                       log_pi) -> jnp.ndarray:
             q_action = self.value_model.apply(q_params, observations, actions)
             min_q = jnp.min(q_action, axis=-1)
             actor_l = alpha * log_pi - min_q
             return jnp.mean(actor_l)
 
         def critic_loss(q_params: Params,
-                        policy_params: Params,
                         target_q_params: Params,
                         alpha: jnp.ndarray,
                         observations,
@@ -825,6 +825,74 @@ class SACJAX(Agent, ABC):
 
         self.select_action_probabilistic = jax.jit(select_action_probabilistic)
 
+        # def update_step(
+        #         state: TrainingState,
+        #         observations,
+        #         actions,
+        #         rewards,
+        #         new_observations,
+        #         done
+        # ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
+        #     (key, key_alpha, key_critic, key_actor,
+        #      key_rewarder) = jax.random.split(state.key, 5)
+        #
+        #     # new_rewarder_state = state.rewarder_state
+        #     # rewarder_metrics = {}
+        #
+        #     alpha_loss, alpha_grads = self.alpha_grad(state.alpha_params,
+        #                                               state.policy_params,
+        #                                               observations, key_alpha)
+        #     alpha = jnp.exp(state.alpha_params)
+        #     critic_loss, critic_grads = self.critic_grad(state.q_params,
+        #                                                  state.policy_params,
+        #                                                  state.target_q_params, alpha,
+        #                                                  observations,
+        #                                                  actions,
+        #                                                  new_observations,
+        #                                                  rewards,
+        #                                                  done, key_critic)
+        #     actor_loss, actor_grads = self.actor_grad(state.policy_params,
+        #                                               state.q_params,
+        #                                               alpha, observations,
+        #                                               key_actor)
+        #
+        #     policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
+        #         actor_grads, state.policy_optimizer_state)
+        #     policy_params = optax.apply_updates(state.policy_params,
+        #                                         policy_params_update)
+        #     q_params_update, q_optimizer_state = self.q_optimizer.update(
+        #         critic_grads, state.q_optimizer_state)
+        #     q_params = optax.apply_updates(state.q_params, q_params_update)
+        #     alpha_params_update, alpha_optimizer_state = self.alpha_optimizer.update(
+        #         alpha_grads, state.alpha_optimizer_state)
+        #     alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
+        #     new_target_q_params = jax.tree_multimap(
+        #         lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
+        #         state.target_q_params, q_params)
+        #
+        #     metrics = {
+        #         'critic_loss': critic_loss,
+        #         'actor_loss': actor_loss,
+        #         'alpha_loss': alpha_loss,
+        #         'alpha': jnp.exp(alpha_params),
+        #         # **rewarder_metrics
+        #     }
+        #
+        #     new_state = TrainingState(
+        #         policy_optimizer_state=policy_optimizer_state,
+        #         policy_params=policy_params,
+        #         q_optimizer_state=q_optimizer_state,
+        #         q_params=q_params,
+        #         target_q_params=new_target_q_params,
+        #         key=key,
+        #         steps=state.steps + 1,
+        #         alpha_optimizer_state=alpha_optimizer_state,
+        #         alpha_params=alpha_params,
+        #         # normalizer_params=state.normalizer_params,
+        #         # rewarder_state=new_rewarder_state
+        #     )
+        #     return new_state, metrics
+
         def update_step(
                 state: TrainingState,
                 observations,
@@ -833,39 +901,55 @@ class SACJAX(Agent, ABC):
                 new_observations,
                 done
         ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
-            (key, key_alpha, key_critic, key_actor,
-             key_rewarder) = jax.random.split(state.key, 5)
+            key, key_alpha, key_critic, key_actor = jax.random.split(state.key, 4)
 
-            # new_rewarder_state = state.rewarder_state
-            # rewarder_metrics = {}
+            dist_params = self.policy_model.apply(state.policy_params, observations)
+            pre_actions = self.sample_no_postprocessing(dist_params, key_alpha)
+            log_pi = self.dist_log_prob(dist_params, pre_actions)
+            obs_actions = self.postprocess(pre_actions)
 
             alpha_loss, alpha_grads = self.alpha_grad(state.alpha_params,
-                                                      state.policy_params,
-                                                      observations, key_alpha)
-            alpha = jnp.exp(state.alpha_params)
+                                                      log_pi)
+            alpha_params_update, alpha_optimizer_state = self.alpha_optimizer.update(
+                alpha_grads, state.alpha_optimizer_state)
+            alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
+
+            alpha = jnp.exp(alpha_params)
+
+            actor_loss, actor_grads = self.actor_grad(state.policy_params,
+                                                      state.q_params,
+                                                      alpha,
+                                                      observations,
+                                                      obs_actions,
+                                                      log_pi)
+
+            next_dist_params = self.policy_model.apply(state.policy_params,
+                                                       new_observations)
+            next_pre_actions = self.sample_no_postprocessing(next_dist_params,
+                                                            key_critic)
+            new_log_pi = self.dist_log_prob(next_dist_params, next_pre_actions)
+            new_next_actions = self.postprocess(next_pre_actions)
+
             critic_loss, critic_grads = self.critic_grad(state.q_params,
-                                                         state.policy_params,
-                                                         state.target_q_params, alpha,
+                                                         state.target_q_params,
+                                                         alpha,
                                                          observations,
                                                          actions,
                                                          new_observations,
+                                                         new_next_actions,
+                                                         new_log_pi,
                                                          rewards,
-                                                         done, key_critic)
-            actor_loss, actor_grads = self.actor_grad(state.policy_params,
-                                                      state.q_params,
-                                                      alpha, observations,
-                                                      key_actor)
+                                                         done)
 
             policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
                 actor_grads, state.policy_optimizer_state)
+
             policy_params = optax.apply_updates(state.policy_params,
                                                 policy_params_update)
             q_params_update, q_optimizer_state = self.q_optimizer.update(
                 critic_grads, state.q_optimizer_state)
             q_params = optax.apply_updates(state.q_params, q_params_update)
-            alpha_params_update, alpha_optimizer_state = self.alpha_optimizer.update(
-                alpha_grads, state.alpha_optimizer_state)
-            alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
+
             new_target_q_params = jax.tree_multimap(
                 lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
                 state.target_q_params, q_params)
@@ -874,8 +958,7 @@ class SACJAX(Agent, ABC):
                 'critic_loss': critic_loss,
                 'actor_loss': actor_loss,
                 'alpha_loss': alpha_loss,
-                'alpha': jnp.exp(alpha_params),
-                # **rewarder_metrics
+                'alpha': jnp.exp(alpha_params)
             }
 
             new_state = TrainingState(
@@ -888,12 +971,11 @@ class SACJAX(Agent, ABC):
                 steps=state.steps + 1,
                 alpha_optimizer_state=alpha_optimizer_state,
                 alpha_params=alpha_params,
-                # normalizer_params=state.normalizer_params,
-                # rewarder_state=new_rewarder_state
             )
             return new_state, metrics
 
         self.update_step = jax.jit(update_step)
+        # self.update_step = update_step
 
         self.training_state = TrainingState(
             policy_optimizer_state=self.policy_optimizer_state,
@@ -901,22 +983,19 @@ class SACJAX(Agent, ABC):
             q_optimizer_state=self.q_optimizer_state,
             q_params=self.q_params,
             target_q_params=self.q_params,
-            # key=jnp.stack(jax.random.split(local_key, local_devices_to_use)),
             key=local_key,
             steps=jnp.zeros((local_devices_to_use,)),
             alpha_optimizer_state=self.alpha_optimizer_state,
-            alpha_params=self.log_alpha,
-            # normalizer_params=normalizer_params,
-            # rewarder_state=rewarder_state
+            alpha_params=self.log_alpha
         )
 
-    def select_action_(self, observation, deterministic=True):
+    def select_action(self, observation, deterministic=True):
         self.key, key_sample = jax.random.split(self.key)
         return self.select_action_probabilistic(observation,
                                                 self.training_state.policy_params,
                                                 key_sample)
 
-    def select_action(self, observation, deterministic=True):
+    def select_action_(self, observation, deterministic=True):
         return self.torchagent.select_action(observation, deterministic)
 
     def save(self, directory):
@@ -929,10 +1008,10 @@ class SACJAX(Agent, ABC):
         batch = sampler.sample(pre_sample, batch_size)
         self.train_on_batch(batch)
 
-    def train_on_batch(self, batch):
+    def train_on_batch_(self, batch):
         self.torchagent.train_on_batch(batch)
 
-    def train_on_batch_(self, batch):
+    def train_on_batch(self, batch):
         self.training_state, _ = self.update_step(
             self.training_state,
             jax.numpy.array(batch['obs']),
