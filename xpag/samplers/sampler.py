@@ -43,5 +43,5 @@ class DefaultSampler(Sampler):
         transitions = {
             key: buffers[key][episode_idxs, t_samples] for key in buffers.keys()
         }
-        print(self.hash(transitions))
+        # print(self.hash(transitions))
         return transitions

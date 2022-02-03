@@ -177,6 +177,7 @@ class SAC_jax(Agent, ABC):
 
         self.policy_optimizer = optax.adam(learning_rate=policy_lr)
         self.q_optimizer = optax.adam(learning_rate=critic_lr)
+
         key_policy, key_q = jax.random.split(key_models)
         self.policy_params = self.policy_model.init(key_policy)
         self.policy_optimizer_state = self.policy_optimizer.init(self.policy_params)
@@ -201,15 +202,24 @@ class SAC_jax(Agent, ABC):
 
         target_entropy = -1. * action_dim
 
-        def alpha_loss(log_alpha: jnp.ndarray, policy_params: Params,
-                       observations, key: PRNGKey) -> jnp.ndarray:
+        # def alpha_loss(log_alpha: jnp.ndarray, policy_params: Params,
+        #                observations, key: PRNGKey) -> jnp.ndarray:
+        #     """Eq 18 from https://arxiv.org/pdf/1812.05905.pdf."""
+        #     dist_params = self.policy_model.apply(policy_params, observations)
+        #     action = self.parametric_action_distribution.sample_no_postprocessing(
+        #         dist_params, key)
+        #     log_prob = self.parametric_action_distribution.log_prob(dist_params, action)
+        #     alpha = jnp.exp(log_alpha)
+        #     alpha_loss = alpha * jax.lax.stop_gradient(-log_prob - target_entropy)
+        #     return jnp.mean(alpha_loss)
+
+        def alpha_loss(log_alpha: jnp.ndarray, o) -> jnp.ndarray:
             """Eq 18 from https://arxiv.org/pdf/1812.05905.pdf."""
             dist_params = self.policy_model.apply(policy_params, observations)
             action = self.parametric_action_distribution.sample_no_postprocessing(
                 dist_params, key)
             log_prob = self.parametric_action_distribution.log_prob(dist_params, action)
-            alpha = jnp.exp(log_alpha)
-            alpha_loss = alpha * jax.lax.stop_gradient(-log_prob - target_entropy)
+            alpha_loss = log_alpha * jax.lax.stop_gradient(-log_prob - target_entropy)
             return jnp.mean(alpha_loss)
 
         def critic_loss(q_params: Params, policy_params: Params,

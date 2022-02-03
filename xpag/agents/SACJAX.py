@@ -64,8 +64,8 @@ class TanhNormal(Distribution, ABC):
         super().__init__(validate_args=False)
         self.normal_mean = normal_mean
         self.normal_std = normal_std
-        print(self.normal_mean)
-        print(self.normal_std)
+        # print(self.normal_mean)
+        # print(self.normal_std)
         self.normal = Normal(normal_mean, normal_std)
         self.epsilon = epsilon
         self.device = device
@@ -542,7 +542,7 @@ class SACJAX(Agent, ABC):
 
         def custom_weight_init(key, shape, dtype=jnp.float_):
             global cnt_weight
-            print("weight", shape)
+            # print("weight", shape)
             cnt_weight += 1
             # return jax.random.uniform(key, shape, dtype, -1)
             if cnt_weight < 9:
@@ -553,7 +553,7 @@ class SACJAX(Agent, ABC):
 
         def custom_bias_init(key, shape, dtype=jnp.float_):
             global cnt_bias
-            print("bias", shape)
+            # print("bias", shape)
             cnt_bias += 1
             if cnt_bias < 9:
                 return jax.numpy.array(
@@ -630,11 +630,13 @@ class SACJAX(Agent, ABC):
         key_models, key_rewarder = jax.random.split(global_key, 2)
         local_key, key_env, key_eval = jax.random.split(local_key, 3)
 
-        self.parametric_action_distribution = distribution.NormalTanhDistribution(
-            event_size=action_dim)
+        # self.parametric_action_distribution = distribution.NormalTanhDistribution(
+        #     event_size=action_dim)
 
+        # self.policy_model, self.value_model = make_sac_networks(
+        #     self.parametric_action_distribution.param_size, observation_dim, action_dim)
         self.policy_model, self.value_model = make_sac_networks(
-            self.parametric_action_distribution.param_size, observation_dim, action_dim)
+            2 * action_dim, observation_dim, action_dim)
 
         self.log_alpha = jnp.asarray(0., dtype=jnp.float32)
         self.alpha_optimizer = optax.adam(learning_rate=alpha_lr)
@@ -642,6 +644,7 @@ class SACJAX(Agent, ABC):
 
         self.policy_optimizer = optax.adam(learning_rate=policy_lr)
         self.q_optimizer = optax.adam(learning_rate=critic_lr)
+
         key_policy, key_q = jax.random.split(key_models)
         self.policy_params = self.policy_model.init(key_policy)
         self.policy_optimizer_state = self.policy_optimizer.init(self.policy_params)
@@ -671,7 +674,7 @@ class SACJAX(Agent, ABC):
             def __init__(self, loc, scale):
                 self.loc = loc
                 self.scale = scale
-                print(self.loc, self.scale)
+                # print(self.loc, self.scale)
 
             def sample(self, seed):
                 return jax.random.normal(
@@ -693,10 +696,8 @@ class SACJAX(Agent, ABC):
         def postprocess(x):
             return jnp.tanh(x)
 
-        self.sample_no_postprocessing = sample_no_postprocessing
-        self.postprocess = postprocess
-
-        def dist_log_prob(action, logits, pre_tanh_action):
+        def dist_log_prob(logits, pre_tanh_action):
+            action = jnp.tanh(pre_tanh_action)
             loc, log_scale = jnp.split(logits, 2, axis=-1)
             log_sig_max = 2.
             log_sig_min = -20.
@@ -709,62 +710,104 @@ class SACJAX(Agent, ABC):
             log_prob = normal_log_prob - jnp.log(1 - action * action + epsilon)
             return jnp.sum(log_prob, axis=-1)
 
+        self.sample_no_postprocessing = sample_no_postprocessing
+        self.postprocess = postprocess
         self.dist_log_prob = dist_log_prob
 
-        def alpha_loss(log_alpha: jnp.ndarray, policy_params: Params,
-                       observations, key: PRNGKey) -> jnp.ndarray:
-            """Eq 18 from https://arxiv.org/pdf/1812.05905.pdf."""
-            dist_params = self.policy_model.apply(policy_params, observations)
-            action = self.parametric_action_distribution.sample_no_postprocessing(
-                dist_params, key)
-            log_prob = self.parametric_action_distribution.log_prob(dist_params, action)
-            alpha = jnp.exp(log_alpha)
-            alpha_loss = alpha * jax.lax.stop_gradient(-log_prob - target_entropy)
-            return jnp.mean(alpha_loss)
+        # def alpha_loss(log_alpha: jnp.ndarray, policy_params: Params,
+        #                observations, key: PRNGKey) -> jnp.ndarray:
+        #     """Eq 18 from https://arxiv.org/pdf/1812.05905.pdf."""
+        #     dist_params = self.policy_model.apply(policy_params, observations)
+        #     pre_action = self.sample_no_postprocessing(dist_params, key)
+        #     log_prob = self.dist_log_prob(dist_params, pre_action)
+        #     # action = self.parametric_action_distribution.sample_no_postprocessing(
+        #     #     dist_params, key)
+        #     # log_prob = self.parametric_action_distribution.log_prob(dist_params, action)
+        #     alpha = jnp.exp(log_alpha)
+        #     alpha_loss = alpha * jax.lax.stop_gradient(-log_prob - target_entropy)
+        #     return jnp.mean(alpha_loss)
+        #
+        # def critic_loss(q_params: Params, policy_params: Params,
+        #                 target_q_params: Params, alpha: jnp.ndarray,
+        #                 observations,
+        #                 actions,
+        #                 new_observations,
+        #                 rewards,
+        #                 done,
+        #                 key: PRNGKey) -> jnp.ndarray:
+        #     q_old_action = self.value_model.apply(q_params, observations,
+        #                                           actions)
+        #     next_dist_params = self.policy_model.apply(policy_params, new_observations)
+        #     next_pre_action = self.sample_no_postprocessing(next_dist_params, key)
+        #     next_log_prob = self.dist_log_prob(next_dist_params, next_pre_action)
+        #     next_action = self.postprocess(next_pre_action)
+        #     # next_action = self.parametric_action_distribution.sample_no_postprocessing(
+        #     #     next_dist_params, key)
+        #     # next_log_prob = self.parametric_action_distribution.log_prob(
+        #     #     next_dist_params, next_action)
+        #     # next_action = self.parametric_action_distribution.postprocess(next_action)
+        #     next_q = self.value_model.apply(target_q_params, new_observations,
+        #                                     next_action)
+        #     next_v = jnp.min(next_q, axis=-1) - alpha * next_log_prob
+        #     target_q = jax.lax.stop_gradient(
+        #         rewards * self.reward_scale + discount * next_v)
+        #     # transitions.d_t * discounting * next_v)
+        #     q_error = q_old_action - jnp.expand_dims(target_q, -1)
+        #
+        #     # Better bootstrapping for truncated episodes.
+        #     # q_error *= jnp.expand_dims(1 - transitions.truncation_t, -1)
+        #     q_error *= jnp.expand_dims(1 - done, -1)
+        #
+        #     # q_loss = 0.5 * jnp.mean(jnp.square(q_error))
+        #     q_loss = jnp.mean(jnp.square(q_error))
+        #     return q_loss
 
-        def critic_loss(q_params: Params, policy_params: Params,
-                        target_q_params: Params, alpha: jnp.ndarray,
+        # def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
+        #                observations) -> jnp.ndarray:
+        #     dist_params = self.policy_model.apply(policy_params, observations)
+        #     pre_action = self.sample_no_postprocessing(dist_params, key)
+        #     log_prob = self.dist_log_prob(dist_params, pre_action)
+        #     action = self.postprocess(pre_action)
+        #     # action = self.parametric_action_distribution.sample_no_postprocessing(
+        #     #     dist_params, key)
+        #     # log_prob = self.parametric_action_distribution.log_prob(dist_params, action)
+        #     # action = self.parametric_action_distribution.postprocess(action)
+        #     q_action = self.value_model.apply(q_params, observations, action)
+        #     min_q = jnp.min(q_action, axis=-1)
+        #     actor_loss = alpha * log_prob - min_q
+        #     return jnp.mean(actor_loss)
+
+        def alpha_loss(log_alpha: jnp.ndarray, log_pi: jnp.ndarray) -> jnp.ndarray:
+            alpha_l = log_alpha * jax.lax.stop_gradient(-log_pi - target_entropy)
+            return jnp.mean(alpha_l)
+
+        def actor_loss(q_params: Params, alpha: jnp.ndarray, observations, actions,
+                       log_pi: jnp.ndarray) -> jnp.ndarray:
+            q_action = self.value_model.apply(q_params, observations, actions)
+            min_q = jnp.min(q_action, axis=-1)
+            actor_l = alpha * log_pi - min_q
+            return jnp.mean(actor_l)
+
+        def critic_loss(q_params: Params,
+                        policy_params: Params,
+                        target_q_params: Params,
+                        alpha: jnp.ndarray,
                         observations,
                         actions,
                         new_observations,
+                        new_next_actions,
+                        new_log_pi: jnp.ndarray,
                         rewards,
-                        done,
-                        key: PRNGKey) -> jnp.ndarray:
-            q_old_action = self.value_model.apply(q_params, observations,
-                                                  actions)
-            next_dist_params = self.policy_model.apply(policy_params, new_observations)
-            next_action = self.parametric_action_distribution.sample_no_postprocessing(
-                next_dist_params, key)
-            next_log_prob = self.parametric_action_distribution.log_prob(
-                next_dist_params, next_action)
-            next_action = self.parametric_action_distribution.postprocess(next_action)
+                        done) -> jnp.ndarray:
+            q_old_action = self.value_model.apply(q_params, observations, actions)
             next_q = self.value_model.apply(target_q_params, new_observations,
-                                            next_action)
-            next_v = jnp.min(next_q, axis=-1) - alpha * next_log_prob
+                                            new_next_actions)
+            next_v = jnp.min(next_q, axis=-1) - alpha * new_log_pi
             target_q = jax.lax.stop_gradient(
-                rewards * self.reward_scale + discount * next_v)
-            # transitions.d_t * discounting * next_v)
+                rewards * self.reward_scale + done * discount * next_v)
             q_error = q_old_action - jnp.expand_dims(target_q, -1)
-
-            # Better bootstrapping for truncated episodes.
-            # q_error *= jnp.expand_dims(1 - transitions.truncation_t, -1)
-            q_error *= jnp.expand_dims(1 - done, -1)
-
-            # q_loss = 0.5 * jnp.mean(jnp.square(q_error))
             q_loss = jnp.mean(jnp.square(q_error))
             return q_loss
-
-        def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
-                       observations, key: PRNGKey) -> jnp.ndarray:
-            dist_params = self.policy_model.apply(policy_params, observations)
-            action = self.parametric_action_distribution.sample_no_postprocessing(
-                dist_params, key)
-            log_prob = self.parametric_action_distribution.log_prob(dist_params, action)
-            action = self.parametric_action_distribution.postprocess(action)
-            q_action = self.value_model.apply(q_params, observations, action)
-            min_q = jnp.min(q_action, axis=-1)
-            actor_loss = alpha * log_prob - min_q
-            return jnp.mean(actor_loss)
 
         self.alpha_grad = jax.jit(jax.value_and_grad(alpha_loss))
         self.critic_grad = jax.jit(jax.value_and_grad(critic_loss))
@@ -774,9 +817,11 @@ class SACJAX(Agent, ABC):
 
         def select_action_probabilistic(observation, policy_params, key_):
             logits = self.policy_model.apply(policy_params, observation)
-            actions = self.parametric_action_distribution.sample_no_postprocessing(
-                logits, key_)
-            return self.parametric_action_distribution.postprocess(actions)
+            actions = self.sample_no_postprocessing(logits, key_)
+            return self.postprocess(actions)
+            # actions = self.parametric_action_distribution.sample_no_postprocessing(
+            #     logits, key_)
+            # return self.parametric_action_distribution.postprocess(actions)
 
         self.select_action_probabilistic = jax.jit(select_action_probabilistic)
 
@@ -885,6 +930,9 @@ class SACJAX(Agent, ABC):
         self.train_on_batch(batch)
 
     def train_on_batch(self, batch):
+        self.torchagent.train_on_batch(batch)
+
+    def train_on_batch_(self, batch):
         self.training_state, _ = self.update_step(
             self.training_state,
             jax.numpy.array(batch['obs']),
