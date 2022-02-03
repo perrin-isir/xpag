@@ -35,14 +35,14 @@ def fanin_init(tensor: torch.Tensor) -> torch.Tensor:
     return tensor.data.uniform_(-bound, bound)
 
 
-def initialize_hidden_layer(layer: torch.nn.Module, b_init_value: float = 0.1):
-    torch.manual_seed(0)
+def initialize_hidden_layer(layer: torch.nn.Module, b_init_value: float = 0.1, key=0):
+    torch.manual_seed(key)
     fanin_init(layer.weight)
     layer.bias.data.fill_(b_init_value)
 
 
-def initialize_last_layer(layer: torch.nn.Module, init_w: float = 1e-3):
-    torch.manual_seed(0)
+def initialize_last_layer(layer: torch.nn.Module, init_w: float = 1e-3, key=0):
+    torch.manual_seed(key)
     layer.weight.data.uniform_(-init_w, init_w)
     layer.bias.data.uniform_(-init_w, init_w)
 
@@ -133,10 +133,10 @@ class Actor(nn.Module):
         self.l3_log_std = nn.Linear(256, action_dim)
 
         # weights initialization
-        initialize_hidden_layer(self.l1)
-        initialize_hidden_layer(self.l2)
-        initialize_last_layer(self.l3_mean)
-        initialize_last_layer(self.l3_log_std)
+        initialize_hidden_layer(self.l1, key=0)
+        initialize_hidden_layer(self.l2, key=1)
+        initialize_last_layer(self.l3_mean, key=2)
+        initialize_last_layer(self.l3_log_std, key=3)
 
         self.device = device
         # self.max_action = torch.tensor(max_action, device=self.device)
@@ -196,13 +196,13 @@ class Critic(nn.Module):
         self.l6 = nn.Linear(256, 1)
 
         # weights initialization
-        initialize_hidden_layer(self.l1)
-        initialize_hidden_layer(self.l2)
-        initialize_last_layer(self.l3)
+        initialize_hidden_layer(self.l1, key=0)
+        initialize_hidden_layer(self.l2, key=1)
+        initialize_last_layer(self.l3, key=2)
 
-        initialize_hidden_layer(self.l4)
-        initialize_hidden_layer(self.l5)
-        initialize_last_layer(self.l6)
+        initialize_hidden_layer(self.l4, key=3)
+        initialize_hidden_layer(self.l5, key=4)
+        initialize_last_layer(self.l6, key=5)
 
         # self.max_action = torch.tensor(max_action, device=self.device)
 
@@ -233,6 +233,206 @@ class LogAlpha(nn.Module):
     def __init__(self):
         super().__init__()
         self.value = torch.nn.Parameter(torch.zeros(1, requires_grad=True))
+
+
+class SAC(Agent):
+    def __init__(
+            self,
+            observation_dim,
+            action_dim,
+            device,
+            params=None,
+            discount=0.99,
+            reward_scale=1.0,
+            policy_lr=1e-3,
+            critic_lr=1e-3,
+            alpha_lr=3e-4,
+            soft_target_tau=0.005,
+            target_update_period=1,
+            use_automatic_entropy_tuning=True,
+            target_entropy=None,
+    ):
+        self._config_string = str(list(locals().items())[1:])
+        super().__init__("SAC", observation_dim, action_dim, device, params)
+
+        # if "device" not in self.params:
+        #     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # else:
+        #     self.device = self.params["device"]
+        self.actor = Actor(observation_dim, action_dim, self.device).to(self.device)
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=policy_lr)
+
+        self.critic = Critic(observation_dim, action_dim).to(self.device)
+        self.critic_target = Critic(observation_dim, action_dim).to(self.device)
+        self.critic_target.load_state_dict(self.critic.state_dict())
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=critic_lr)
+
+        self.soft_target_tau = soft_target_tau
+        self.target_update_period = target_update_period
+
+        self.action_dim = action_dim
+
+        self.use_automatic_entropy_tuning = use_automatic_entropy_tuning
+        if self.use_automatic_entropy_tuning:
+            if target_entropy:
+                self.target_entropy = target_entropy
+            else:
+                self.target_entropy = -np.prod(
+                    self.action_dim
+                ).item()  # heuristic value
+            self.log_alpha = LogAlpha().to(self.device)
+            self.alpha_optimizer = torch.optim.Adam(
+                self.log_alpha.parameters(), lr=alpha_lr
+            )
+
+        self.discount = discount
+        self.reward_scale = reward_scale
+        self._n_train_steps_total = 0
+
+    def write_config(self, output_file: str):
+        print(self._config_string, file=output_file)
+
+    def save(self, directory):
+        self.save_nets(
+            [
+                self.actor,
+                self.actor_optimizer,
+                self.critic,
+                self.critic_target,
+                self.critic_optimizer,
+                self.log_alpha,
+                self.alpha_optimizer,
+            ],
+            directory,
+        )
+
+    def load(self, directory):
+        self.load_nets(
+            [
+                self.actor,
+                self.actor_optimizer,
+                self.critic,
+                self.critic_target,
+                self.critic_optimizer,
+                self.log_alpha,
+                self.alpha_optimizer,
+            ],
+            directory,
+        )
+
+    def select_action(self, observation, deterministic=True):
+        # observation = torch.FloatTensor(observation.reshape(1, -1)).to(self.device)
+        # return (
+        #     self.actor(observation, deterministic=deterministic)[0]
+        #     .cpu()
+        #     .data.numpy()
+        #     .flatten()
+        # )
+        if torch.is_tensor(observation):
+            version = "torch"
+        else:
+            version = "numpy"
+        if version == "numpy":
+            # from IPython import embed
+            # embed()
+            obs = torch.FloatTensor(observation).to(self.device)
+            action = self.actor(obs, deterministic=deterministic)[0] \
+                .detach().cpu().numpy()
+            if len(action.shape) == 1:
+                return np.expand_dims(action, axis=0)
+            else:
+                return action
+        else:
+            action = self.actor(observation, deterministic=deterministic)[0].detach()
+            if len(action.shape) == 1:
+                return torch.unsqueeze(action, dim=0)
+            else:
+                return action
+
+    def train(self, pre_sample, sampler, batch_size):
+        batch = sampler.sample(pre_sample, batch_size)
+        self.train_on_batch(batch)
+
+    def train_on_batch(self, batch):
+        # increment iteration counter
+        self._n_train_steps_total += 1
+
+        if torch.is_tensor(batch["r"]):
+            version = "torch"
+        else:
+            version = "numpy"
+
+        if version == "numpy":
+            # from IPython import embed
+            # embed()
+            rewards = torch.FloatTensor(batch["r"]).to(self.device)
+            done = torch.FloatTensor(1.0 - batch["terminals"]).to(self.device)
+            observations = torch.FloatTensor(batch["obs"]).to(self.device)
+            actions = torch.FloatTensor(batch["actions"]).to(self.device)
+            new_observations = torch.FloatTensor(batch["obs_next"]).to(self.device)
+        else:
+            rewards = batch["r"].detach()
+            done = 1. - batch["terminals"].detach()
+            observations = batch["obs"].detach()
+            actions = batch["actions"].detach()
+            new_observations = batch["obs_next"].detach()
+
+        # replay_data.observations
+        # replay_data.next_observations
+        # replay_data.dones
+        # replay_data.actions
+        # replay_data.rewards
+
+        # compute actor and alpha losses
+        new_obs_actions, policy_mean, policy_log_std, log_pi, *_ = self.actor(
+            observations, return_log_prob=True
+        )
+        if self.use_automatic_entropy_tuning:
+            alpha_loss = -(
+                    self.log_alpha.value * (log_pi + self.target_entropy).detach()
+            ).mean()
+            self.alpha_optimizer.zero_grad()
+            alpha_loss.backward(retain_graph=True)
+            self.alpha_optimizer.step()
+            alpha = self.log_alpha.value.exp()
+        else:
+            alpha = 1
+
+        Q1_new_actions, Q2_new_actions = self.critic_target(
+            observations, new_obs_actions
+        )
+        Q_new_actions = torch.min(Q1_new_actions, Q2_new_actions)
+        actor_loss = (alpha * log_pi - Q_new_actions).mean()
+
+        # compute critic losses
+        current_Q1, current_Q2 = self.critic(observations, actions)
+
+        # Make sure policy accounts for squashing functions like tanh correctly!
+        new_next_actions, _, _, new_log_pi, *_ = self.actor(
+            new_observations, return_log_prob=True
+        )
+        target_Q1, target_Q2 = self.critic_target(new_observations, new_next_actions)
+        target_Q_values = torch.min(target_Q1, target_Q2) - alpha * new_log_pi
+
+        target_Q = self.reward_scale * rewards + (
+                done * self.discount * target_Q_values
+        )
+        critic_loss = F.mse_loss(current_Q1, target_Q.detach()) + F.mse_loss(
+            current_Q2, target_Q.detach()
+        )
+
+        # optimization
+        self.critic_optimizer.zero_grad()
+        critic_loss.backward()
+        self.critic_optimizer.step()
+
+        self.actor_optimizer.zero_grad()
+        actor_loss.backward()
+        self.actor_optimizer.step()
+
+        # soft updates
+        if self._n_train_steps_total % self.target_update_period == 0:
+            self.soft_update(self.critic, self.critic_target, self.soft_target_tau)
 
 
 cnt_weight = -1
@@ -278,6 +478,9 @@ class SACJAX(Agent, ABC):
 
         ################################################################################
         self.device = 'cuda'
+
+        self.torchagent = SAC(observation_dim, action_dim, self.device)
+
         self.actor = Actor(observation_dim, action_dim, self.device).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=policy_lr)
 
@@ -340,13 +543,21 @@ class SACJAX(Agent, ABC):
             print("weight", shape)
             cnt_weight += 1
             # return jax.random.uniform(key, shape, dtype, -1)
-            return jax.numpy.array(weight_init_list[cnt_weight].detach().cpu().numpy())
+            if cnt_weight < 9:
+                return jax.numpy.array(
+                    weight_init_list[cnt_weight].detach().cpu().numpy())
+            else:
+                pass
 
         def custom_bias_init(key, shape, dtype=jnp.float_):
             global cnt_bias
             print("bias", shape)
             cnt_bias += 1
-            return jax.numpy.array(bias_init_list[cnt_bias].detach().cpu().numpy())
+            if cnt_bias < 9:
+                return jax.numpy.array(
+                    bias_init_list[cnt_bias].detach().cpu().numpy())
+            else:
+                pass
 
         ################################################################################
 
@@ -446,6 +657,21 @@ class SACJAX(Agent, ABC):
 
         target_entropy = -1. * action_dim
 
+        def dist_log_prob(action, logits, pre_tanh_action):
+            loc, log_scale = jnp.split(logits, 2, axis=-1)
+            log_sig_max = 2.
+            log_sig_min = -20.
+            epsilon = 1e-6
+            log_scale_clip = jnp.clip(log_scale, log_sig_min, log_sig_max)
+            scale = jnp.exp(log_scale_clip)
+            var = scale ** 2
+            normal_log_prob = -((pre_tanh_action - loc) ** 2) / (2 * var) - log_scale \
+                              - jnp.log(jnp.sqrt(2 * jnp.pi))
+            log_prob = normal_log_prob - jnp.log(1 - action * action + epsilon)
+            return jnp.sum(log_prob, axis=-1)
+
+        self.dist_log_prob = dist_log_prob
+
         def alpha_loss(log_alpha: jnp.ndarray, policy_params: Params,
                        observations, key: PRNGKey) -> jnp.ndarray:
             """Eq 18 from https://arxiv.org/pdf/1812.05905.pdf."""
@@ -511,7 +737,7 @@ class SACJAX(Agent, ABC):
             logits = self.policy_model.apply(policy_params, observation)
             actions = self.parametric_action_distribution.sample_no_postprocessing(
                 logits, key_)
-            return actions
+            return self.parametric_action_distribution.postprocess(actions)
 
         self.select_action_probabilistic = jax.jit(select_action_probabilistic)
 
@@ -600,11 +826,14 @@ class SACJAX(Agent, ABC):
             # rewarder_state=rewarder_state
         )
 
-    def select_action(self, observation, deterministic=True):
+    def select_action_(self, observation, deterministic=True):
         self.key, key_sample = jax.random.split(self.key)
         return self.select_action_probabilistic(observation,
                                                 self.training_state.policy_params,
                                                 key_sample)
+
+    def select_action(self, observation, deterministic=True):
+        return self.torchagent.select_action(observation, deterministic)
 
     def save(self, directory):
         pass

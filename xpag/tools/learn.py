@@ -142,7 +142,6 @@ def default_replay_buffer(buffer_size: int, episode_max_length: int,
 
 def learn(
         agent: Agent,
-        agent2: Agent,
         env,
         num_envs: int,
         episode_max_length: int,
