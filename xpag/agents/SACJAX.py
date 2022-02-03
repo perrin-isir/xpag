@@ -787,6 +787,7 @@ class SACJAX(Agent, ABC):
             q_action = self.value_model.apply(q_params, observations, actions)
             min_q = jnp.min(q_action, axis=-1)
             actor_l = alpha * log_pi - min_q
+            # embed()
             return jnp.mean(actor_l)
 
         def critic_loss(q_params: Params,
@@ -811,12 +812,12 @@ class SACJAX(Agent, ABC):
             q_loss = 2. * jnp.mean(jnp.square(q_error))
             return q_loss
 
-        self.alpha_grad = jax.jit(jax.value_and_grad(alpha_loss))
-        self.critic_grad = jax.jit(jax.value_and_grad(critic_loss))
-        self.actor_grad = jax.jit(jax.value_and_grad(actor_loss))
-        # self.alpha_grad = jax.value_and_grad(alpha_loss)
-        # self.critic_grad = jax.value_and_grad(critic_loss)
-        # self.actor_grad = jax.value_and_grad(actor_loss)
+        # self.alpha_grad = jax.jit(jax.value_and_grad(alpha_loss))
+        # self.critic_grad = jax.jit(jax.value_and_grad(critic_loss))
+        # self.actor_grad = jax.jit(jax.value_and_grad(actor_loss))
+        self.alpha_grad = jax.value_and_grad(alpha_loss)
+        self.critic_grad = jax.value_and_grad(critic_loss)
+        self.actor_grad = jax.value_and_grad(actor_loss)
 
         self.key = jax.random.PRNGKey(seed)
 
@@ -955,9 +956,17 @@ class SACJAX(Agent, ABC):
                 torch_actor_loss = (torch_alpha * torch_log_pi - Q_new_actions).mean()
 
             ############################################################################
+            # def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
+            #                observations, actions,
+            #                log_pi) -> jnp.ndarray:
+            #     q_action = self.value_model.apply(q_params, observations, actions)
+            #     min_q = jnp.min(q_action, axis=-1)
+            #     actor_l = alpha * log_pi - min_q
+            #     embed()
+            #     return jnp.mean(actor_l)
 
             actor_loss, actor_grads = self.actor_grad(state.policy_params,
-                                                      state.q_params,
+                                                      state.target_q_params,
                                                       alpha,
                                                       observations,
                                                       obs_actions,
@@ -1064,9 +1073,9 @@ class SACJAX(Agent, ABC):
                 alpha_params=alpha_params,
             )
 
-            print(alpha_loss, torch_alpha_loss)
-            print(actor_loss, torch_actor_loss)
-            print(critic_loss, torch_critic_loss)
+            print("alpha", alpha_loss, torch_alpha_loss)
+            print("actor", actor_loss, torch_actor_loss)
+            print("critic", critic_loss, torch_critic_loss)
             # embed()
 
             return new_state, metrics
