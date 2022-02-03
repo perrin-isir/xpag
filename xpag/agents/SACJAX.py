@@ -804,14 +804,19 @@ class SACJAX(Agent, ABC):
                                             new_next_actions)
             next_v = jnp.min(next_q, axis=-1) - alpha * new_log_pi
             target_q = jax.lax.stop_gradient(
-                rewards * self.reward_scale + done * discount * next_v)
-            q_error = q_old_action - jnp.expand_dims(target_q, -1)
-            q_loss = jnp.mean(jnp.square(q_error))
+                rewards * self.reward_scale +
+                done * discount * jnp.expand_dims(next_v, -1)
+            )
+            q_error = q_old_action - target_q
+            q_loss = 2. * jnp.mean(jnp.square(q_error))
             return q_loss
 
         self.alpha_grad = jax.jit(jax.value_and_grad(alpha_loss))
         self.critic_grad = jax.jit(jax.value_and_grad(critic_loss))
         self.actor_grad = jax.jit(jax.value_and_grad(actor_loss))
+        # self.alpha_grad = jax.value_and_grad(alpha_loss)
+        # self.critic_grad = jax.value_and_grad(critic_loss)
+        # self.actor_grad = jax.value_and_grad(actor_loss)
 
         self.key = jax.random.PRNGKey(seed)
 
@@ -899,8 +904,32 @@ class SACJAX(Agent, ABC):
                 actions,
                 rewards,
                 new_observations,
-                done
+                done,
+                # torch_observations,
+                # torch_actions,
+                # torch_rewards,
+                # torch_new_observations,
+                # torch_done,
         ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
+
+            trc = False
+
+            ############################################################################
+
+            if trc:
+                torch_new_obs_actions, policy_mean, policy_log_std, torch_log_pi, *_ = \
+                    self.torchagent.actor(torch_observations, return_log_prob=True)
+                torch_alpha_loss = -(
+                    self.torchagent.log_alpha.value * (
+                        torch_log_pi + self.torchagent.target_entropy).detach()
+                ).mean()
+                self.torchagent.alpha_optimizer.zero_grad()
+                torch_alpha_loss.backward(retain_graph=True)
+                self.torchagent.alpha_optimizer.step()
+                torch_alpha = self.torchagent.log_alpha.value.exp()
+
+            ############################################################################
+
             key, key_alpha, key_critic, key_actor = jax.random.split(state.key, 4)
 
             dist_params = self.policy_model.apply(state.policy_params, observations)
@@ -916,6 +945,17 @@ class SACJAX(Agent, ABC):
 
             alpha = jnp.exp(alpha_params)
 
+            ############################################################################
+
+            if trc:
+                Q1_new_actions, Q2_new_actions = self.critic_target(
+                    torch_observations, torch_new_obs_actions
+                )
+                Q_new_actions = torch.min(Q1_new_actions, Q2_new_actions)
+                torch_actor_loss = (torch_alpha * torch_log_pi - Q_new_actions).mean()
+
+            ############################################################################
+
             actor_loss, actor_grads = self.actor_grad(state.policy_params,
                                                       state.q_params,
                                                       alpha,
@@ -930,6 +970,57 @@ class SACJAX(Agent, ABC):
             new_log_pi = self.dist_log_prob(next_dist_params, next_pre_actions)
             new_next_actions = self.postprocess(next_pre_actions)
 
+            # print(torch_actor_loss, actor_loss)
+
+            ############################################################################
+
+            if trc:
+                # compute critic losses
+                current_Q1, current_Q2 = self.torchagent.critic(torch_observations, torch_actions)
+
+                # Make sure policy accounts for squashing functions like tanh correctly!
+                torch_new_next_actions, _, _, torch_new_log_pi, *_ = self.torchagent.actor(
+                    torch_new_observations, return_log_prob=True
+                )
+                target_Q1, target_Q2 = self.torchagent.critic_target(torch_new_observations,
+                                                          torch_new_next_actions)
+                target_Q_values = torch.min(
+                    target_Q1, target_Q2) - torch_alpha * torch_new_log_pi
+
+                target_Q = self.torchagent.reward_scale * torch_rewards + (
+                        torch_done * self.torchagent.discount * target_Q_values
+                )
+                torch_critic_loss = F.mse_loss(current_Q1, target_Q.detach()) + F.mse_loss(
+                    current_Q2, target_Q.detach()
+                )
+
+                # optimization
+                self.torchagent.critic_optimizer.zero_grad()
+                torch_critic_loss.backward()
+                self.torchagent.critic_optimizer.step()
+
+                self.torchagent.actor_optimizer.zero_grad()
+                torch_actor_loss.backward()
+                self.torchagent.actor_optimizer.step()
+
+                # soft updates
+                if self.torchagent._n_train_steps_total % self.torchagent.target_update_period == 0:
+                    self.torchagent.soft_update(self.torchagent.critic,
+                                                self.torchagent.critic_target,
+                                                self.torchagent.soft_target_tau)
+
+            ############################################################################
+
+            # q_old_action = self.value_model.apply(q_params, observations, actions)
+            # next_q = self.value_model.apply(target_q_params, new_observations,
+            #                                 new_next_actions)
+            # next_v = jnp.min(next_q, axis=-1) - alpha * new_log_pi
+            # target_q = jax.lax.stop_gradient(
+            #     rewards * self.reward_scale + done * discount * next_v)
+            # q_error = q_old_action - jnp.expand_dims(target_q, -1)
+            # q_loss = jnp.mean(jnp.square(q_error))
+            # embed()
+            # return q_loss
             critic_loss, critic_grads = self.critic_grad(state.q_params,
                                                          state.target_q_params,
                                                          alpha,
@@ -972,6 +1063,12 @@ class SACJAX(Agent, ABC):
                 alpha_optimizer_state=alpha_optimizer_state,
                 alpha_params=alpha_params,
             )
+
+            # print(alpha_loss, torch_alpha_loss)
+            # print(actor_loss, torch_actor_loss)
+            # print(critic_loss, torch_critic_loss)
+            # embed()
+
             return new_state, metrics
 
         self.update_step = jax.jit(update_step)
@@ -1018,4 +1115,10 @@ class SACJAX(Agent, ABC):
             jax.numpy.array(batch['actions']),
             jax.numpy.array(batch['r']),
             jax.numpy.array(batch['obs_next']),
-            jax.numpy.array(batch['terminals']))
+            jax.numpy.array(1.0 - batch['terminals']),
+            # torch.FloatTensor(batch["obs"]).to(self.device),
+            # torch.FloatTensor(batch["actions"]).to(self.device),
+            # torch.FloatTensor(batch["r"]).to(self.device),
+            # torch.FloatTensor(batch["obs_next"]).to(self.device),
+            # torch.FloatTensor(1.0 - batch["terminals"]).to(self.device),
+        )

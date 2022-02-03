@@ -229,8 +229,6 @@ def learn(
 
                     for _ in range(int(train_ratio * episode_t)):
                         pre_sample = replay_buffer.pre_sample()
-                        # embed()
-                        # quit()
                         agent.train(pre_sample, sampler, batch_size)
 
                 if mode == 'eval':
