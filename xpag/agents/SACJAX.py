@@ -783,10 +783,13 @@ class SACJAX(Agent, ABC):
 
         def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
                        observations, actions,
-                       log_pi) -> jnp.ndarray:
+                       log_pi, key) -> jnp.ndarray:
+            dist_params = self.policy_model.apply(policy_params, observations)
+            pre_actions = self.sample_no_postprocessing(dist_params, key)
+            log_p = self.dist_log_prob(dist_params, pre_actions)
             q_action = self.value_model.apply(q_params, observations, actions)
             min_q = jnp.min(q_action, axis=-1)
-            actor_l = alpha * log_pi - min_q
+            actor_l = alpha * log_p - min_q
             # embed()
             return jnp.mean(actor_l)
 
@@ -812,12 +815,12 @@ class SACJAX(Agent, ABC):
             q_loss = 2. * jnp.mean(jnp.square(q_error))
             return q_loss
 
-        # self.alpha_grad = jax.jit(jax.value_and_grad(alpha_loss))
-        # self.critic_grad = jax.jit(jax.value_and_grad(critic_loss))
-        # self.actor_grad = jax.jit(jax.value_and_grad(actor_loss))
-        self.alpha_grad = jax.value_and_grad(alpha_loss)
-        self.critic_grad = jax.value_and_grad(critic_loss)
-        self.actor_grad = jax.value_and_grad(actor_loss)
+        self.alpha_grad = jax.jit(jax.value_and_grad(alpha_loss))
+        self.critic_grad = jax.jit(jax.value_and_grad(critic_loss))
+        self.actor_grad = jax.jit(jax.value_and_grad(actor_loss))
+        # self.alpha_grad = jax.value_and_grad(alpha_loss)
+        # self.critic_grad = jax.value_and_grad(critic_loss)
+        # self.actor_grad = jax.value_and_grad(actor_loss)
 
         self.key = jax.random.PRNGKey(seed)
 
@@ -906,18 +909,24 @@ class SACJAX(Agent, ABC):
                 rewards,
                 new_observations,
                 done,
-                torch_observations,
-                torch_actions,
-                torch_rewards,
-                torch_new_observations,
-                torch_done,
+                # torch_observations,
+                # torch_actions,
+                # torch_rewards,
+                # torch_new_observations,
+                # torch_done,
         ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
 
-            trc = True
+            trc = False
 
             ############################################################################
 
             if trc:
+                print("torch actor sum:", sum([
+                    param.sum() for param in self.torchagent.actor.parameters()]))
+                print("policy_params sum:", sum(jax.tree_flatten(
+                    jax.tree_map(lambda x: x.sum(), state.policy_params))[0]))
+
+
                 torch_new_obs_actions, policy_mean, policy_log_std, torch_log_pi, *_ = \
                     self.torchagent.actor(torch_observations, return_log_prob=True)
                 torch_alpha_loss = -(
@@ -970,7 +979,8 @@ class SACJAX(Agent, ABC):
                                                       alpha,
                                                       observations,
                                                       obs_actions,
-                                                      log_pi)
+                                                      log_pi,
+                                                      key_actor)
 
             next_dist_params = self.policy_model.apply(state.policy_params,
                                                        new_observations)
@@ -1073,10 +1083,11 @@ class SACJAX(Agent, ABC):
                 alpha_params=alpha_params,
             )
 
-            print("alpha", alpha_loss, torch_alpha_loss)
-            print("actor", actor_loss, torch_actor_loss)
-            print("critic", critic_loss, torch_critic_loss)
-            # embed()
+            if trc:
+                print("alpha", alpha_loss, torch_alpha_loss)
+                print("actor", actor_loss, torch_actor_loss)
+                print("critic", critic_loss, torch_critic_loss)
+                embed()
 
             return new_state, metrics
 
@@ -1125,9 +1136,9 @@ class SACJAX(Agent, ABC):
             jax.numpy.array(batch['r']),
             jax.numpy.array(batch['obs_next']),
             jax.numpy.array(1.0 - batch['terminals']),
-            torch.FloatTensor(batch["obs"]).to(self.device),
-            torch.FloatTensor(batch["actions"]).to(self.device),
-            torch.FloatTensor(batch["r"]).to(self.device),
-            torch.FloatTensor(batch["obs_next"]).to(self.device),
-            torch.FloatTensor(1.0 - batch["terminals"]).to(self.device),
+            # torch.FloatTensor(batch["obs"]).to(self.device),
+            # torch.FloatTensor(batch["actions"]).to(self.device),
+            # torch.FloatTensor(batch["r"]).to(self.device),
+            # torch.FloatTensor(batch["obs_next"]).to(self.device),
+            # torch.FloatTensor(1.0 - batch["terminals"]).to(self.device),
         )
