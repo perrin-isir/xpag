@@ -64,6 +64,8 @@ class TanhNormal(Distribution, ABC):
         super().__init__(validate_args=False)
         self.normal_mean = normal_mean
         self.normal_std = normal_std
+        print(self.normal_mean)
+        print(self.normal_std)
         self.normal = Normal(normal_mean, normal_std)
         self.epsilon = epsilon
         self.device = device
@@ -656,6 +658,43 @@ class SACJAX(Agent, ABC):
         # compute_reward = None
 
         target_entropy = -1. * action_dim
+
+        # COMPARING LOG PROBS (for an observation o):
+        # ai = agent.torchagent.actor(torch.tensor(o).to('cuda').unsqueeze(0),return_log_prob=True)
+        # p_a = jax.numpy.array(ai[7][0].detach().cpu().numpy())
+        # a = jax.numpy.array(ai[0][0].detach().cpu().numpy())
+        # d_p = agent.policy_model.apply(agent.policy_params, jax.numpy.array(o))
+        # log_p = agent.dist_log_prob(a, d_p, p_a)
+        # # compare log_p and ai[3]
+
+        class NormalDistribution:
+            def __init__(self, loc, scale):
+                self.loc = loc
+                self.scale = scale
+                print(self.loc, self.scale)
+
+            def sample(self, seed):
+                return jax.random.normal(
+                    seed, shape=self.loc.shape) * self.scale + self.loc
+
+        def create_dist(logits):
+            loc, log_scale = jnp.split(logits, 2, axis=-1)
+            log_sig_max = 2.
+            log_sig_min = -20.
+            log_scale_clip = jnp.clip(log_scale, log_sig_min, log_sig_max)
+            scale = jnp.exp(log_scale_clip)
+            # scale = jax.nn.softplus(scale) + 0.001
+            dist = NormalDistribution(loc=loc, scale=scale)
+            return dist
+
+        def sample_no_postprocessing(logits, seed):
+            return create_dist(logits).sample(seed=seed)
+
+        def postprocess(x):
+            return jnp.tanh(x)
+
+        self.sample_no_postprocessing = sample_no_postprocessing
+        self.postprocess = postprocess
 
         def dist_log_prob(action, logits, pre_tanh_action):
             loc, log_scale = jnp.split(logits, 2, axis=-1)
