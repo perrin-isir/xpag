@@ -250,6 +250,7 @@ class SAC(Agent):
             critic_lr=1e-3,
             alpha_lr=3e-4,
             soft_target_tau=0.005,
+            # soft_target_tau=1.,
             target_update_period=1,
             use_automatic_entropy_tuning=True,
             target_entropy=None,
@@ -473,6 +474,7 @@ class SACJAX(Agent, ABC):
             critic_lr=1e-3,
             alpha_lr=3e-4,
             soft_target_tau=0.005,
+            # soft_target_tau=1.,
             target_update_period=1,
             use_automatic_entropy_tuning=True,
             target_entropy=None,
@@ -481,7 +483,8 @@ class SACJAX(Agent, ABC):
         ################################################################################
         self.device = 'cuda'
 
-        self.torchagent = SAC(observation_dim, action_dim, self.device)
+        self.torchagent = SAC(observation_dim, action_dim, self.device,
+                              soft_target_tau=soft_target_tau)
 
         self.actor = Actor(observation_dim, action_dim, self.device).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=policy_lr)
@@ -499,6 +502,49 @@ class SACJAX(Agent, ABC):
             bias_init: Callable[..., Any] = jax.nn.initializers.lecun_uniform()
             activate_final: bool = False
             bias: bool = True
+
+            # def setup(self):
+            #     print("setup")
+            #     self.layer0 = linen.Dense(
+            #         self.layer_sizes[0],
+            #         name=f'hidden_{0}',
+            #         kernel_init=self.kernel_init,
+            #         bias_init=self.bias_init,
+            #         use_bias=self.bias)
+            #     self.layer1 = linen.Dense(
+            #         self.layer_sizes[1],
+            #         name=f'hidden_{1}',
+            #         kernel_init=self.kernel_init,
+            #         bias_init=self.bias_init,
+            #         use_bias=self.bias)
+            #     self.layer2 = linen.Dense(
+            #         self.layer_sizes[2],
+            #         name=f'hidden_{2}',
+            #         kernel_init=self.kernel_init,
+            #         bias_init=self.bias_init,
+            #         use_bias=self.bias)
+            #     # self.layers = {}
+            #     # for i, hidden_size in enumerate(self.layer_sizes):
+            #     #     self.layers[f'hidden_{i}'] = linen.Dense(
+            #     #         hidden_size,
+            #     #         name=f'hidden_{i}',
+            #     #         kernel_init=self.kernel_init,
+            #     #         bias_init=self.bias_init,
+            #     #         use_bias=self.bias)
+            #
+            # def __call__(self, data: jnp.ndarray):
+            #     print("call")
+            #     hidden = data
+            #     hidden = self.activation(self.layer0(hidden))
+            #     hidden = self.activation(self.layer1(hidden))
+            #     hidden = self.layer2(hidden)
+                # hidden = data
+                # for i, hidden_size in enumerate(self.layer_sizes):
+                #     hidden = self.layers[f'hidden_{i}'](hidden)
+                #     if i != len(self.layer_sizes) - 1 or self.activate_final:
+                #         hidden = self.activation(hidden)
+                # embed()
+                # return hidden
 
             @linen.compact
             def __call__(self, data: jnp.ndarray):
@@ -523,9 +569,9 @@ class SACJAX(Agent, ABC):
             torch.transpose(self.critic.l1.weight, 0, 1),
             torch.transpose(self.critic.l2.weight, 0, 1),
             torch.transpose(self.critic.l3.weight, 0, 1),
-            torch.transpose(self.critic_target.l1.weight, 0, 1),
-            torch.transpose(self.critic_target.l2.weight, 0, 1),
-            torch.transpose(self.critic_target.l3.weight, 0, 1)
+            torch.transpose(self.critic.l4.weight, 0, 1),
+            torch.transpose(self.critic.l5.weight, 0, 1),
+            torch.transpose(self.critic.l6.weight, 0, 1)
         ]
 
         bias_init_list = [
@@ -535,31 +581,41 @@ class SACJAX(Agent, ABC):
             self.critic.l1.bias,
             self.critic.l2.bias,
             self.critic.l3.bias,
-            self.critic_target.l1.bias,
-            self.critic_target.l2.bias,
-            self.critic_target.l3.bias,
+            self.critic.l4.bias,
+            self.critic.l5.bias,
+            self.critic.l6.bias,
         ]
 
         def custom_weight_init(key, shape, dtype=jnp.float_):
             global cnt_weight
-            # print("weight", shape)
             cnt_weight += 1
             # return jax.random.uniform(key, shape, dtype, -1)
-            if cnt_weight < 9:
+            if cnt_weight > 8:
+                pass
+            else:
+                print("weight", shape, cnt_weight)
                 return jax.numpy.array(
                     weight_init_list[cnt_weight].detach().cpu().numpy())
-            else:
-                pass
+            # if cnt_weight < 9:
+            #     return jax.numpy.array(
+            #         weight_init_list[cnt_weight].detach().cpu().numpy())
+            # else:
+            #     pass
 
         def custom_bias_init(key, shape, dtype=jnp.float_):
             global cnt_bias
-            # print("bias", shape)
             cnt_bias += 1
-            if cnt_bias < 9:
+            if cnt_bias > 8:
+                pass
+            else:
+                print("bias", shape, cnt_bias)
                 return jax.numpy.array(
                     bias_init_list[cnt_bias].detach().cpu().numpy())
-            else:
-                pass
+            # if cnt_bias < 9:
+            #     return jax.numpy.array(
+            #         bias_init_list[cnt_bias].detach().cpu().numpy())
+            # else:
+            #     pass
 
         ################################################################################
 
@@ -642,14 +698,15 @@ class SACJAX(Agent, ABC):
         self.alpha_optimizer = optax.adam(learning_rate=alpha_lr)
         self.alpha_optimizer_state = self.alpha_optimizer.init(self.log_alpha)
 
-        self.policy_optimizer = optax.adam(learning_rate=policy_lr)
-        self.q_optimizer = optax.adam(learning_rate=critic_lr)
+        self.policy_optimizer = optax.adam(learning_rate=1. * policy_lr)
+        self.q_optimizer = optax.adam(learning_rate=1. * critic_lr)
 
         key_policy, key_q = jax.random.split(key_models)
         self.policy_params = self.policy_model.init(key_policy)
         self.policy_optimizer_state = self.policy_optimizer.init(self.policy_params)
         self.q_params = self.value_model.init(key_q)
         self.q_optimizer_state = self.q_optimizer.init(self.q_params)
+        print("init_done")
 
         # normalizer_params, obs_normalizer_update_fn, obs_normalizer_apply_fn = (
         #     normalization.create_observation_normalizer(
@@ -782,27 +839,39 @@ class SACJAX(Agent, ABC):
             return jnp.mean(alpha_l)
 
         def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
-                       observations, actions,
-                       log_pi, key) -> jnp.ndarray:
+                       observations,
+                       # actions,
+                       # log_pi,
+                       key) -> jnp.ndarray:
             dist_params = self.policy_model.apply(policy_params, observations)
             pre_actions = self.sample_no_postprocessing(dist_params, key)
             log_p = self.dist_log_prob(dist_params, pre_actions)
-            q_action = self.value_model.apply(q_params, observations, actions)
+            pre_actions = self.postprocess(pre_actions)
+            q_action = self.value_model.apply(q_params, observations, pre_actions)
             min_q = jnp.min(q_action, axis=-1)
             actor_l = alpha * log_p - min_q
+            # print("mean min q", jnp.mean(min_q))
             # embed()
             return jnp.mean(actor_l)
 
         def critic_loss(q_params: Params,
+                        policy_params: Params,
                         target_q_params: Params,
                         alpha: jnp.ndarray,
                         observations,
                         actions,
                         new_observations,
-                        new_next_actions,
-                        new_log_pi: jnp.ndarray,
+                        # new_next_actions,
+                        # new_log_pi: jnp.ndarray,
                         rewards,
-                        done) -> jnp.ndarray:
+                        done,
+                        key_c) -> jnp.ndarray:
+            next_dist_params = self.policy_model.apply(policy_params,
+                                                       new_observations)
+            next_pre_actions = self.sample_no_postprocessing(next_dist_params,
+                                                             key_c)
+            new_log_pi = self.dist_log_prob(next_dist_params, next_pre_actions)
+            new_next_actions = self.postprocess(next_pre_actions)
             q_old_action = self.value_model.apply(q_params, observations, actions)
             next_q = self.value_model.apply(target_q_params, new_observations,
                                             new_next_actions)
@@ -833,6 +902,7 @@ class SACJAX(Agent, ABC):
             # return self.parametric_action_distribution.postprocess(actions)
 
         self.select_action_probabilistic = jax.jit(select_action_probabilistic)
+        # self.select_action_probabilistic = select_action_probabilistic
 
         # def update_step(
         #         state: TrainingState,
@@ -925,7 +995,23 @@ class SACJAX(Agent, ABC):
                     param.sum() for param in self.torchagent.actor.parameters()]))
                 print("policy_params sum:", sum(jax.tree_flatten(
                     jax.tree_map(lambda x: x.sum(), state.policy_params))[0]))
+                print("torch critic sum:", sum([
+                    param.sum() for param in self.torchagent.critic.parameters()]))
+                print("value_params sum:", sum(jax.tree_flatten(
+                    jax.tree_map(lambda x: x.sum(), state.q_params))[0]))
+                print("torch critic target sum:", sum([
+                    param.sum() for param in self.torchagent.critic_target.parameters()]))
+                print("target_value_params sum:", sum(jax.tree_flatten(
+                    jax.tree_map(lambda x: x.sum(), state.target_q_params))[0]))
 
+                print("mean target value", jnp.mean(
+                    self.value_model.apply(
+                        state.target_q_params, observations, actions)
+                ))
+                c1, c2 = self.torchagent.critic_target(torch_observations, torch_actions)
+                print("mean torch target value", 0.5*torch.mean(c1) + 0.5*torch.mean(c2))
+
+                # embed()
 
                 torch_new_obs_actions, policy_mean, policy_log_std, torch_log_pi, *_ = \
                     self.torchagent.actor(torch_observations, return_log_prob=True)
@@ -958,10 +1044,12 @@ class SACJAX(Agent, ABC):
             ############################################################################
 
             if trc:
-                Q1_new_actions, Q2_new_actions = self.critic_target(
+                Q1_new_actions, Q2_new_actions = self.torchagent.critic_target(
                     torch_observations, torch_new_obs_actions
                 )
                 Q_new_actions = torch.min(Q1_new_actions, Q2_new_actions)
+                print("torch mean Q new action",
+                      torch.mean(Q1_new_actions) + torch.mean(Q2_new_actions))
                 torch_actor_loss = (torch_alpha * torch_log_pi - Q_new_actions).mean()
 
             ############################################################################
@@ -975,19 +1063,13 @@ class SACJAX(Agent, ABC):
             #     return jnp.mean(actor_l)
 
             actor_loss, actor_grads = self.actor_grad(state.policy_params,
+                                                      # state.q_params,
                                                       state.target_q_params,
                                                       alpha,
                                                       observations,
-                                                      obs_actions,
-                                                      log_pi,
+                                                      # obs_actions,
+                                                      # log_pi,
                                                       key_actor)
-
-            next_dist_params = self.policy_model.apply(state.policy_params,
-                                                       new_observations)
-            next_pre_actions = self.sample_no_postprocessing(next_dist_params,
-                                                            key_critic)
-            new_log_pi = self.dist_log_prob(next_dist_params, next_pre_actions)
-            new_next_actions = self.postprocess(next_pre_actions)
 
             # print(torch_actor_loss, actor_loss)
 
@@ -1040,22 +1122,25 @@ class SACJAX(Agent, ABC):
             # q_loss = jnp.mean(jnp.square(q_error))
             # embed()
             # return q_loss
+
+            policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
+                actor_grads, state.policy_optimizer_state)
+            policy_params = optax.apply_updates(state.policy_params,
+                                                policy_params_update)
+
             critic_loss, critic_grads = self.critic_grad(state.q_params,
+                                                         state.policy_params,
                                                          state.target_q_params,
                                                          alpha,
                                                          observations,
                                                          actions,
                                                          new_observations,
-                                                         new_next_actions,
-                                                         new_log_pi,
+                                                         # new_next_actions,
+                                                         # new_log_pi,
                                                          rewards,
-                                                         done)
+                                                         done,
+                                                         key_critic)
 
-            policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
-                actor_grads, state.policy_optimizer_state)
-
-            policy_params = optax.apply_updates(state.policy_params,
-                                                policy_params_update)
             q_params_update, q_optimizer_state = self.q_optimizer.update(
                 critic_grads, state.q_optimizer_state)
             q_params = optax.apply_updates(state.q_params, q_params_update)
@@ -1084,15 +1169,15 @@ class SACJAX(Agent, ABC):
             )
 
             if trc:
-                print("alpha", alpha_loss, torch_alpha_loss)
+                print("alpha", alpha, torch_alpha)
                 print("actor", actor_loss, torch_actor_loss)
                 print("critic", critic_loss, torch_critic_loss)
-                embed()
+                # embed()
 
             return new_state, metrics
 
-        # self.update_step = jax.jit(update_step)
-        self.update_step = update_step
+        self.update_step = jax.jit(update_step)
+        # self.update_step = update_step
 
         self.training_state = TrainingState(
             policy_optimizer_state=self.policy_optimizer_state,
