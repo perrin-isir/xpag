@@ -8,6 +8,7 @@ from xpag.tools.utils import DataType
 class Sampler(ABC):
     def __init__(self,
                  datatype: DataType = DataType.TORCH):
+        assert(datatype == DataType.TORCH or datatype == DataType.NUMPY)
         self.datatype = datatype
 
     @abstractmethod
@@ -25,8 +26,7 @@ class DefaultSampler(Sampler):
         super().__init__(datatype)
 
     @staticmethod
-    def hash(transitions):
-        # return sum([hash(transitions[key].tobytes()) for key in transitions.keys()])
+    def sum(transitions):
         return sum([transitions[key].sum() for key in transitions.keys()])
 
     def sample(self,
@@ -43,5 +43,5 @@ class DefaultSampler(Sampler):
         transitions = {
             key: buffers[key][episode_idxs, t_samples] for key in buffers.keys()
         }
-        # print(self.hash(transitions))
+        # print(self.sum(transitions))
         return transitions

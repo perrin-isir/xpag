@@ -6,6 +6,12 @@ from brax.training import networks
 from brax.training import normalization
 from brax.training.types import Params
 from brax.training.types import PRNGKey
+# from typing import Any
+# import jax.numpy as jnp
+#
+# Params = Any
+# PRNGKey = jnp.ndarray
+
 import flax
 from flax import linen
 import jax
