@@ -9,7 +9,7 @@ git clone https://github.com/perrin-isir/xpag.git
 cd xpag
 ```
 Choose a conda environmnent name, for instance `xpagenv`.  
-The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](xomx/environment.yaml):
+The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](xpag/environment.yaml):
 ```
 conda env create --name xpagenv --file environment.yaml
 ```
