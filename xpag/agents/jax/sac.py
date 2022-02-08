@@ -19,7 +19,6 @@ import flax
 from flax import linen
 import jax
 import jax.numpy as jnp
-import numpy as np
 import optax
 from xpag.agents.agent import Agent
 import os
