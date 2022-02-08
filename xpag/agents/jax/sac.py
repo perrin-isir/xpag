@@ -23,6 +23,8 @@ import numpy as np
 import optax
 from xpag.agents.agent import Agent
 import os
+import joblib
+
 
 Params = Any
 PRNGKey = jnp.ndarray
@@ -46,15 +48,6 @@ class TrainingState:
     steps: jnp.ndarray
     alpha_optimizer_state: optax.OptState
     alpha_params: Params
-
-    def save(self, directory: str):
-        os.makedirs(directory, exist_ok=True)
-        with open(os.path.join(directory, 'policy_optimizer_state'), 'wb') as f_:
-            np.save(f_, np.asarray(self.policy_optimizer_state, dtype=object))
-
-    def load(self, directory: str):
-        self.policy_optimizer_state = jnp.load(
-            os.path.join(directory, 'policy_optimizer_state'))
 
 
 class SAC(Agent, ABC):
@@ -385,10 +378,27 @@ class SAC(Agent, ABC):
                                                 key_sample)
 
     def save(self, directory):
-        self.training_state.save(directory)
+        os.makedirs(directory, exist_ok=True)
+        for filename in self.training_state.__dict__.keys():
+            with open(os.path.join(directory, filename + '.joblib'), 'wb') as f_:
+                joblib.dump(self.training_state.__dict__[filename], f_)
 
     def load(self, directory):
-        self.training_state.load(directory)
+        load_all = {}
+        for filename in self.training_state.__dict__.keys():
+            load_all[filename] = jax.tree_util.tree_multimap(
+                jnp.array, joblib.load(os.path.join(directory, filename + '.joblib')))
+        return TrainingState(
+            policy_optimizer_state=load_all['policy_optimizer_state'],
+            policy_params=load_all['policy_params'],
+            q_optimizer_state=load_all['q_optimizer_state'],
+            q_params=load_all['q_params'],
+            target_q_params=load_all['target_q_params'],
+            key=load_all['key'],
+            steps=load_all['steps'],
+            alpha_optimizer_state=load_all['alpha_optimizer_state'],
+            alpha_params=load_all['alpha_params'],
+        )
 
     def write_config(self, output_file: str):
         pass
