@@ -25,7 +25,6 @@ from xpag.agents.agent import Agent
 import os
 import joblib
 
-
 Params = Any
 PRNGKey = jnp.ndarray
 
@@ -357,7 +356,13 @@ class SAC(Agent, ABC):
             actions = self.sample_no_postprocessing(logits, key_)
             return self.postprocess(actions)
 
+        def select_action_deterministic(observation, policy_params, key_=None):
+            logits = self.policy_model.apply(policy_params, observation)
+            loc, _ = jnp.split(logits, 2, axis=-1)
+            return self.postprocess(loc)
+
         self.select_action_probabilistic = jax.jit(select_action_probabilistic)
+        self.select_action_deterministic = jax.jit(select_action_deterministic)
 
         self.training_state = TrainingState(
             policy_optimizer_state=self.policy_optimizer_state,
@@ -373,9 +378,28 @@ class SAC(Agent, ABC):
 
     def select_action(self, observation, deterministic=True):
         self.key, key_sample = jax.random.split(self.key)
-        return self.select_action_probabilistic(observation,
-                                                self.training_state.policy_params,
-                                                key_sample)
+        if deterministic:
+            apply_func = self.select_action_deterministic
+        else:
+            apply_func = self.select_action_probabilistic
+        if torch.is_tensor(observation):
+            version = 'torch'
+        else:
+            version = 'numpy'
+        if version == 'numpy':
+            action = apply_func(
+                observation,
+                self.training_state.policy_params,
+                key_sample)
+        else:
+            action = apply_func(
+                observation.detach().cpu().numpy(),
+                self.training_state.policy_params,
+                key_sample)
+        if len(action.shape) == 1:
+            return jnp.expand_dims(action, axis=0)
+        else:
+            return action
 
     def save(self, directory):
         os.makedirs(directory, exist_ok=True)
@@ -401,18 +425,18 @@ class SAC(Agent, ABC):
         )
 
     def write_config(self, output_file: str):
-        pass
+        print(self._config_string, file=output_file)
 
     def train(self, pre_sample, sampler, batch_size):
         batch = sampler.sample(pre_sample, batch_size)
         self.train_on_batch(batch)
 
     def train_on_batch(self, batch):
-        if torch.is_tensor(batch["r"]):
-            version = "torch"
+        if torch.is_tensor(batch['r']):
+            version = 'torch'
         else:
-            version = "numpy"
-        if version == "numpy":
+            version = 'numpy'
+        if version == 'numpy':
             observations = jnp.array(batch['obs'])
             actions = jnp.array(batch['actions'])
             rewards = jnp.array(batch['r'])
