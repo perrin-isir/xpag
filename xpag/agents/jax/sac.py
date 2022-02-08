@@ -350,6 +350,39 @@ class SAC(Agent, ABC):
 
         self.update_step = jax.jit(update_step)
 
+        def repeat_update_step(
+                state: TrainingState,
+                observations,
+                actions,
+                rewards,
+                new_observations,
+                done
+        ):
+            # def iteration_update_step(i: int, st: TrainingState):
+            #     return self.update_step(
+            #         st,
+            #         observations.pop(0),
+            #         actions.pop(0),
+            #         rewards.pop(0),
+            #         new_observations.pop(0),
+            #         done.pop(0))
+            def iteration_update_step(i: int, st: TrainingState):
+                return self.update_step(
+                    st,
+                    observations[0],
+                    actions[0],
+                    rewards[0],
+                    new_observations[0],
+                    done[0])
+
+            # from IPython import embed
+            # embed()
+
+            new_state = jax.lax.fori_loop(0, 10, iteration_update_step, state)
+            return new_state
+
+        self.repeat_update_step = jax.jit(repeat_update_step)
+
         def select_action_probabilistic(observation, policy_params, key_):
             logits = self.policy_model.apply(policy_params, observation)
             actions = self.sample_no_postprocessing(logits, key_)
@@ -426,29 +459,74 @@ class SAC(Agent, ABC):
     def write_config(self, output_file: str):
         print(self._config_string, file=output_file)
 
+    # def train(self, pre_sample, sampler, batch_size):
+    #     batch = sampler.sample(pre_sample, batch_size)
+    #     self.train_on_batch(batch)
+    #
+    # def train_on_batch(self, batch):
+    #     if torch.is_tensor(batch['r']):
+    #         version = 'torch'
+    #     else:
+    #         version = 'numpy'
+    #     if version == 'numpy':
+    #         observations = jnp.array(batch['obs'])
+    #         actions = jnp.array(batch['actions'])
+    #         rewards = jnp.array(batch['r'])
+    #         new_observations = jnp.array(batch['obs_next'])
+    #         done = jnp.array(1.0 - batch['terminals'])
+    #     else:
+    #         observations = jnp.array(batch['obs'].detach().cpu().numpy())
+    #         actions = jnp.array(batch['actions'].detach().cpu().numpy())
+    #         rewards = jnp.array(batch['r'].detach().cpu().numpy())
+    #         new_observations = jnp.array(batch['obs_next'].detach().cpu().numpy())
+    #         done = jnp.array(1.0 - batch['terminals'].detach().cpu().numpy())
+    #
+    #     self.training_state = self.update_step(
+    #         self.training_state,
+    #         observations,
+    #         actions,
+    #         rewards,
+    #         new_observations,
+    #         done
+    #     )
+
     def train(self, pre_sample, sampler, batch_size):
-        batch = sampler.sample(pre_sample, batch_size)
+        batch = []
+        for i in range(10):
+            batch.append(sampler.sample(pre_sample, batch_size))
         self.train_on_batch(batch)
 
     def train_on_batch(self, batch):
-        if torch.is_tensor(batch['r']):
+        observations = []
+        actions = []
+        rewards = []
+        new_observations = []
+        done = []
+        if torch.is_tensor(batch[0]['r']):
             version = 'torch'
         else:
             version = 'numpy'
         if version == 'numpy':
-            observations = jnp.array(batch['obs'])
-            actions = jnp.array(batch['actions'])
-            rewards = jnp.array(batch['r'])
-            new_observations = jnp.array(batch['obs_next'])
-            done = jnp.array(1.0 - batch['terminals'])
+            for i in range(len(batch)):
+                observations.append(jnp.array(batch[i]['obs']))
+                actions.append(jnp.array(batch[i]['actions']))
+                rewards.append(jnp.array(batch[i]['r']))
+                new_observations.append(jnp.array(batch[i]['obs_next']))
+                done.append(jnp.array(1.0 - batch[i]['terminals']))
         else:
-            observations = jnp.array(batch['obs'].detach().cpu().numpy())
-            actions = jnp.array(batch['actions'].detach().cpu().numpy())
-            rewards = jnp.array(batch['r'].detach().cpu().numpy())
-            new_observations = jnp.array(batch['obs_next'].detach().cpu().numpy())
-            done = jnp.array(1.0 - batch['terminals'].detach().cpu().numpy())
+            for i in range(len(batch)):
+                observations.append(jnp.array(batch[i]['obs'].detach().cpu().numpy()))
+                actions.append(jnp.array(batch[i]['actions'].detach().cpu().numpy()))
+                rewards.append(jnp.array(batch[i]['r'].detach().cpu().numpy()))
+                new_observations.append(
+                    jnp.array(batch[i]['obs_next'].detach().cpu().numpy()))
+                done.append(
+                    jnp.array(1.0 - batch[i]['terminals'].detach().cpu().numpy()))
 
-        self.training_state = self.update_step(
+        # from IPython import embed
+        # embed()
+
+        self.training_state = self.repeat_update_step(
             self.training_state,
             observations,
             actions,
