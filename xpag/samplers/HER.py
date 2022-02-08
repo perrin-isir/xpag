@@ -31,7 +31,7 @@ class HER(Sampler):
         transitions = {
             key: buffers[key][episode_idxs, t_samples] for key in buffers.keys()
         }
-        # her indexes
+        # HER indexes
         her_indexes = np.where(np.random.uniform(size=batch_size) < self.future_p)
 
         if self.datatype == DataType.TORCH:
@@ -44,10 +44,10 @@ class HER(Sampler):
             )
             future_offset = future_offset.astype(int)
         future_t = (t_samples + future_offset)[her_indexes]
-        # replace go with achieved goal
+        # replace desired goal with achieved goal
         future_ag = buffers["ag_next"][episode_idxs[her_indexes], future_t]
         transitions["g"][her_indexes] = future_ag
-        # to get the params to re-compute reward
+        # recomputing rewards
         if self.datatype == DataType.TORCH:
             transitions["r"] = torch.unsqueeze(
                 self.reward_func(transitions["ag_next"], transitions["g"], {}), -1

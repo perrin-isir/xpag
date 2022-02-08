@@ -1,5 +1,5 @@
 # xpag
-*xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning platform.
+*xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning platform, currently in beta version.
 
 ## Installation
 
@@ -39,7 +39,7 @@ print(jax.lib.xla_bridge.get_backend().platform)
 It will print "cpu" or "gpu" depending on the platform that jax is using.
 
 * *xpag* also uses `mujoco_py`, which requires mujoco.  
-You can download it here: [https://mujoco.org/download](https://mujoco.org/download)  
+You can download it here: [https://mujoco.org/download](https://mujoco.org/download).
 `mujoco_py` may require mujoco to be put in a specific folder, for instance
 `~/.mujoco/mujoco210/`, with the following line added to your `~/.bashrc`:
 ```

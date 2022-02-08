@@ -11,6 +11,7 @@ class Buffer(ABC):
                  buffer_size: int,
                  datatype: DataType = DataType.TORCH,
                  device: str = 'cpu'):
+        assert(datatype == DataType.TORCH or datatype == DataType.NUMPY)
         self.T = episode_max_length
         self.buffer_size = buffer_size
         self.datatype = datatype

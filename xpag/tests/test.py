@@ -206,12 +206,15 @@ env = gym.make('HalfCheetah-v3')
 version = 'numpy'
 datatype = xpag.tl.DataType.NUMPY
 
+agent_params = {}
 # Set seeds
 args.seed = 0
 if args.seed is not None:
     env.seed(args.seed)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
+    agent_params['seed'] = args.seed
+
 
 # if isinstance(env, gym.Wrapper):
 #     env_class = env.unwrapped.__class__
@@ -282,7 +285,8 @@ else:
 if is_goalenv:
     agent = xpag.ag.SAC(
         dimensions['observation_dim'] + dimensions['action_dim'],
-        dimensions['action_dim'], device, params=None)
+        dimensions['action_dim'],
+        params=agent_params)
 else:
     # agent = xpag.ag.SAC(dimensions['observation_dim'],
     #                     dimensions['action_dim'], device,
@@ -290,9 +294,9 @@ else:
     # agent = xpag.ag.SAC_jax(dimensions['observation_dim'],
     #                        dimensions['action_dim'], device,
     #                        params=None)
-    agent = xpag.ag.SACJAX(dimensions['observation_dim'],
-                           dimensions['action_dim'], device,
-                           params=None)
+    agent = xpag.ag.SAC(dimensions['observation_dim'],
+                        dimensions['action_dim'],
+                        params=agent_params)
 
 save_dir = os.path.join(os.path.expanduser("~"),
                         "results",
@@ -312,6 +316,8 @@ start_random_t = 0
 eval_freq = 1000 * 5
 eval_episodes = 5
 save_freq = 0
+
+embed()
 
 xpag.tl.learn(agent, env, num_envs, episode_max_length,
               max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_episodes,

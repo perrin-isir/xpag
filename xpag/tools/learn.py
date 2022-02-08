@@ -14,6 +14,7 @@ from IPython import embed
 
 
 class SaveEpisode:
+    """ To save episodes in brax or mujoco environments """
     def __init__(self, env, num_envs):
         self.env = env
         self.num_envs = num_envs
@@ -141,25 +142,27 @@ def default_replay_buffer(buffer_size: int, episode_max_length: int,
 
 
 def learn(
-        agent: Agent,
-        env,
-        num_envs: int,
-        episode_max_length: int,
-        max_t: int,
-        train_ratio: float,
-        batch_size: int,
-        start_random_t: int,
-        eval_freq: int,
-        eval_episodes: int,
-        save_freq: int,
-        replay_buffer: Buffer,
-        sampler: Sampler,
-        datatype: DataType,
-        device: str,
-        save_dir: str = None,
-        save_episode: bool = False,
-        plot_function=None,
+        agent: Agent,  # the learning agent
+        env,  # the gym environment
+        num_envs: int,  # nr of environments that run in parallel (//)
+        episode_max_length: int,  # maximum length of eps (1 ep = num_envs // rollouts)
+        max_t: int,  # total max nr of ts (1 ts = 1 time step in each of the // envs)
+        train_ratio: float,  # nr of gradient steps per ts
+        batch_size: int,  # size of the batches
+        start_random_t: int,  # starting with random actions for start_random_t ts
+        eval_freq: int,  # evaluation every eval_freq ts
+        eval_episodes: int,  # nr of episodes for each evaluation
+        save_freq: int,  # saving models every save_freq ts
+        replay_buffer: Buffer,  # replay buffer
+        sampler: Sampler,  # sampler (which extracts batches from the replay buffer)
+        datatype: DataType,  # datatype (DataType.TORCH or .NUMPY) used in the buffer
+        device: str = 'cpu',  # only relevant if datatype == DataType.TORCH
+        save_dir: str = None,  # directory where data is saved
+        save_episode: bool = False,  # if True: saving training episodes
+        plot_function=None,  # if True: creating a plot after each episode
 ):
+    assert(datatype == DataType.TORCH or datatype == DataType.NUMPY)
+
     def init_done(value: float):
         if datatype == DataType.TORCH:
             return value * torch.ones(num_envs, device=device)
