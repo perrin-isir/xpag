@@ -369,16 +369,16 @@ class SAC(Agent, ABC):
             def iteration_update_step(i: int, st: TrainingState):
                 return self.update_step(
                     st,
-                    observations[0],
-                    actions[0],
-                    rewards[0],
-                    new_observations[0],
-                    done[0])
+                    observations[i],
+                    actions[i],
+                    rewards[i],
+                    new_observations[i],
+                    done[i])
 
             # from IPython import embed
             # embed()
 
-            new_state = jax.lax.fori_loop(0, 10, iteration_update_step, state)
+            new_state = jax.lax.fori_loop(0, 1000, iteration_update_step, state)
             return new_state
 
         self.repeat_update_step = jax.jit(repeat_update_step)
@@ -492,7 +492,7 @@ class SAC(Agent, ABC):
 
     def train(self, pre_sample, sampler, batch_size):
         batch = []
-        for i in range(10):
+        for i in range(1000):
             batch.append(sampler.sample(pre_sample, batch_size))
         self.train_on_batch(batch)
 
@@ -523,14 +523,11 @@ class SAC(Agent, ABC):
                 done.append(
                     jnp.array(1.0 - batch[i]['terminals'].detach().cpu().numpy()))
 
-        # from IPython import embed
-        # embed()
-
         self.training_state = self.repeat_update_step(
             self.training_state,
-            observations,
-            actions,
-            rewards,
-            new_observations,
-            done
+            jnp.array(observations),
+            jnp.array(actions),
+            jnp.array(rewards),
+            jnp.array(new_observations),
+            jnp.array(done)
         )
