@@ -247,8 +247,12 @@ def configure(
                         walls=gmaze_walls_)
         datatype_ = xpag.tl.DataType.TORCH
     else:
-        env_ = gym.vector.make(env_name_, num_envs=num_envs)
-        env_.spec = gym.envs.registration.EnvSpec(env_name_)
+        if num_envs > 1:
+            print('ok')
+            env_ = gym.vector.make(env_name_, num_envs=num_envs)
+            env_.spec = gym.envs.registration.EnvSpec(env_name_)
+        else:
+            env_ = gym.make(env_name_)
         datatype_ = xpag.tl.DataType.NUMPY
         device_ = 'cpu'
 
@@ -296,6 +300,7 @@ def configure(
 gmaze_frame_skip = 2  # only used by gym-gmazes environments
 gmaze_walls = []  # only used by gym-gmazes environments
 env_name = 'HalfCheetah-v3'
+# env_name = 'brax-halfcheetah-v0'
 num_envs = 1
 episode_max_length = 1000
 buffer_name = 'DefaultBuffer'
