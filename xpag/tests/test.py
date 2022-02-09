@@ -27,7 +27,7 @@ from xpag.plotting.basics import plot_episode_2d
 # GPU memory. By default JAX will pre-allocate 90% of the available GPU memory:
 # https://jax.readthedocs.io/en/latest/gpu_memory_allocation.html
 v = torch.ones(1, device='cuda')
-print(torch.cuda.memory_allocated(device='cuda'))
+print(torch.cuda.memory_allocated(device='cuda'), 'bytes')
 
 
 def str2bool(val):
@@ -314,12 +314,12 @@ batch_size = 256
 start_random_t = 0
 # eval_freq = 50 * 7
 eval_freq = 1000 * 5
-eval_episodes = 5
+eval_eps = 5
 save_freq = 0
 
 # embed()
 
 xpag.tl.learn(agent, env, num_envs, episode_max_length,
-              max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_episodes,
+              max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_eps,
               save_freq, replay_buffer, sampler, datatype, device, save_dir=save_dir,
               save_episode=False, plot_function=plot_episode)

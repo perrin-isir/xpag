@@ -7,14 +7,16 @@ from xpag.samplers.sampler import Sampler
 from xpag.tools.utils import DataType, define_step_data, \
     step_data_select, reshape_func, hstack_func, max_func, datatype_convert, \
     register_step_in_episode
+from xpag.tools.timing import timing
 import gym
 from xpag.buffers.buffer import DefaultBuffer
-
+import logging
 from IPython import embed
 
 
 class SaveEpisode:
     """ To save episodes in brax or mujoco environments """
+
     def __init__(self, env, num_envs):
         self.env = env
         self.num_envs = num_envs
@@ -141,6 +143,68 @@ def default_replay_buffer(buffer_size: int, episode_max_length: int,
     return replay_buffer
 
 
+class LevelFilter(logging.Filter):
+    def __init__(self, level):
+        super().__init__()
+        self.__level = level
+
+    def filter(self, logrecord):
+        return logrecord.levelno == self.__level
+
+
+def log_init(save_dir,
+             env,
+             num_envs,
+             episode_max_length,
+             max_t,
+             batch_size,
+             start_random_t,
+             agent,
+             init_list,
+             init_list_eval):
+    """
+    Create 2 loggers, one for the training, one for evaluations.
+    Use .info() to save to log file, and .warning() to print in the terminal.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    with open(os.path.join(save_dir, "config.txt"), "w") as f:
+        print(f'\nEnv: {env.spec.id}, num_envs = {num_envs}', file=f)
+        print('\nSome parameters:', file=f)
+        print(f'    episode_max_length = {episode_max_length}', file=f)
+        print(f'    max_t = {max_t}', file=f)
+        print(f'    batch_size = {batch_size}', file=f)
+        print(f'    start_random_t = {start_random_t}', file=f)
+        print('\nAgent config:', file=f)
+        agent.write_config(f)
+        f.close()
+
+    def config_logger(logger_, filename):
+        logger_.setLevel(logging.DEBUG)
+        logger_.propagate = False
+        fh = logging.FileHandler(os.path.join(save_dir, filename))
+        fh.setLevel(logging.INFO)
+        fhfilter = LevelFilter(logging.INFO)
+        fh.addFilter(fhfilter)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.WARNING)
+        fhformatter = logging.Formatter('%(message)s')
+        chformatter = logging.Formatter('%(message)s')
+        fh.setFormatter(fhformatter)
+        ch.setFormatter(chformatter)
+        logger_.addHandler(fh)
+        logger_.addHandler(ch)
+
+    logger = logging.getLogger('logger')
+    config_logger(logger, 'log.txt')
+    logger.info(",".join(map(str, init_list)))
+
+    logger_eval = logging.getLogger('logger-eval')
+    config_logger(logger_eval, 'log_eval.txt')
+    logger_eval.info(",".join(map(str, init_list_eval)))
+
+    return logger, logger_eval
+
+
 def learn(
         agent: Agent,  # the learning agent
         env,  # the gym environment
@@ -151,7 +215,7 @@ def learn(
         batch_size: int,  # size of the batches
         start_random_t: int,  # starting with random actions for start_random_t ts
         eval_freq: int,  # evaluation every eval_freq ts
-        eval_episodes: int,  # nr of episodes for each evaluation
+        eval_eps: int,  # nr of episodes per evaluation: num_envs * eval_eps
         save_freq: int,  # saving models every save_freq ts
         replay_buffer: Buffer,  # replay buffer
         sampler: Sampler,  # sampler (which extracts batches from the replay buffer)
@@ -161,7 +225,21 @@ def learn(
         save_episode: bool = False,  # if True: saving training episodes
         plot_function=None,  # if True: creating a plot after each episode
 ):
-    assert(datatype == DataType.TORCH or datatype == DataType.NUMPY)
+    assert (datatype == DataType.TORCH or datatype == DataType.NUMPY)
+    print('Saving in:', save_dir)
+
+    logger, logger_eval = log_init(
+        save_dir,
+        env,
+        num_envs,
+        episode_max_length,
+        max_t,
+        batch_size,
+        start_random_t,
+        agent,
+        ["time", "ts", "ep_nr", "ep_reward"],
+        ["time", "ts", "eval_eps", "avg_reward", "success_rate"]
+    )
 
     def init_done(value: float):
         if datatype == DataType.TORCH:
@@ -199,6 +277,9 @@ def learn(
     done = init_done(1)
 
     mode = 'training'
+    timing()
+    eval_time = 0.
+    training_time = 0.
     while total_t < max_t:
 
         # as soon as one episode is done we terminate all the episodes
@@ -213,8 +294,7 @@ def learn(
                     step_data_select(
                         episode_argmax, episode, index
                     )
-                    print(f'[{episode_num}] best episode out of {num_envs}: ' +
-                          f'reward = {episode_rewards.max()}')
+                    maxr = episode_rewards.max()
 
                     if save_dir is not None and save_episode:
                         save_ep.save(index, save_dir)
@@ -227,33 +307,57 @@ def learn(
                             episode_argmax,
                             # episode,
                             episode_t)
+
                     replay_buffer.store_episode(1, episode_argmax, episode_t)
                     # replay_buffer.store_episode(num_envs, episode, episode_t)
+                    for _ in range(int(train_ratio * episode_t)):
+                        pre_sample = replay_buffer.pre_sample()
+                        agent.train(pre_sample, sampler, batch_size)
 
-                    # for _ in range(int(train_ratio * episode_t) // 1000):
-                    pre_sample = replay_buffer.pre_sample()
-                    agent.train(pre_sample, sampler, batch_size)
+                    interval_time, _ = timing()
+                    training_time += interval_time/1000.
 
-                if mode == 'eval':
+                    logger.warning(f'[{episode_num}] {training_time:.3f}s; ' +
+                                   f'best episode out of {num_envs}: ' +
+                                   f'reward = {maxr:.3f}')
+                    logger.info(','.join(map(str, [training_time,
+                                                   total_t,
+                                                   episode_num,
+                                                   maxr])))
+
+                    episode_num += 1
+                else:
+                    # mode == 'eval'
                     eval_ep -= 1
                     avg_reward += episode_mean_reward
                     if eval_ep <= 0:
-                        eval_ep = eval_episodes
-                        avg_reward /= eval_episodes
-                        print(f'[EVAL] average reward over {eval_episodes} ' +
-                              f'x {num_envs} episode(s): {avg_reward}')
+                        eval_ep = eval_eps
+                        avg_reward /= eval_eps
+                        success_rate = episode_success.mean()
+
+                        interval_time, _ = timing()
+                        eval_time += interval_time/1000.
+
+                        logger_eval.info(','.join(map(str, [training_time,
+                                                            total_t,
+                                                            eval_eps,
+                                                            avg_reward,
+                                                            success_rate])))
+                        logger_eval.warning(f'[EVAL] {eval_time:.3f}s; ' +
+                                            f'average reward over {eval_eps} ' +
+                                            f'x {num_envs} episode(s): {avg_reward}')
                         if is_goalenv:
-                            print(f'[EVAL] average success rate over {eval_episodes} ' +
-                                  f'x {num_envs} episode(s): {episode_success.mean()}')
+                            logger_eval.warning(
+                                f'[EVAL] {eval_time:.3f}s; ' +
+                                f'average success rate over {eval_eps} ' +
+                                f'x {num_envs} episode(s): {success_rate}')
                         mode = 'training'
-                else:
-                    episode_num += 1
 
                 # switch to 'eval' mode
                 if t_since_eval >= eval_freq:
                     t_since_eval %= eval_freq
                     mode = 'eval'
-                    eval_ep = eval_episodes
+                    eval_ep = eval_eps
                     avg_reward = 0.
 
             # env reset
