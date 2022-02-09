@@ -105,61 +105,6 @@ def get_args(rnddir):
     return args
 
 
-class LevelFilter(logging.Filter):
-    def __init__(self, level):
-        super().__init__()
-        self.__level = level
-
-    def filter(self, logrecord):
-        return logrecord.levelno <= self.__level
-
-
-def log_init(args, agent, gsetter, init_list, init_list_test):
-    os.makedirs(args.save_dir, exist_ok=True)
-    with open(os.path.join(args.save_dir, "config.txt"), "w") as f:
-        print("last commit:", file=f)
-        print(os.popen("git rev-parse --short HEAD").read()[:-1], file=f)
-        print("\nargs: ", file=f)
-        print(args, file=f)
-        print("\nAgent config:", file=f)
-        agent.write_config(f)
-        print("\nGoalSetter parameters:", file=f)
-        gsetter.write_params(f)
-        f.close()
-    logger = logging.getLogger("SGE-logger")
-    logger.setLevel(logging.INFO)
-    fh = logging.FileHandler(os.path.join(args.save_dir, "log.txt"))
-    fh.setLevel(logging.INFO)
-    fhfilter = LevelFilter(logging.INFO)
-    fh.addFilter(fhfilter)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.WARNING)
-    fhformatter = logging.Formatter("%(message)s")
-    chformatter = logging.Formatter("%(asctime)s - %(message)s")
-    fh.setFormatter(fhformatter)
-    ch.setFormatter(chformatter)
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-    logger.info(",".join(map(str, init_list)))
-
-    logger_test = logging.getLogger("SGE-logger-test")
-    logger_test.setLevel(logging.INFO)
-    fh_test = logging.FileHandler(os.path.join(args.save_dir, "log_test.txt"))
-    fh_test.setLevel(logging.INFO)
-    fhfilter_test = LevelFilter(logging.INFO)
-    fh_test.addFilter(fhfilter_test)
-    ch_test = logging.StreamHandler()
-    ch_test.setLevel(logging.WARNING)
-    fhformatter_test = logging.Formatter("%(message)s")
-    chformatter_test = logging.Formatter("%(asctime)s ------------ TEST: %(message)s")
-    fh_test.setFormatter(fhformatter_test)
-    ch_test.setFormatter(chformatter_test)
-    logger_test.addHandler(fh_test)
-    logger_test.addHandler(ch_test)
-    logger_test.info(",".join(map(str, init_list_test)))
-
-    return logger, logger_test
-
 
 args = get_args('')
 
@@ -215,22 +160,9 @@ if args.seed is not None:
     np.random.seed(args.seed)
     agent_params['seed'] = args.seed
 
-
-# if isinstance(env, gym.Wrapper):
-#     env_class = env.unwrapped.__class__
-# else:
-#     env_class = env.__class__
-#
-# is_goalenv = issubclass(env_class, gym.core.GoalEnv)
 is_goalenv = xpag.tl.check_goalenv(env)
 
 dimensions = xpag.tl.get_dimensions(env)
-
-# action_dim = env.action_space.shape[-1]
-# max_action = env.action_space.high
-
-# observation_dim = env.observation_space['observation'].shape[-1] if is_goalenv \
-#     else env.observation_space.shape[-1]
 
 replay_buffer = xpag.tl.default_replay_buffer(
     args.buffer_size,
@@ -239,43 +171,6 @@ replay_buffer = xpag.tl.default_replay_buffer(
     datatype,
     device
 )
-
-# achieved_goal_dim = env.observation_space['achieved_goal'].shape[-1] if is_goalenv \
-#     else None
-# desired_goal_dim = env.observation_space['desired_goal'].shape[-1] if is_goalenv \
-#     else None
-
-# if is_goalenv:
-#     replay_buffer = xpag.bf.DefaultBuffer(
-#         {
-#             "obs": observation_dim,
-#             "obs_next": observation_dim,
-#             "ag": achieved_goal_dim,
-#             "ag_next": achieved_goal_dim,
-#             "g": desired_goal_dim,
-#             "g_next": desired_goal_dim,
-#             "actions": action_dim,
-#             "terminals": 1,
-#         },
-#         episode_max_length,
-#         args.buffer_size,
-#         datatype=datatype,
-#         device=device,
-#     )
-# else:
-#     replay_buffer = xpag.bf.DefaultBuffer(
-#         {
-#             'obs': observation_dim,
-#             'obs_next': observation_dim,
-#             'actions': action_dim,
-#             'r': 1,
-#             'terminals': 1,
-#         },
-#         episode_max_length,
-#         args.buffer_size,
-#         datatype=datatype,
-#         device=device,
-#     )
 
 if is_goalenv:
     sampler = xpag.sa.HER(env.compute_reward, datatype=datatype)
