@@ -3,3 +3,4 @@ from .utils import DataType, define_step_data, step_data_select, reshape_func, \
 from .learn import learn, SaveEpisode, default_replay_buffer, check_goalenv, \
     get_dimensions
 from .timing import timing
+from .configure import configure

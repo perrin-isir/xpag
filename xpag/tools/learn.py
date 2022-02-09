@@ -11,11 +11,23 @@ from xpag.tools.timing import timing
 import gym
 from xpag.buffers.buffer import DefaultBuffer
 import logging
-from IPython import embed
 
 
 class SaveEpisode:
     """ To save episodes in brax or mujoco environments """
+
+    """ TODO:
+    call, get_attr and set_attr methods have been added to 
+    gym/vector/async_vector_env.py in the commit 
+    081c5c1e80ef5dc75dce2b1a6ec984937db8aa41 of gym
+    So in a future version, it will be possible to retrieve information about the
+    underlying envs in the vectorized gym envs.
+    For instance, commands like:
+    env_.parent_pipes[0].send(('_call', ('qpos', {}, {})))
+    env_.parent_pipes[0].recv()
+    should retrieve env.qpos for the env of index 0.
+    See future versions of gym.
+    """
 
     def __init__(self, env, num_envs):
         self.env = env
