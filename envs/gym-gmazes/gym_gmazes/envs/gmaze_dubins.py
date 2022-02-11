@@ -43,7 +43,6 @@ class GMazeCommon:
         )
 
         # initial position + orientation
-        # self.init_qpos = np.tile(np.array([-1., 0.]), (self.batch_size, 1))
         self.init_qpos = np.tile(np.array([-1., 0., 0.]), (self.batch_size, 1))
         self.init_qvel = []  # velocities are not used
         self.state = torch.tensor(self.init_qpos).to(self.device)
@@ -56,9 +55,7 @@ class GMazeCommon:
         else:
             self.walls = walls
 
-        # self._obs_dim = 2
         self._obs_dim = 3
-        # self._action_dim = 2
         self._action_dim = 1
         self.num_steps = 0
         high = np.tile(1.0 * np.ones(self._action_dim), (self.batch_size, 1))
@@ -81,7 +78,8 @@ class GMazeCommon:
 
 
 def default_reward_fun(action, new_obs):
-    reward = 1. * (torch.logical_and(new_obs[:, 0] > 0.5, new_obs[:, 1] > 0.5))
+    # reward = 1. * (torch.logical_and(new_obs[:, 0] > 0.5, new_obs[:, 1] > 0.5))
+    reward = 1. * (torch.logical_and(new_obs[:, 0] > -0.5, new_obs[:, 1] > 0.))
     return torch.unsqueeze(reward, dim=-1)
 
 
