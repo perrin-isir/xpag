@@ -238,7 +238,7 @@ def learn(
         plot_function=None,  # if True: creating a plot after each episode
 ):
     assert (datatype == DataType.TORCH or datatype == DataType.NUMPY)
-    print('Saving in:', save_dir)
+    print('Saving in:\n', save_dir)
 
     logger, logger_eval = log_init(
         save_dir,

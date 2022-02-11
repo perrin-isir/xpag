@@ -37,7 +37,7 @@ def configure(
         datatype_ = DataType.TORCH
     elif env_name_.startswith('GMaze'):
         device_ = 'cuda' if torch.cuda.is_available() else 'cpu'
-        env_ = gym.make("GMazeSimple-v0",
+        env_ = gym.make(env_name_,
                         device=device_,
                         batch_size=num_envs_,
                         frame_skip=gmaze_frame_skip_,
@@ -82,7 +82,7 @@ def configure(
 
     if is_goalenv:
         agent_ = eval(agent_name_)(
-            dimensions['observation_dim'] + dimensions['action_dim'],
+            dimensions['observation_dim'] + dimensions['desired_goal_dim'],
             dimensions['action_dim'],
             params=agent_params)
     else:
