@@ -85,7 +85,7 @@ def default_reward_fun(action, new_obs):
     return torch.unsqueeze(reward, dim=-1)
 
 
-class GMazeSimple(GMazeCommon, gym.Env, utils.EzPickle, ABC):
+class GMazeDubins(GMazeCommon, gym.Env, utils.EzPickle, ABC):
     def __init__(
             self,
             device: str = 'cpu',
@@ -171,7 +171,7 @@ def default_success_function(achieved_goal: torch.Tensor,
     return 1. * (d < distance_threshold)
 
 
-class GMazeGoalSimple(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
+class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
     def __init__(
             self,
             device: str = 'cpu',

@@ -11,14 +11,14 @@ def envpath():
 print("gym-gmazes: ")
 print("|    gym version and path:", gym.__version__, gym.__path__)
 
-print("|    REGISTERING GMazeSimple-v0 from", envpath())
+print("|    REGISTERING GMazeDubins-v0 from", envpath())
 register(
-    id="GMazeSimple-v0",
-    entry_point="gym_gmazes.envs:GMazeSimple",
+    id="GMazeDubins-v0",
+    entry_point="gym_gmazes.envs:GMazeDubins",
 )
 
-print("|    REGISTERING GMazeGoalSimple-v0 from", envpath())
+print("|    REGISTERING GMazeGoalDubins-v0 from", envpath())
 register(
-    id="GMazeGoalSimple-v0",
-    entry_point="gym_gmazes.envs:GMazeGoalSimple",
+    id="GMazeGoalDubins-v0",
+    entry_point="gym_gmazes.envs:GMazeGoalDubins",
 )
