@@ -60,6 +60,8 @@ def configure(
     # Set seeds
     if seed_ is not None:
         env_.seed(seed_)
+        env_.action_space.seed(seed_)
+        env_.observation_space.seed(seed_)
         agent_params['seed'] = seed_
 
     is_goalenv = check_goalenv(env_)

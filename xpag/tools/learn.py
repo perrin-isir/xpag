@@ -320,8 +320,8 @@ def learn(
                             # episode,
                             episode_t)
 
-                    # replay_buffer.store_episode(1, episode_argmax, episode_t)
-                    replay_buffer.store_episode(num_envs, episode, episode_t)
+                    replay_buffer.store_episode(1, episode_argmax, episode_t)
+                    # replay_buffer.store_episode(num_envs, episode, episode_t)
 
                     # for _ in range(int(train_ratio * episode_t)):
                     #     pre_sample = replay_buffer.pre_sample()
