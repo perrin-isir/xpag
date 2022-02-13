@@ -18,6 +18,10 @@ def configure(
         sampler_name_, goalenv_sampler_name_, agent_name_,
         seed_=None
 ):
+    if seed_ is not None:
+        torch.manual_seed(seed_)
+        np.random.seed(seed_)
+
     if env_name_.startswith('brax-'):
         device_ = 'cuda' if torch.cuda.is_available() else 'cpu'
         # torch allocation on device first, to prevent JAX from swallowing up all the
@@ -56,8 +60,6 @@ def configure(
     # Set seeds
     if seed_ is not None:
         env_.seed(seed_)
-        torch.manual_seed(seed_)
-        np.random.seed(seed_)
         agent_params['seed'] = seed_
 
     is_goalenv = check_goalenv(env_)

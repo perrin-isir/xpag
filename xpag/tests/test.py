@@ -36,7 +36,7 @@ plot_episode = functools.partial(
 )
 # plot_episode = None
 max_t = int(1e6)
-train_ratio = 1
+train_ratio = 2
 batch_size = 256
 start_random_t = int(np.ceil(5_000 / num_envs))
 eval_freq = episode_max_length * 5
