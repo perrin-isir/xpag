@@ -11,7 +11,7 @@ gmaze_walls = None  # only used by gym-gmazes environments
 env_name = 'HalfCheetah-v3'
 # env_name = 'brax-halfcheetah-v0'
 # env_name = 'GMazeGoalDubins-v0'
-num_envs = 2
+num_envs = 10
 episode_max_length = 1000
 # episode_max_length = 50
 buffer_name = 'DefaultBuffer'
@@ -37,7 +37,7 @@ plot_episode = functools.partial(
 )
 # plot_episode = None
 max_t = int(1e6)
-train_ratio = 2
+train_ratio = 10
 batch_size = 256
 start_random_t = int(np.ceil(episode_max_length * 5 / num_envs))
 eval_freq = episode_max_length * 5

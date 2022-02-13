@@ -57,7 +57,7 @@ class DefaultBuffer(Buffer):
             ep_length = np.full((num_envs, self.T, 1),
                                 float(episode_length))
         for key in episode._fields:
-            self.buffers[key][idxs][:episode_length, :] = episode_dict[key]
+            self.buffers[key][idxs, :episode_length, :] = episode_dict[key]
         self.buffers['episode_length'][idxs] = ep_length
 
     def pre_sample(self):
