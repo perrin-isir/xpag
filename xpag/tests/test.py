@@ -2,6 +2,7 @@ import functools
 from datetime import datetime
 import os
 import numpy as np
+import torch
 import xpag
 from xpag.plotting.basics import plot_episode_2d
 
