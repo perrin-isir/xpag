@@ -184,8 +184,8 @@ class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
 
         high = np.tile(1.0 * np.ones(self._obs_dim), (self.batch_size, 1))
         low = -high
-        self._achieved_goal_dim = 6
-        self._desired_goal_dim = 6
+        self._achieved_goal_dim = 2
+        self._desired_goal_dim = 2
         high_achieved_goal = np.tile(1.0 * np.ones(self._achieved_goal_dim),
                                      (self.batch_size, 1))
         low_achieved_goal = -high_achieved_goal
@@ -212,9 +212,10 @@ class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
     @staticmethod
     def achieved_g(state):
         s1 = state[:, :2]
-        s2 = (s1 / (1 / 3.)).int() / 3.
-        s3 = (s1 / (1 / 2.)).int() / 2.
-        return torch.hstack((s1, s2, s3))
+        # s2 = (s1 / (1 / 3.)).int() / 3.
+        # s3 = (s1 / (1 / 2.)).int() / 2.
+        # return torch.hstack((s1, s2, s3))
+        return s1
 
     def _sample_goal(self):
         # return (torch.rand(self.batch_size, 2) * 2. - 1).to(self.device)
