@@ -1,1 +1,2 @@
-from .default_goalsetter import DefaultGoalSetter
+from .goalsetter import GoalSetter, DefaultGoalSetter
+from .sgs import SGS

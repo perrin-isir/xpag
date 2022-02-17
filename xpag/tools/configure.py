@@ -9,6 +9,7 @@ from xpag.tools.utils import DataType
 from xpag.tools.learn import check_goalenv, get_dimensions, default_replay_buffer
 from xpag.samplers import DefaultSampler, HER
 from xpag.agents import SAC
+from xpag.goalsetters import DefaultGoalSetter, SGS
 import re
 
 
@@ -16,7 +17,7 @@ def configure(
         env_name_, num_envs_, gmaze_frame_skip_, gmaze_walls_,
         episode_max_length_, buffer_name_, buffer_size_,
         sampler_name_, goalenv_sampler_name_, agent_name_,
-        seed_=None
+        goalsetter_name_, seed_=None
 ):
     if seed_ is not None:
         torch.manual_seed(seed_)
@@ -57,12 +58,14 @@ def configure(
         device_ = 'cpu'
 
     agent_params = {}
+    goalsetter_params = {}
     # Set seeds
     if seed_ is not None:
         env_.seed(seed_)
         env_.action_space.seed(seed_)
         env_.observation_space.seed(seed_)
         agent_params['seed'] = seed_
+        goalsetter_params['seed'] = seed_
 
     is_goalenv = check_goalenv(env_)
     dimensions = get_dimensions(env_)
@@ -94,4 +97,9 @@ def configure(
                                    dimensions['action_dim'],
                                    params=agent_params)
 
-    return agent_, env_, replay_buffer_, sampler_, datatype_, device_
+    goalsetter_ = eval(goalsetter_name_)(params=goalsetter_params,
+                                         num_envs=num_envs_,
+                                         datatype=datatype_,
+                                         device=device_)
+
+    return agent_, goalsetter_, env_, replay_buffer_, sampler_, datatype_, device_

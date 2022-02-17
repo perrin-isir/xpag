@@ -6,7 +6,7 @@ from xpag.buffers.buffer import Buffer
 from xpag.samplers.sampler import Sampler
 from xpag.tools.utils import DataType, define_step_data, \
     step_data_select, reshape_func, hstack_func, max_func, datatype_convert, \
-    register_step_in_episode
+    register_step_in_episode, debug
 from xpag.tools.timing import timing
 import gym
 from xpag.buffers.buffer import DefaultBuffer
@@ -219,7 +219,7 @@ def log_init(save_dir,
 
 def learn(
         agent: Agent,  # the learning agent
-        goalsetter, # the goal setter
+        goalsetter,  # the goal setter
         env,  # the gym environment
         num_envs: int,  # nr of environments that run in parallel (//)
         episode_max_length: int,  # maximum length of eps (1 ep = num_envs // rollouts)
@@ -232,7 +232,7 @@ def learn(
         save_freq: int,  # saving models every save_freq ts
         replay_buffer: Buffer,  # replay buffer
         sampler: Sampler,  # sampler (which extracts batches from the replay buffer)
-        datatype: DataType,  # datatype (DataType.TORCH or .NUMPY) used in the buffer
+        datatype: DataType,  # datatype (DataType.TORCH or .NUMPY) used by env & buffer
         device: str = 'cpu',  # only relevant if datatype == DataType.TORCH
         save_dir: str = None,  # directory where data is saved
         save_episode: bool = False,  # if True: saving training episodes
@@ -317,8 +317,8 @@ def learn(
                         plot_function(
                             os.path.join(save_dir,
                                          'ts{:010d}.png'.format(total_t)),
-                            episode_argmax,
-                            # episode,
+                            # episode_argmax,
+                            episode,
                             episode_t)
 
                     # replay_buffer.store_episode(1, episode_argmax, episode_t)
@@ -377,7 +377,7 @@ def learn(
             # env reset
             o = env.reset()
             if is_goalenv:
-                o =
+                o = goalsetter.reset(o)
 
             if save_episode:
                 save_ep.update()
@@ -413,9 +413,13 @@ def learn(
                     device)
 
         new_o, reward, done, info = env.step(action)
+        if is_goalenv:
+            action, new_o, reward, done, info = goalsetter.step(
+                action, new_o, reward, done, info
+            )
+            # debug()
 
         if episode_num > 0:
-            assert(train_ratio >= 1)
             for _ in range(train_ratio):
                 pre_sample = replay_buffer.pre_sample()
                 agent.train(pre_sample, sampler, batch_size)

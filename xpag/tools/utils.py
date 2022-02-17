@@ -6,6 +6,9 @@ import torch
 import numpy as np
 from jaxlib.xla_extension import DeviceArray
 import jax.numpy as jnp
+from IPython import embed
+
+debug = embed
 
 
 class DataType(Enum):
