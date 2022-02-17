@@ -219,6 +219,7 @@ def log_init(save_dir,
 
 def learn(
         agent: Agent,  # the learning agent
+        goalsetter, # the goal setter
         env,  # the gym environment
         num_envs: int,  # nr of environments that run in parallel (//)
         episode_max_length: int,  # maximum length of eps (1 ep = num_envs // rollouts)
@@ -375,6 +376,8 @@ def learn(
 
             # env reset
             o = env.reset()
+            if is_goalenv:
+                o =
 
             if save_episode:
                 save_ep.update()
