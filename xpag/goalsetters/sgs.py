@@ -17,11 +17,14 @@ class SGS(GoalSetter, ABC):
         super().__init__("SGS", params, num_envs, datatype, device)
         self.goal_sequence = []
         self.budget_sequence = []
-        self.current_idxs = np.zeros(self.num_envs).astype('int')
+        self.current_idxs = None
+        self.current_budgets = None
         self.timesteps = np.zeros(self.num_envs).astype('int')
 
     def reset(self, obs):
         self.current_idxs = np.zeros(self.num_envs).astype('int')
+        self.current_budgets = self.budget_sequence[self.current_idxs]
+        debug()
         self.timesteps = np.zeros(self.num_envs).astype('int')
         # obs["desired_goal"] =
         # obs['desired_goal'][:] = self.goal_sequence[0]
@@ -39,6 +42,7 @@ class SGS(GoalSetter, ABC):
         if delta_max:
             self.current_idxs += delta
             self.current_idxs = self.current_idxs.clip(0, len(self.goal_sequence) - 1)
+            self.current_budgets = self.budget_sequence[self.current_idxs]
             new_o['desired_goal'][:] = self.goal_sequence[self.current_idxs]
         return action, new_o, reward, done, info
 
@@ -58,7 +62,7 @@ class SGS(GoalSetter, ABC):
                                               self.device)
         self.budget_sequence = np.array(bseq)
         self.budget_sequence = datatype_convert(self.budget_sequence,
-                                                self.datatype,
+                                                DataType.NUMPY,
                                                 self.device)
 
         # for i in range(len(self.goal_sequence)):
