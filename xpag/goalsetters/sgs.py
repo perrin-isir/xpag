@@ -17,21 +17,29 @@ class SGS(GoalSetter, ABC):
         super().__init__("SGS", params, num_envs, datatype, device)
         self.goal_sequence = []
         self.budget_sequence = []
-        self.current_idxs = np.zeros(self.num_envs)
-        self.ts = 0
+        self.current_idxs = np.zeros(self.num_envs).astype('int')
+        self.timesteps = np.zeros(self.num_envs).astype('int')
 
     def reset(self, obs):
-        self.current_idxs = np.zeros(self.num_envs)
-        self.ts = 0
+        self.current_idxs = np.zeros(self.num_envs).astype('int')
+        self.timesteps = np.zeros(self.num_envs).astype('int')
         # obs["desired_goal"] =
-        obs['desired_goal'][:] = self.goal_sequence[0]
+        # obs['desired_goal'][:] = self.goal_sequence[0]
+        obs['desired_goal'][:] = self.goal_sequence[self.current_idxs]
         return obs
 
     def step(self, action, new_o, reward, done, info):
         # if info is not None:
         #     info["target"] = ""
-        self.ts += 1
+        self.timesteps += 1
         # new_o["desired_goal"] =
+        delta = datatype_convert(info['is_success'], DataType.NUMPY).astype('int')
+        debug()
+        delta_max = delta.max()
+        if delta_max:
+            self.current_idxs += delta
+            self.current_idxs = self.current_idxs.clip(0, len(self.goal_sequence) - 1)
+            new_o['desired_goal'][:] = self.goal_sequence[self.current_idxs]
         return action, new_o, reward, done, info
 
     def write_config(self, output_file: str):
@@ -44,9 +52,17 @@ class SGS(GoalSetter, ABC):
         pass
 
     def set_sequence(self, gseq, bseq):
-        self.goal_sequence = gseq
-        for i in range(len(self.goal_sequence)):
-            self.goal_sequence[i] = datatype_convert(self.goal_sequence[i],
-                                                     self.datatype,
-                                                     self.device)
-        self.budget_sequence = bseq
+        self.goal_sequence = np.array(gseq)
+        self.goal_sequence = datatype_convert(self.goal_sequence,
+                                              self.datatype,
+                                              self.device)
+        self.budget_sequence = np.array(bseq)
+        self.budget_sequence = datatype_convert(self.budget_sequence,
+                                                self.datatype,
+                                                self.device)
+
+        # for i in range(len(self.goal_sequence)):
+        #     self.goal_sequence[i] = datatype_convert(self.goal_sequence[i],
+        #                                              self.datatype,
+        #                                              self.device)
+        # self.budget_sequence = bseq

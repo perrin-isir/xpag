@@ -6,7 +6,7 @@ import torch
 import xpag
 from xpag.plotting.basics import plot_episode_2d
 
-gmaze_frame_skip = 1  # only used by gym-gmazes environments
+gmaze_frame_skip = 2  # only used by gym-gmazes environments
 gmaze_walls = []  # only used by gym-gmazes environments
 # env_name = 'HalfCheetah-v3'
 # env_name = 'brax-halfcheetah-v0'
