@@ -43,7 +43,7 @@ You can download it here: [https://mujoco.org/download](https://mujoco.org/downl
 `mujoco_py` may require mujoco to be put in a specific folder, for instance
 `~/.mujoco/mujoco210/`, with the following line added to your `~/.bashrc`:
 ```
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/perrin/.mujoco/mujoco200/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco200/bin
 ```
 To test mujoco, run (from the mujoco folder):
 ```
