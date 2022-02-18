@@ -21,7 +21,7 @@ class SGS(GoalSetter, ABC):
         self.current_idxs = None
         self.current_budgets = None
         self.timesteps = None
-        self.cut_value = -25.
+        self.cut_value = -20.
 
     def reset(self, obs):
         self.current_idxs = np.zeros(self.num_envs).astype('int')
@@ -31,10 +31,7 @@ class SGS(GoalSetter, ABC):
             self.episode_budget_sequence[i] = int(
                 self.episode_budget_sequence[i] * np.random.random())
         self.current_budgets = self.episode_budget_sequence[self.current_idxs]
-        debug()
         self.timesteps = np.zeros(self.num_envs).astype('int')
-        # obs["desired_goal"] =
-        # obs['desired_goal'][:] = self.goal_sequence[0]
         obs['desired_goal'][:] = self.goal_sequence[self.current_idxs]
         return obs
 
