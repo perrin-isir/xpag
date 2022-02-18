@@ -20,6 +20,7 @@ class SGS(GoalSetter, ABC):
         self.current_idxs = None
         self.current_budgets = None
         self.timesteps = np.zeros(self.num_envs).astype('int')
+        self.cut_value = -25.
 
     def reset(self, obs):
         self.current_idxs = np.zeros(self.num_envs).astype('int')
@@ -31,13 +32,20 @@ class SGS(GoalSetter, ABC):
         return obs
 
     def step(self, o, action, new_o, reward, done, info):
-        self.agent.value(hstack_func(o["observation"], o["desired_goal"]), action)
+        next_goals = self.goal_sequence[
+            (self.current_idxs + 1).clip(0, len(self.goal_sequence) - 1)]
+        values = datatype_convert(
+            self.agent.value(
+                hstack_func(o["observation"], next_goals), action) > self.cut_value,
+            DataType.NUMPY
+        ).astype('int')
         # if info is not None:
         #     info["target"] = ""
         self.timesteps += 1
         # new_o["desired_goal"] =
         delta = datatype_convert(info['is_success'], DataType.NUMPY).astype('int')
         delta = np.maximum(delta, (self.timesteps > self.current_budgets).astype('int'))
+        delta = np.maximum(delta, values)
         delta_max = delta.max()
         if delta_max:
             self.timesteps = self.timesteps * (1 - delta)
