@@ -47,13 +47,26 @@ eval_freq = episode_max_length * 5
 eval_eps = int(np.ceil(5 / num_envs))
 save_freq = 0
 
+# goalsetter.set_sequence(
+#     [
+#         np.array([-0.5, -0.5]),
+#         np.array([0., 0.5]),
+#         np.array([0.5, -0.5])
+#     ],
+#     [20, 20, 20]
+# )
 goalsetter.set_sequence(
     [
-        np.array([-0.5, -0.5]),
-        np.array([0., 0.5]),
-        np.array([0.5, -0.5])
+        np.array([-0.75, -0.75]),
+        np.array([-0.25, -0.75]),
+        np.array([-0.25, 0.]),
+        np.array([-0.25, 0.75]),
+        np.array([0.25, 0.75]),
+        np.array([0.25, 0.]),
+        np.array([0.25, -0.75]),
+        np.array([0.75, -0.75])
     ],
-    [20, 20, 20]
+    [20, 20, 20, 20, 20, 20, 20, 20]
 )
 
 xpag.tl.learn(agent, goalsetter, env, num_envs, episode_max_length,

@@ -48,7 +48,6 @@ class SGS(GoalSetter, ABC):
         next_goals = self.goal_sequence[
             (self.current_idxs + 1).clip(0, len(self.goal_sequence) - 1)]
         q_a = self.agent.value(hstack_func(o['observation'], next_goals), action)
-        debug()
         # q_a = self.agent.value(hstack_func(o['observation'], o['desired_goal']), action)
         self.mean_value.append(float(q_a.mean()))
         self.global_ts += 1
