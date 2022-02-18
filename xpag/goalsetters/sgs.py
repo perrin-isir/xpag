@@ -15,18 +15,27 @@ class SGS(GoalSetter, ABC):
             params = {}
         super().__init__("SGS", params, num_envs, datatype, device)
         self.agent = self.params['agent']
+        # self.cut_value = -70.
+        self.cut_value = -20.
         self.goal_sequence = []
         self.budget_sequence = []
         self.episode_budget_sequence = None
         self.current_idxs = None
         self.current_budgets = None
         self.timesteps = None
-        self.cut_value = -20.
+        self.mean_value = None
+        self.global_ts = 0
 
     def reset(self, obs):
+        if self.global_ts > 0:
+            # self.mean_value /= self.global_ts
+            # self.cut_value = np.mean(self.mean_value) / self.global_ts
+            print(self.mean_value)
+        self.mean_value = []
+        self.global_ts = 0
         self.current_idxs = np.zeros(self.num_envs).astype('int')
         self.episode_budget_sequence = self.budget_sequence.copy()
-        if np.random.random() > 0.5:
+        if np.random.random() > 0.:
             i = np.random.choice(len(self.episode_budget_sequence))
             self.episode_budget_sequence[i] = int(
                 self.episode_budget_sequence[i] * np.random.random())
@@ -38,9 +47,13 @@ class SGS(GoalSetter, ABC):
     def step(self, o, action, new_o, reward, done, info):
         next_goals = self.goal_sequence[
             (self.current_idxs + 1).clip(0, len(self.goal_sequence) - 1)]
+        q_a = self.agent.value(hstack_func(o['observation'], next_goals), action)
+        debug()
+        # q_a = self.agent.value(hstack_func(o['observation'], o['desired_goal']), action)
+        self.mean_value.append(float(q_a.mean()))
+        self.global_ts += 1
         values = datatype_convert(
-            self.agent.value(
-                hstack_func(o["observation"], next_goals), action) > self.cut_value,
+            q_a > self.cut_value,
             DataType.NUMPY
         ).astype('int')
         # if info is not None:
