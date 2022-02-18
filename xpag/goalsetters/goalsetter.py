@@ -18,7 +18,7 @@ class GoalSetter(ABC):
         pass
 
     @abstractmethod
-    def step(self, action, new_o, reward, done, info):
+    def step(self, o, action, new_o, reward, done, info):
         pass
 
     @abstractmethod
@@ -46,8 +46,8 @@ class DefaultGoalSetter(GoalSetter, ABC):
     def reset(self, obs):
         return obs
 
-    def step(self, action, new_o, reward, done, info):
-        return action, new_o, reward, done, info
+    def step(self, o, action, new_o, reward, done, info):
+        return o, action, new_o, reward, done, info
 
     def write_config(self, output_file: str):
         pass

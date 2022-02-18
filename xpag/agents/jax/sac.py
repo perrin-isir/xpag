@@ -239,10 +239,10 @@ class SAC(Agent, ABC):
         def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
                        observations, key_) -> jnp.ndarray:
             dist_params = self.policy_model.apply(policy_params, observations)
-            pre_actions = self.sample_no_postprocessing(dist_params, key_)
-            log_p = self.dist_log_prob(dist_params, pre_actions)
-            pre_actions = self.postprocess(pre_actions)
-            q_action = self.value_model.apply(q_params, observations, pre_actions)
+            p_actions = self.sample_no_postprocessing(dist_params, key_)
+            log_p = self.dist_log_prob(dist_params, p_actions)
+            p_actions = self.postprocess(p_actions)
+            q_action = self.value_model.apply(q_params, observations, p_actions)
             min_q = jnp.min(q_action, axis=-1)
             actor_l = alpha * log_p - min_q
             return jnp.mean(actor_l)
@@ -360,6 +360,13 @@ class SAC(Agent, ABC):
         self.select_action_probabilistic = jax.jit(select_action_probabilistic)
         self.select_action_deterministic = jax.jit(select_action_deterministic)
 
+        def q_value(observation, action, q_params):
+            q_action = self.value_model.apply(q_params, observation, action)
+            min_q = jnp.min(q_action, axis=-1)
+            return min_q
+
+        self.q_value = jax.jit(q_value)
+
         self.training_state = TrainingState(
             policy_optimizer_state=self.policy_optimizer_state,
             policy_params=self.policy_params,
@@ -371,6 +378,24 @@ class SAC(Agent, ABC):
             alpha_optimizer_state=self.alpha_optimizer_state,
             alpha_params=self.log_alpha
         )
+
+    def value(self, observation, action):
+        if torch.is_tensor(observation):
+            version = 'torch'
+        else:
+            version = 'numpy'
+        if version == 'numpy':
+            return self.q_value(
+                observation,
+                action,
+                self.training_state.target_q_params
+            )
+        else:
+            return self.q_value(
+                observation.detach().cpu().numpy(),
+                action.detach().cpu().numpy(),
+                self.training_state.target_q_params
+            )
 
     def select_action(self, observation, deterministic=True):
         self.key, key_sample = jax.random.split(self.key)

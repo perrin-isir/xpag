@@ -97,6 +97,9 @@ def configure(
                                    dimensions['action_dim'],
                                    params=agent_params)
 
+    if goalsetter_name_ == 'SGS':
+        goalsetter_params['agent'] = agent_
+
     goalsetter_ = eval(goalsetter_name_)(params=goalsetter_params,
                                          num_envs=num_envs_,
                                          datatype=datatype_,

@@ -414,8 +414,8 @@ def learn(
 
         new_o, reward, done, info = env.step(action)
         if is_goalenv:
-            action, new_o, reward, done, info = goalsetter.step(
-                action, new_o, reward, done, info
+            o, action, new_o, reward, done, info = goalsetter.step(
+                o, action, new_o, reward, done, info
             )
             # debug()
 
