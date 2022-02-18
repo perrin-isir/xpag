@@ -260,8 +260,9 @@ class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
         reward = self.compute_reward(self.achieved_g(self.state), self.goal, {})
         self.num_steps += 1
 
-        done = torch.full((self.batch_size, 1), False).to(self.device)
-        info = {"is_success": self._is_success(self.achieved_g(self.state), self.goal)}
+        # done = torch.full((self.batch_size, 1), False).to(self.device)
+        info = {'is_success': self._is_success(self.achieved_g(self.state), self.goal)}
+        done = info['is_success'].reshape((self.batch_size, 1))
 
         return (
             {

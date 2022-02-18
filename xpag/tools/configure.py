@@ -23,6 +23,8 @@ def configure(
         torch.manual_seed(seed_)
         np.random.seed(seed_)
 
+    continue_after_done_ = False
+
     if env_name_.startswith('brax-'):
         device_ = 'cuda' if torch.cuda.is_available() else 'cpu'
         # torch allocation on device first, to prevent JAX from swallowing up all the
@@ -48,6 +50,7 @@ def configure(
                         frame_skip=gmaze_frame_skip_,
                         walls=gmaze_walls_)
         datatype_ = DataType.TORCH
+        continue_after_done_ = True
     else:
         if num_envs_ > 1:
             env_ = gym.vector.make(env_name_, num_envs=num_envs_)
@@ -105,4 +108,5 @@ def configure(
                                          datatype=datatype_,
                                          device=device_)
 
-    return agent_, goalsetter_, env_, replay_buffer_, sampler_, datatype_, device_
+    return agent_, goalsetter_, env_, continue_after_done_, \
+           replay_buffer_, sampler_, datatype_, device_

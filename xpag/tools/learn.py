@@ -221,6 +221,7 @@ def learn(
         agent: Agent,  # the learning agent
         goalsetter,  # the goal setter
         env,  # the gym environment
+        continue_after_done: bool,  # if True: continue episodes even if done is True
         num_envs: int,  # nr of environments that run in parallel (//)
         episode_max_length: int,  # maximum length of eps (1 ep = num_envs // rollouts)
         max_t: int,  # total max nr of ts (1 ts = 1 time step in each of the // envs)
@@ -296,7 +297,8 @@ def learn(
     while total_t < max_t:
 
         # as soon as one episode is done we terminate all the episodes
-        if done.max() or episode_t >= episode_max_length:
+        # if done.max() or episode_t >= episode_max_length:
+        if total_t == 0 or episode_t >= episode_max_length:
 
             if total_t != 0:
 
