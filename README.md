@@ -49,3 +49,4 @@ To test mujoco, run (from the mujoco folder):
 ```
 ./bin/testspeed ./model/humanoid.xml 2000
 ```
+Remark: `mujoco_py` may also require the installation of `libglew-dev` and `patchelf`.
