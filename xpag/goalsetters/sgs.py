@@ -17,14 +17,21 @@ class SGS(GoalSetter, ABC):
         self.agent = self.params['agent']
         self.goal_sequence = []
         self.budget_sequence = []
+        self.episode_budget_sequence = None
         self.current_idxs = None
         self.current_budgets = None
-        self.timesteps = np.zeros(self.num_envs).astype('int')
+        self.timesteps = None
         self.cut_value = -25.
 
     def reset(self, obs):
         self.current_idxs = np.zeros(self.num_envs).astype('int')
-        self.current_budgets = self.budget_sequence[self.current_idxs]
+        self.episode_budget_sequence = self.budget_sequence.copy()
+        if np.random.random() > 0.5:
+            i = np.random.choice(len(self.episode_budget_sequence))
+            self.episode_budget_sequence[i] = int(
+                self.episode_budget_sequence[i] * np.random.random())
+        self.current_budgets = self.episode_budget_sequence[self.current_idxs]
+        debug()
         self.timesteps = np.zeros(self.num_envs).astype('int')
         # obs["desired_goal"] =
         # obs['desired_goal'][:] = self.goal_sequence[0]
@@ -51,7 +58,7 @@ class SGS(GoalSetter, ABC):
             self.timesteps = self.timesteps * (1 - delta)
             self.current_idxs += delta
             self.current_idxs = self.current_idxs.clip(0, len(self.goal_sequence) - 1)
-            self.current_budgets = self.budget_sequence[self.current_idxs]
+            self.current_budgets = self.episode_budget_sequence[self.current_idxs]
             new_o['desired_goal'][:] = self.goal_sequence[self.current_idxs]
         return o, action, new_o, reward, done, info
 
