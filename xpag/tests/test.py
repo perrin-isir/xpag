@@ -14,7 +14,7 @@ gmaze_walls = None  # only used by gym-gmazes environments
 env_name = 'GMazeGoalDubins-v0'
 num_envs = 3
 # episode_max_length = 1000
-episode_max_length = 50
+episode_max_length = 70
 buffer_name = 'DefaultBuffer'
 buffer_size = 1e6
 sampler_name = 'DefaultSampler'
@@ -64,10 +64,12 @@ goalsetter.set_sequence(
         np.array([0.25, 0.75]),
         np.array([0.25, 0.]),
         np.array([0.25, -0.75]),
-        np.array([0.75, -0.75])
+        np.array([0.75, -0.75]),
+        np.array([0.75, 0.0]),
+        np.array([0.75, 0.75])
     ],
     # [20, 20, 20, 20, 20, 20, 20, 20]
-    [20, 20, 20, 20, 20, 20, 20, 20]
+    [20, 20, 20, 20, 20, 20, 20, 20, 20, 20]
 )
 
 xpag.tl.learn(agent, goalsetter, env, continue_after_done, num_envs, episode_max_length,

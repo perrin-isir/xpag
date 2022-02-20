@@ -145,6 +145,15 @@ class GMazeDubins(GMazeCommon, gym.Env, utils.EzPickle, ABC):
         self.state = qpos
 
 
+def achieved_g(state):
+    s1 = state[:, :2]
+    # s2 = (s1 / (1 / 3.)).int() / 3.
+    # s3 = (s1 / (1 / 2.)).int() / 2.
+    # return torch.hstack((s1, s2, s3))
+    return s1
+    # return (s1 / (1 / 3.)).int() / 3.
+
+
 def goal_distance(goal_a, goal_b):
     assert goal_a.shape == goal_b.shape
     return torch.linalg.norm(goal_a[:, :2] - goal_b[:, :2], axis=-1)
@@ -209,17 +218,9 @@ class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
         self.compute_reward = reward_function
         self._is_success = success_function
 
-    @staticmethod
-    def achieved_g(state):
-        s1 = state[:, :2]
-        # s2 = (s1 / (1 / 3.)).int() / 3.
-        # s3 = (s1 / (1 / 2.)).int() / 2.
-        # return torch.hstack((s1, s2, s3))
-        return s1
-
     def _sample_goal(self):
         # return (torch.rand(self.batch_size, 2) * 2. - 1).to(self.device)
-        return self.achieved_g(torch.rand(self.batch_size, 2) * 2. - 1).to(self.device)
+        return achieved_g(torch.rand(self.batch_size, 2) * 2. - 1).to(self.device)
 
     def reset_model(self):
         # reset state to initial value
@@ -231,7 +232,7 @@ class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
         self.num_steps = 0
         return {
             "observation": self.state,
-            "achieved_goal": self.achieved_g(self.state),
+            "achieved_goal": achieved_g(self.state),
             "desired_goal": self.goal,
         }
 
@@ -257,17 +258,17 @@ class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
             self.state = self.state * intersection + new_state * torch.logical_not(
                 intersection)
 
-        reward = self.compute_reward(self.achieved_g(self.state), self.goal, {})
+        reward = self.compute_reward(achieved_g(self.state), self.goal, {})
         self.num_steps += 1
 
         # done = torch.full((self.batch_size, 1), False).to(self.device)
-        info = {'is_success': self._is_success(self.achieved_g(self.state), self.goal)}
+        info = {'is_success': self._is_success(achieved_g(self.state), self.goal)}
         done = info['is_success'].reshape((self.batch_size, 1))
 
         return (
             {
                 "observation": self.state,
-                "achieved_goal": self.achieved_g(self.state),
+                "achieved_goal": achieved_g(self.state),
                 "desired_goal": self.goal,
             },
             reward,

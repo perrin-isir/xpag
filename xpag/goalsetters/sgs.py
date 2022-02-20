@@ -1,6 +1,7 @@
 # SGS: SEQUENTIAL GOAL SWITCHING
 
 import bisect
+from collections import deque
 from abc import ABC
 from xpag.goalsetters.goalsetter import GoalSetter
 from xpag.tools.utils import debug, DataType, datatype_convert, hstack_func
@@ -17,7 +18,8 @@ class SGS(GoalSetter, ABC):
         super().__init__("SGS", params, num_envs, datatype, device)
         self.agent = self.params['agent']
         # self.cut_value = -70.
-        self.cut_value = -10.
+        self.cut_value = -5.
+        self.cut_steps = 5
         self.goal_sequence = []
         # self.budget_sequence = []
         # self.episode_budget_sequence = None
@@ -27,15 +29,18 @@ class SGS(GoalSetter, ABC):
         self.timesteps = None
         # self.mean_value = None
         self.stats = np.zeros(40).astype('int')
+        self.q_a = None
         self.budget = None
         self.global_ts = 0
 
     def reset(self, obs):
+        self.q_a = deque(maxlen=5)
         if self.global_ts > 0:
             # self.mean_value /= self.global_ts
             # self.cut_value = np.mean(self.mean_value) / self.global_ts
             # print(self.mean_value)
-            print(self.budget)
+            # print(self.budget)
+            pass
         # self.mean_value = []
         self.global_ts = 0
         self.current_idxs = np.zeros(self.num_envs).astype('int')
@@ -68,10 +73,12 @@ class SGS(GoalSetter, ABC):
         #     DataType.NUMPY
         # ).astype('int')
         vals = datatype_convert(q_a, DataType.NUMPY)
+        self.q_a.append(vals)
         newvalues = np.zeros(self.num_envs).astype('int')
         for k in range(self.num_envs):
             if len(self.budget[k][self.current_idxs[k]]) > 0:
-                if vals[k] > self.budget[k][self.current_idxs[k]][0] + self.cut_value:
+                # if vals[k] > self.budget[k][self.current_idxs[k]][0] + self.cut_value:
+                if vals[k] > self.budget[k][self.current_idxs[k]][0]:
                     newvalues[k] = 1
                     self.budget[k][self.current_idxs[k]].pop(0)
         # for j in range(len(vals)):
@@ -87,7 +94,8 @@ class SGS(GoalSetter, ABC):
         for k in range(self.num_envs):
             if delta[k]:
                 for _ in range(10):
-                    bisect.insort(self.budget[k][self.current_idxs[k]], vals[k])
+                    # bisect.insort(self.budget[k][self.current_idxs[k]], vals[k])
+                    bisect.insort(self.budget[k][self.current_idxs[k]], self.q_a[0][k])
         # for goalval, success, i in zip(vals, delta, self.current_idxs):
         #     # self.budget[i] += incr
         #     # self.budget[i].append(vals[i])
