@@ -99,7 +99,7 @@ class SGS(GoalSetter, ABC):
         for k in range(self.num_envs):
             if delta[k]:
                 _, n = self.budget[k][self.current_idxs[k]]
-                self.budget[k][self.current_idxs[k]] = (self.q_a[0][k], n + 10)
+                self.budget[k][self.current_idxs[k]] = (self.q_a[0][k], min(n + 10, 20))
                 # for _ in range(10):
                 #     # bisect.insort(self.budget[k][self.current_idxs[k]], vals[k])
                 #     # bisect.insort(self.budget[k][self.current_idxs[k]], self.q_a[0][k])
