@@ -78,9 +78,14 @@ class SGS(GoalSetter, ABC):
         for k in range(self.num_envs):
             if len(self.budget[k][self.current_idxs[k]]) > 0:
                 # if vals[k] > self.budget[k][self.current_idxs[k]][0] + self.cut_value:
-                if vals[k] > self.budget[k][self.current_idxs[k]][0]:
+                if vals[k] > self.budget[k][self.current_idxs[k]][0] and \
+                        self.budget[k][self.current_idxs[k]][1] > 0:
                     newvalues[k] = 1
-                    self.budget[k][self.current_idxs[k]].pop(0)
+                    # self.budget[k][self.current_idxs[k]].pop(0)
+                    self.budget[k][self.current_idxs[k]] = \
+                        self.budget[k][self.current_idxs[k]][0], \
+                        self.budget[k][self.current_idxs[k]][1] - 1
+
         # for j in range(len(vals)):
         #     if len(self.budget[j]) > 0:
         #         if vals[j] > self.budget[j][0] + self.cut_value:
@@ -93,9 +98,12 @@ class SGS(GoalSetter, ABC):
         delta = datatype_convert(info['is_success'], DataType.NUMPY).astype('int')
         for k in range(self.num_envs):
             if delta[k]:
-                for _ in range(10):
-                    # bisect.insort(self.budget[k][self.current_idxs[k]], vals[k])
-                    bisect.insort(self.budget[k][self.current_idxs[k]], self.q_a[0][k])
+                _, n = self.budget[k][self.current_idxs[k]]
+                self.budget[k][self.current_idxs[k]] = (self.q_a[0][k], n + 10)
+                # for _ in range(10):
+                #     # bisect.insort(self.budget[k][self.current_idxs[k]], vals[k])
+                #     # bisect.insort(self.budget[k][self.current_idxs[k]], self.q_a[0][k])
+                #     bisect.insort(self.budget[k][self.current_idxs[k]], self.q_a[0][k])
         # for goalval, success, i in zip(vals, delta, self.current_idxs):
         #     # self.budget[i] += incr
         #     # self.budget[i].append(vals[i])
@@ -142,7 +150,8 @@ class SGS(GoalSetter, ABC):
         for k in range(self.num_envs):
             self.budget.append([])
             for i in range(len(self.goal_sequence)):
-                self.budget[k].append([])
+                # self.budget[k].append([])
+                self.budget[k].append((0., 0))
         # self.budget_sequence = np.array(bseq)
         # self.budget_sequence = datatype_convert(self.budget_sequence,
         #                                         DataType.NUMPY,
