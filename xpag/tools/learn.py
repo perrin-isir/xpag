@@ -298,7 +298,8 @@ def learn(
 
         # as soon as one episode is done we terminate all the episodes
         # if done.max() or episode_t >= episode_max_length:
-        if total_t == 0 or episode_t >= episode_max_length:
+        if total_t == 0 or (done.max() and not continue_after_done) \
+                or episode_t >= episode_max_length:
 
             if total_t != 0:
 

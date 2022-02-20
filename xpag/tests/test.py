@@ -12,7 +12,7 @@ gmaze_walls = None  # only used by gym-gmazes environments
 # env_name = 'HalfCheetah-v3'
 # env_name = 'brax-halfcheetah-v0'
 env_name = 'GMazeGoalDubins-v0'
-num_envs = 1
+num_envs = 3
 # episode_max_length = 1000
 episode_max_length = 50
 buffer_name = 'DefaultBuffer'
@@ -66,6 +66,7 @@ goalsetter.set_sequence(
         np.array([0.25, -0.75]),
         np.array([0.75, -0.75])
     ],
+    # [20, 20, 20, 20, 20, 20, 20, 20]
     [20, 20, 20, 20, 20, 20, 20, 20]
 )
 
