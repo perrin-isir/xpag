@@ -84,10 +84,10 @@ class SGS(GoalSetter, ABC):
         # new_o["desired_goal"] =
         # values = values * (1 - self.wait_sequence[self.current_idxs])
         delta = datatype_convert(info['is_success'], DataType.NUMPY).astype('int')
-        # for k in range(self.num_envs):
-        #     if delta[k]:
-        #         for _ in range(2):
-        #             bisect.insort(self.budget[k][self.current_idxs[k]], vals[k])
+        for k in range(self.num_envs):
+            if delta[k]:
+                for _ in range(10):
+                    bisect.insort(self.budget[k][self.current_idxs[k]], vals[k])
         # for goalval, success, i in zip(vals, delta, self.current_idxs):
         #     # self.budget[i] += incr
         #     # self.budget[i].append(vals[i])
