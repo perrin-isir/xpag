@@ -388,15 +388,15 @@ class SAC(Agent, ABC):
             return self.q_value(
                 observation,
                 action,
-                # self.training_state.target_q_params
-                self.training_state.q_params
+                self.training_state.target_q_params
+                # self.training_state.q_params
             )
         else:
             return self.q_value(
                 observation.detach().cpu().numpy(),
                 action.detach().cpu().numpy(),
-                # self.training_state.target_q_params
-                self.training_state.q_params
+                self.training_state.target_q_params
+                # self.training_state.q_params
             )
 
     def select_action(self, observation, deterministic=True):

@@ -3,7 +3,6 @@ import gym
 from gym import utils, spaces
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
 from matplotlib import collections as mc
 
 
@@ -43,9 +42,11 @@ class GMazeCommon:
         )
 
         # initial position + orientation
-        self.init_qpos = np.tile(np.array([-1., 0., 0.]), (self.batch_size, 1))
-        self.init_qvel = []  # velocities are not used
-        self.state = torch.tensor(self.init_qpos).to(self.device)
+        self.init_qpos = torch.tensor(
+            np.tile(np.array([-1., 0., 0.]), (self.batch_size, 1))
+        ).to(self.device)
+        self.init_qvel = None  # velocities are not used
+        self.state = self.init_qpos
         if walls is None:
             self.walls = [
                 ([0.5, -0.5], [0.5, 1.01]),
@@ -73,8 +74,6 @@ class GMazeCommon:
         ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=2))
         ax.set_xlim([-1, 1])
         ax.set_ylim([-1, 1])
-        plt.xlim(-1, 1)
-        plt.ylim(-1, 1)
 
 
 def default_reward_fun(action, new_obs):
@@ -134,7 +133,7 @@ class GMazeDubins(GMazeCommon, gym.Env, utils.EzPickle, ABC):
 
     def reset_model(self):
         # reset state to initial value
-        self.state = torch.tensor(self.init_qpos).to(self.device)
+        self.state = self.init_qpos
 
     def reset(self):
         self.reset_model()
@@ -224,7 +223,7 @@ class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
 
     def reset_model(self):
         # reset state to initial value
-        self.state = torch.tensor(self.init_qpos).to(self.device)
+        self.state = self.init_qpos
 
     def reset(self):
         self.reset_model()  # reset state to initial value

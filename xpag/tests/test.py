@@ -9,19 +9,19 @@ from xpag.plotting.basics import plot_episode_2d
 gmaze_frame_skip = 2  # only used by gym-gmazes environments
 # gmaze_walls = []  # only used by gym-gmazes environments
 gmaze_walls = None  # only used by gym-gmazes environments
-env_name = 'HalfCheetah-v3'
+# env_name = 'HalfCheetah-v3'
 # env_name = 'brax-halfcheetah-v0'
-# env_name = 'GMazeGoalDubins-v0'
+env_name = 'GMazeGoalDubins-v0'
 num_envs = 3
-episode_max_length = 1000
-# episode_max_length = 70
+# episode_max_length = 1000
+episode_max_length = 70
 buffer_name = 'DefaultBuffer'
 buffer_size = 1e6
 sampler_name = 'DefaultSampler'
 goalenv_sampler_name = 'HER'  # only for environments with goals
 agent_name = 'SAC'
-goalsetter_name = 'DefaultGoalSetter'
-# goalsetter_name = 'SGS'
+# goalsetter_name = 'DefaultGoalSetter'
+goalsetter_name = 'SGS'
 seed = 0
 
 agent, goalsetter, env, continue_after_done, replay_buffer, sampler, datatype, device\
@@ -55,22 +55,22 @@ save_freq = 0
 #     ],
 #     [20, 20, 20]
 # )
-# goalsetter.set_sequence(
-#     [
-#         np.array([-0.75, -0.75]),
-#         np.array([-0.25, -0.75]),
-#         np.array([-0.25, 0.]),
-#         np.array([-0.25, 0.75]),
-#         np.array([0.25, 0.75]),
-#         np.array([0.25, 0.]),
-#         np.array([0.25, -0.75]),
-#         np.array([0.75, -0.75]),
-#         np.array([0.75, 0.0]),
-#         np.array([0.75, 0.75])
-#     ],
-#     # [20, 20, 20, 20, 20, 20, 20, 20]
-#     [20, 20, 20, 20, 20, 20, 20, 20, 20, 20]
-# )
+goalsetter.set_sequence(
+    [
+        np.array([-0.75, -0.75]),
+        np.array([-0.25, -0.75]),
+        np.array([-0.25, 0.]),
+        np.array([-0.25, 0.75]),
+        np.array([0.25, 0.75]),
+        np.array([0.25, 0.]),
+        np.array([0.25, -0.75]),
+        np.array([0.75, -0.75]),
+        np.array([0.75, 0.0]),
+        np.array([0.75, 0.75])
+    ],
+    # [20, 20, 20, 20, 20, 20, 20, 20]
+    [20, 20, 20, 20, 20, 20, 20, 20, 20, 20]
+)
 
 xpag.tl.learn(agent, goalsetter, env, continue_after_done, num_envs, episode_max_length,
               max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_eps,

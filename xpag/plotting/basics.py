@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+from matplotlib import figure
 import numpy as np
 from matplotlib import collections as mc
 import collections
@@ -16,7 +16,8 @@ def plot_episode_2d(filename: str,
     It can plot multiple episodes, but they must have the same length.
     """
     assert (len(episode.obs.shape) == 3)
-    _, ax = plt.subplots()
+    fig = figure.Figure()
+    ax = fig.subplots(1)
     xmax = -np.inf
     xmin = np.inf
     ymax = -np.inf
@@ -49,9 +50,10 @@ def plot_episode_2d(filename: str,
         ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=1.))
         if 'g' in episode._fields:
             ax.scatter(gx, gy, s=10, c="green", alpha=0.8)
-    plt.xlim(xmin, xmax)
-    plt.ylim(ymin, ymax)
+    ax.set_xlim([xmin, xmax])
+    ax.set_ylim([ymin, ymax])
     if plot_env_function is not None:
         plot_env_function(ax)
-    plt.savefig(filename, dpi=200)
-    plt.close()
+    fig.savefig(filename, dpi=200)
+    fig.clf()
+    ax.cla()
