@@ -1,3 +1,7 @@
+# Copyright 2022 Nicolas Perrin-Gilbert.
+#
+# Licensed under the BSD 3-Clause License.
+
 from abc import ABC, abstractmethod
 from typing import Union, Dict
 import torch

@@ -2,7 +2,6 @@
 #
 # Licensed under the BSD 3-Clause License.
 #
-#
 # This file is an implementation of the SAC (Soft-Actor Critic) algorithm.
 # It is partially derived from the implementation of SAC in brax
 # [https://github.com/google/brax/blob/main/brax/training/sac.py]

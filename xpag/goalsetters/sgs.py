@@ -1,4 +1,6 @@
-# SGS: SEQUENTIAL GOAL SWITCHING
+# Copyright 2022 Nicolas Perrin-Gilbert.
+#
+# Licensed under the BSD 3-Clause License.
 
 from collections import deque
 from abc import ABC
@@ -8,6 +10,9 @@ import numpy as np
 
 
 class SGS(GoalSetter, ABC):
+    """
+    SGS: Sequential Goal Switching
+    """
     def __init__(self, params,
                  num_envs: int = 1,
                  datatype: DataType = DataType.TORCH,
