@@ -225,7 +225,7 @@ def learn(
         num_envs: int,  # nr of environments that run in parallel (//)
         episode_max_length: int,  # maximum length of eps (1 ep = num_envs // rollouts)
         max_t: int,  # total max nr of ts (1 ts = 1 time step in each of the // envs)
-        train_ratio: int,  # nr of gradient steps per ts
+        train_ratio: float,  # nr of gradient steps per ts
         batch_size: int,  # size of the batches
         start_random_t: int,  # starting with random actions for start_random_t ts
         eval_freq: int,  # evaluation every eval_freq ts
@@ -420,12 +420,6 @@ def learn(
             o, action, new_o, reward, done, info = goalsetter.step(
                 o, action, new_o, reward, done, info
             )
-            # debug()
-
-        # if episode_num > 0:
-        #     for _ in range(train_ratio):
-        #         pre_sample = replay_buffer.pre_sample()
-        #         agent.train(pre_sample, sampler, batch_size)
 
         if save_episode:
             save_ep.update()

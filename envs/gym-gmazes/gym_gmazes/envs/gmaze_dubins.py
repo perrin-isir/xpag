@@ -62,7 +62,7 @@ class GMazeCommon:
         high = np.tile(1.0 * np.ones(self._action_dim), (self.batch_size, 1))
         low = -high
         self.action_space = spaces.Box(
-            low=low, high=high, dtype=np.float32
+            low=low, high=high, dtype=np.float64
         )
 
     def plot(self, ax):
@@ -97,7 +97,7 @@ class GMazeDubins(GMazeCommon, gym.Env, utils.EzPickle, ABC):
         high = np.tile(1.0 * np.ones(self._obs_dim), (self.batch_size, 1))
         low = -high
         self.observation_space = spaces.Box(
-            low, high, dtype=np.float32
+            low, high, dtype=np.float64
         )
 
     def step(self, action: torch.Tensor):
@@ -203,13 +203,13 @@ class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
         self.observation_space = spaces.Dict(
             dict(
                 observation=spaces.Box(
-                    low, high, dtype=np.float32
+                    low, high, dtype=np.float64
                 ),
                 achieved_goal=spaces.Box(
-                    low_achieved_goal, high_achieved_goal, dtype=np.float32
+                    low_achieved_goal, high_achieved_goal, dtype=np.float64
                 ),
                 desired_goal=spaces.Box(
-                    low_desired_goal, high_desired_goal, dtype=np.float32
+                    low_desired_goal, high_desired_goal, dtype=np.float64
                 ),
             )
         )

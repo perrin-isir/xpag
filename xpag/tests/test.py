@@ -2,9 +2,11 @@ import functools
 from datetime import datetime
 import os
 import numpy as np
-import torch
+import gym
 import xpag
 from xpag.plotting.basics import plot_episode_2d
+
+# print(gym.envs.registry.all())
 
 gmaze_frame_skip = 2  # only used by gym-gmazes environments
 # gmaze_walls = []  # only used by gym-gmazes environments

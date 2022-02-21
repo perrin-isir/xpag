@@ -1,6 +1,5 @@
 # SGS: SEQUENTIAL GOAL SWITCHING
 
-import bisect
 from collections import deque
 from abc import ABC
 from xpag.goalsetters.goalsetter import GoalSetter
@@ -22,15 +21,17 @@ class SGS(GoalSetter, ABC):
         self.budget_sequence = []
         self.current_idxs = None
         self.timesteps = None
+        self.block = None
         self.q_a = None
         self.budget = None
         self.global_ts = 0
 
     def reset(self, obs):
-        self.q_a = deque(maxlen=5)
+        self.q_a = deque(maxlen=self.cut_steps)
         self.global_ts = 0
         self.current_idxs = np.zeros(self.num_envs).astype('int')
         self.timesteps = np.zeros(self.num_envs).astype('int')
+        self.block = np.zeros(self.num_envs).astype('int')
         obs['desired_goal'][:] = self.goal_sequence[self.current_idxs]
         return obs
 
@@ -44,21 +45,23 @@ class SGS(GoalSetter, ABC):
         self.q_a.append(datatype_convert(q_a, DataType.NUMPY))
         newvalues = np.zeros(self.num_envs).astype('int')
         for k in range(self.num_envs):
-            if len(self.budget[k][self.current_idxs[k]]) > 0:
-                if self.q_a[-1][k] > self.budget[k][self.current_idxs[k]][0] and \
-                        self.budget[k][self.current_idxs[k]][1] > 0:
-                    newvalues[k] = 1
-                    self.budget[k][self.current_idxs[k]] = \
-                        self.budget[k][self.current_idxs[k]][0], \
-                        self.budget[k][self.current_idxs[k]][1] - 1
+            if self.q_a[-1][k] > self.budget[k][self.current_idxs[k]][0] and \
+                    self.budget[k][self.current_idxs[k]][1] > 0 and not self.block[k]:
+                newvalues[k] = 1
+                self.budget[k][self.current_idxs[k]] = \
+                    self.budget[k][self.current_idxs[k]][0], \
+                    self.budget[k][self.current_idxs[k]][1] - 1
 
         delta = datatype_convert(info['is_success'], DataType.NUMPY).astype('int')
         for k in range(self.num_envs):
             if delta[k]:
                 _, n = self.budget[k][self.current_idxs[k]]
-                self.budget[k][self.current_idxs[k]] = (self.q_a[0][k], min(n + 2, 20))
+                self.budget[k][self.current_idxs[k]] = (self.q_a[0][k], min(n + 8, 20))
+                self.block[k] = 1
 
-        delta = np.maximum(delta, newvalues)
+        # delta = np.maximum(delta, newvalues)
+        delta = newvalues
+
         delta_max = delta.max()
         if delta_max:
             self.timesteps = self.timesteps * (1 - delta)
