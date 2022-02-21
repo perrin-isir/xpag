@@ -16,19 +16,6 @@ import logging
 class SaveEpisode:
     """ To save episodes in brax or mujoco environments """
 
-    """ TODO:
-    call, get_attr and set_attr methods have been added to 
-    gym/vector/async_vector_env.py in the commit 
-    081c5c1e80ef5dc75dce2b1a6ec984937db8aa41 of gym
-    So in a future version, it will be possible to retrieve information about the
-    underlying envs in the vectorized gym envs.
-    For instance, commands like:
-    env_.parent_pipes[0].send(('_call', ('qpos', {}, {})))
-    env_.parent_pipes[0].recv()
-    should retrieve env.qpos for the env of index 0.
-    See future versions of gym.
-    """
-
     def __init__(self, env, num_envs):
         self.env = env
         self.num_envs = num_envs
@@ -45,10 +32,19 @@ class SaveEpisode:
             self.qvel.append(self.env.unwrapped._state.qp.vel.to_py())
             self.qang.append(self.env.unwrapped._state.qp.ang.to_py())
         else:
-            posvel = np.split(reshape_func(self.env.state_vector(), (1, -1)),
-                              [self.env.init_qpos.shape[-1]], axis=1)
-            self.qpos.append(posvel[0])
-            self.qvel.append(posvel[1])
+            if isinstance(self.env, gym.vector.async_vector_env.VectorEnv):
+                posvel = np.split(
+                    np.array(self.env.call('state_vector')).reshape(self.num_envs, -1),
+                    [self.env.call('init_qpos')[0].shape[-1]],
+                    axis=1
+                )
+                self.qpos.append(posvel[0])
+                self.qvel.append(posvel[1])
+            else:
+                posvel = np.split(reshape_func(self.env.state_vector(), (1, -1)),
+                                  [self.env.init_qpos.shape[-1]], axis=1)
+                self.qpos.append(posvel[0])
+                self.qvel.append(posvel[1])
 
     def save(self, i: int, save_dir: str):
         os.makedirs(os.path.join(save_dir, 'episode'), exist_ok=True)
@@ -80,11 +76,22 @@ class SaveEpisode:
 
 
 def check_goalenv(env) -> bool:
-    if isinstance(env, gym.Wrapper):
-        env_class = env.unwrapped.__class__
+    """
+    The migration of GoalEnv from gym (0.22) to gym-robotics makes things more
+    complicated. Here we just verify that the observation_space has a structure
+    that is compatible with the GoalEnv class.
+    """
+    if isinstance(env, gym.vector.async_vector_env.VectorEnv):
+        obs_space = env.single_observation_space
     else:
-        env_class = env.__class__
-    return issubclass(env_class, gym.core.GoalEnv)
+        obs_space = env.observation_space
+    if not isinstance(obs_space, gym.spaces.Dict):
+        return False
+    else:
+        for key in ["observation", "achieved_goal", "desired_goal"]:
+            if key not in obs_space.spaces:
+                return False
+    return True
 
 
 def get_dimensions(env) -> dict:
@@ -332,7 +339,7 @@ def learn(
                         agent.train(pre_sample, sampler, batch_size)
 
                     interval_time, _ = timing()
-                    training_time += interval_time/1000.
+                    training_time += interval_time / 1000.
 
                     logger.warning(f'[{episode_num}] {training_time:.3f}s; ' +
                                    f'best episode out of {num_envs}: ' +
@@ -353,7 +360,7 @@ def learn(
                         success_rate = episode_success.mean()
 
                         interval_time, _ = timing()
-                        eval_time += interval_time/1000.
+                        eval_time += interval_time / 1000.
 
                         logger_eval.info(','.join(map(str, [training_time,
                                                             total_t,

@@ -1,9 +1,48 @@
 from abc import ABC
+from abc import abstractmethod
+from typing import Optional
 import gym
 from gym import utils, spaces
+from gym import error
 import numpy as np
 import torch
 from matplotlib import collections as mc
+
+
+class GoalEnv(gym.Env):
+    """ The GoalEnv class that was migrated to gym-robotics (version 0.22 of gym)
+    """
+
+    def reset(self, options=None, seed: Optional[int] = None, infos=None):
+        super().reset(seed=seed)
+        # Enforce that each GoalEnv uses a Goal-compatible observation space.
+        if not isinstance(self.observation_space, gym.spaces.Dict):
+            raise error.Error(
+                "GoalEnv requires an observation space of type gym.spaces.Dict"
+            )
+        for key in ["observation", "achieved_goal", "desired_goal"]:
+            if key not in self.observation_space.spaces:
+                raise error.Error(
+                    'GoalEnv requires the "{}" key.'.format(
+                        key
+                    )
+                )
+
+    @abstractmethod
+    def compute_reward(self, achieved_goal, desired_goal, info):
+        """Compute the step reward.
+        Args:
+            achieved_goal (object): the goal that was achieved during execution
+            desired_goal (object): the desired goal
+            info (dict): an info dictionary with additional information
+        Returns:
+            float: The reward that corresponds to the provided achieved goal w.r.t. to
+            the desired goal. Note that the following should always hold true:
+                ob, reward, done, info = env.step()
+                assert reward == env.compute_reward(ob['achieved_goal'],
+                                                    ob['desired_goal'], info)
+        """
+        raise NotImplementedError
 
 
 def intersect(a, b, c, d):
@@ -177,7 +216,7 @@ def default_success_function(achieved_goal: torch.Tensor,
     return 1. * (d < distance_threshold)
 
 
-class GMazeGoalDubins(GMazeCommon, gym.GoalEnv, utils.EzPickle, ABC):
+class GMazeGoalDubins(GMazeCommon, GoalEnv, utils.EzPickle, ABC):
     def __init__(
             self,
             device: str = 'cpu',
