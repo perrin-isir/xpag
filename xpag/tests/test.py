@@ -11,8 +11,9 @@ import xpag
 from xpag.plotting.basics import plot_episode_2d
 from xpag.agents import SAC
 from xpag.samplers import DefaultSampler, HER
-from xpag.goalsetters import DefaultGoalSetter, SGS
+from xpag.goalsetters import DefaultGoalSetter
 from xpag.tools.utils import debug
+import SGS.sgs as sgs
 
 # print(gym.envs.registry.all())
 
@@ -31,15 +32,12 @@ buffer_size = 1e6
 sampler_class = HER
 agent_class = SAC
 # goalsetter_name = 'DefaultGoalSetter'
-goalsetter_class = SGS
+goalsetter_class = sgs.SGS
 seed = 0
 
-debug()
-
 agent, goalsetter, env, continue_after_done, replay_buffer, sampler, datatype, device\
-    = xpag.tl.configure(env_name, num_envs, gmaze_frame_skip, gmaze_walls,
-                        episode_max_length, buffer_size, sampler_class,
-                        agent_class, goalsetter_class, seed)
+    = xpag.tl.configure(env_name, num_envs, episode_max_length, buffer_size,
+                        sampler_class, agent_class, goalsetter_class, seed)
 
 save_dir = os.path.join(os.path.expanduser("~"),
                         "results",
@@ -83,6 +81,9 @@ goalsetter.set_sequence(
     # [20, 20, 20, 20, 20, 20, 20, 20]
     [20, 20, 20, 20, 20, 20, 20, 20, 20, 20]
 )
+
+env.set_frame_skip(1)
+env.set_walls()
 
 xpag.tl.learn(agent, goalsetter, env, continue_after_done, num_envs, episode_max_length,
               max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_eps,

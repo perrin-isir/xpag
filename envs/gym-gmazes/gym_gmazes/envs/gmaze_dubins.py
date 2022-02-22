@@ -14,7 +14,7 @@ from matplotlib import collections as mc
 
 
 class GoalEnv(gym.Env):
-    """ The GoalEnv class that was migrated to gym-robotics (version 0.22 of gym)
+    """ The GoalEnv class that was migrated from gym (v0.22) to gym-robotics
     """
 
     def reset(self, options=None, seed: Optional[int] = None, infos=None):
@@ -81,7 +81,7 @@ class GMazeCommon:
         ).to(self.device)
         self.init_qvel = None  # velocities are not used
         self.state = self.init_qpos
-        self.walls = None
+        self.walls = []
         self._obs_dim = 3
         self._action_dim = 1
         self.num_steps = 0
@@ -137,8 +137,6 @@ class GMazeDubins(GMazeCommon, gym.Env, utils.EzPickle, ABC):
         super().__init__(
             device, batch_size)
 
-        self.set_frame_skip(2)
-        self.set_walls(None)
         self.set_reward_function(default_reward_fun)
 
         high = np.tile(1.0 * np.ones(self._obs_dim), (self.batch_size, 1))
@@ -182,7 +180,7 @@ class GMazeDubins(GMazeCommon, gym.Env, utils.EzPickle, ABC):
         # reset state to initial value
         self.state = self.init_qpos
 
-    def reset(self):
+    def reset(self, options=None, seed: Optional[int] = None, infos=None):
         self.reset_model()
         self.num_steps = 0
         return self.state
@@ -228,14 +226,10 @@ class GMazeGoalDubins(GMazeCommon, GoalEnv, utils.EzPickle, ABC):
     def __init__(
             self,
             device: str = 'cpu',
-            batch_size: int = 1,
-            frame_skip: int = 2,
-            walls=None,
-            reward_function=default_compute_reward,
-            success_function=default_success_function
+            batch_size: int = 1
     ):
         super().__init__(
-            device, batch_size, frame_skip, walls, reward_function)
+            device, batch_size)
 
         high = np.tile(1.0 * np.ones(self._obs_dim), (self.batch_size, 1))
         low = -high
@@ -262,7 +256,18 @@ class GMazeGoalDubins(GMazeCommon, GoalEnv, utils.EzPickle, ABC):
         )
         self.goal = None
 
-        self.compute_reward = reward_function
+        self.compute_reward = None
+        self.set_reward_function(default_compute_reward)
+
+        self._is_success = None
+        self.set_success_function(default_success_function)
+
+    def set_reward_function(self, reward_function):
+        self.compute_reward = (  # the name is compute_reward in GoalEnv environments
+            reward_function
+        )
+
+    def set_success_function(self, success_function):
         self._is_success = success_function
 
     def _sample_goal(self):
@@ -273,7 +278,7 @@ class GMazeGoalDubins(GMazeCommon, GoalEnv, utils.EzPickle, ABC):
         # reset state to initial value
         self.state = self.init_qpos
 
-    def reset(self):
+    def reset(self, options=None, seed: Optional[int] = None, infos=None):
         self.reset_model()  # reset state to initial value
         self.goal = self._sample_goal()  # sample goal
         self.num_steps = 0

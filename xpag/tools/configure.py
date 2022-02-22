@@ -11,15 +11,12 @@ from brax import envs
 from brax.envs import to_torch
 from xpag.tools.utils import DataType
 from xpag.tools.learn import check_goalenv, get_dimensions, default_replay_buffer
-# from xpag.samplers import DefaultSampler, HER
-# from xpag.agents import SAC
-# from xpag.goalsetters import DefaultGoalSetter, SGS
 import re
 
 
 def configure(
-        env_name_, num_envs_, gmaze_frame_skip_, gmaze_walls_, episode_max_length_,
-        buffer_size_, sampler_class_, agent_class_, goalsetter_class_, seed_=None
+        env_name_, num_envs_, episode_max_length_, buffer_size_, sampler_class_,
+        agent_class_, goalsetter_class_, seed_=None
 ):
     if seed_ is not None:
         torch.manual_seed(seed_)
@@ -50,9 +47,7 @@ def configure(
         device_ = 'cuda' if torch.cuda.is_available() else 'cpu'
         env_ = gym.make(env_name_,
                         device=device_,
-                        batch_size=num_envs_,
-                        frame_skip=gmaze_frame_skip_,
-                        walls=gmaze_walls_)
+                        batch_size=num_envs_)
         datatype_ = DataType.TORCH
         continue_after_done_ = True
     else:
