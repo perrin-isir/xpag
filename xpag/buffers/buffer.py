@@ -10,12 +10,14 @@ from xpag.tools.utils import DataType
 
 
 class Buffer(ABC):
-    def __init__(self,
-                 episode_max_length: int,
-                 buffer_size: int,
-                 datatype: DataType = DataType.TORCH,
-                 device: str = 'cpu'):
-        assert(datatype == DataType.TORCH or datatype == DataType.NUMPY)
+    def __init__(
+        self,
+        episode_max_length: int,
+        buffer_size: int,
+        datatype: DataType = DataType.TORCH,
+        device: str = "cpu",
+    ):
+        assert datatype == DataType.TORCH or datatype == DataType.NUMPY
         self.T = episode_max_length
         self.buffer_size = buffer_size
         self.datatype = datatype
@@ -26,27 +28,32 @@ class Buffer(ABC):
 
     @abstractmethod
     def store_episode(self, num_envs: int, episode: NamedTuple, episode_length: int):
-        """Store one or several episodes in the buffer
-        """
+        """Store one or several episodes in the buffer"""
         pass
 
     @abstractmethod
     def pre_sample(self) -> Dict[str, Union[torch.Tensor, np.ndarray]]:
-        """Return a part of the buffer from which the sampler will extract samples
-        """
+        """Return a part of the buffer from which the sampler will extract samples"""
         pass
 
 
 class DefaultBuffer(Buffer):
-    def __init__(self, dict_sizes: dict, episode_max_length: int, buffer_size: int,
-                 datatype: DataType, device: str = 'cpu'):
+    def __init__(
+        self,
+        dict_sizes: dict,
+        episode_max_length: int,
+        buffer_size: int,
+        datatype: DataType,
+        device: str = "cpu",
+    ):
         super().__init__(episode_max_length, buffer_size, datatype, device)
         self.dict_sizes = dict_sizes
-        self.dict_sizes['episode_length'] = 1
+        self.dict_sizes["episode_length"] = 1
         for key in dict_sizes:
             if self.datatype == DataType.TORCH:
-                self.buffers[key] = torch.empty([self.size, self.T, dict_sizes[key]],
-                                                device=self.device)
+                self.buffers[key] = torch.empty(
+                    [self.size, self.T, dict_sizes[key]], device=self.device
+                )
             else:
                 self.buffers[key] = np.empty([self.size, self.T, dict_sizes[key]])
 
@@ -54,16 +61,16 @@ class DefaultBuffer(Buffer):
         idxs = self._get_storage_idx(inc=num_envs)
         episode_dict = episode._asdict()
         if self.datatype == DataType.TORCH:
-            ep_length = torch.full((num_envs, self.T, 1),
-                                   float(episode_length),
-                                   device=self.device)
+            ep_length = torch.full(
+                (num_envs, self.T, 1), float(episode_length), device=self.device
+            )
         else:
-            ep_length = np.full((num_envs, self.T, 1),
-                                float(episode_length))
+            ep_length = np.full((num_envs, self.T, 1), float(episode_length))
         for key in episode._fields:
             self.buffers[key][idxs, :episode_length, :] = episode_dict[key][
-                                                          :, :episode_length, :]
-        self.buffers['episode_length'][idxs] = ep_length
+                :, :episode_length, :
+            ]
+        self.buffers["episode_length"][idxs] = ep_length
 
     def pre_sample(self):
         temp_buffers = {}

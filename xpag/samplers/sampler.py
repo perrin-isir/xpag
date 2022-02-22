@@ -10,18 +10,17 @@ from xpag.tools.utils import DataType
 
 
 class Sampler(ABC):
-    def __init__(self,
-                 datatype: DataType = DataType.TORCH):
-        assert(datatype == DataType.TORCH or datatype == DataType.NUMPY)
+    def __init__(self, datatype: DataType = DataType.TORCH):
+        assert datatype == DataType.TORCH or datatype == DataType.NUMPY
         self.datatype = datatype
 
     @abstractmethod
-    def sample(self,
-               buffers: Dict[str, Union[torch.Tensor, np.ndarray]],
-               batch_size_in_transitions: int
-               ) -> Dict[str, Union[torch.Tensor, np.ndarray]]:
-        """Return a batch of transitions
-        """
+    def sample(
+        self,
+        buffers: Dict[str, Union[torch.Tensor, np.ndarray]],
+        batch_size_in_transitions: int,
+    ) -> Dict[str, Union[torch.Tensor, np.ndarray]]:
+        """Return a batch of transitions"""
         pass
 
 
@@ -33,13 +32,15 @@ class DefaultSampler(Sampler):
     def sum(transitions):
         return sum([transitions[key].sum() for key in transitions.keys()])
 
-    def sample(self,
-               buffers: Dict[str, Union[torch.Tensor, np.ndarray]],
-               batch_size_in_transitions: int):
+    def sample(
+        self,
+        buffers: Dict[str, Union[torch.Tensor, np.ndarray]],
+        batch_size_in_transitions: int,
+    ):
         rollout_batch_size = buffers[list(buffers.keys())[0]].shape[0]
         batch_size = batch_size_in_transitions
         episode_idxs = np.random.randint(0, rollout_batch_size, batch_size)
-        t_max_episodes = buffers['episode_length'][episode_idxs, 0].flatten()
+        t_max_episodes = buffers["episode_length"][episode_idxs, 0].flatten()
         if self.datatype == DataType.TORCH:
             t_samples = (torch.rand_like(t_max_episodes) * t_max_episodes).long()
         else:

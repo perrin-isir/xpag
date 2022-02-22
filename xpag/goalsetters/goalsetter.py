@@ -7,10 +7,14 @@ from xpag.tools.utils import DataType
 
 
 class GoalSetter(ABC):
-    def __init__(self, name: str, params: dict,
-                 num_envs: int = 1,
-                 datatype: DataType = DataType.TORCH,
-                 device: str = 'cpu'):
+    def __init__(
+        self,
+        name: str,
+        params: dict,
+        num_envs: int = 1,
+        datatype: DataType = DataType.TORCH,
+        device: str = "cpu",
+    ):
         self.name = name
         self.params = params
         self.num_envs = num_envs
@@ -39,10 +43,13 @@ class GoalSetter(ABC):
 
 
 class DefaultGoalSetter(GoalSetter, ABC):
-    def __init__(self, params=None,
-                 num_envs: int = 1,
-                 datatype: DataType = DataType.TORCH,
-                 device: str = 'cpu'):
+    def __init__(
+        self,
+        params=None,
+        num_envs: int = 1,
+        datatype: DataType = DataType.TORCH,
+        device: str = "cpu",
+    ):
         if params is None:
             params = {}
         super().__init__("DefaultGoalSetter", params, num_envs, datatype, device)

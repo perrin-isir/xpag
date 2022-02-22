@@ -13,10 +13,18 @@ from xpag.tools.utils import DataType
 from xpag.tools.learn import check_goalenv, get_dimensions, default_replay_buffer
 import re
 
+assert gym_gmazes
+
 
 def configure(
-        env_name_, num_envs_, episode_max_length_, buffer_size_, sampler_class_,
-        agent_class_, goalsetter_class_, seed_=None
+    env_name_,
+    num_envs_,
+    episode_max_length_,
+    buffer_size_,
+    sampler_class_,
+    agent_class_,
+    goalsetter_class_,
+    seed_=None,
 ):
     if seed_ is not None:
         torch.manual_seed(seed_)
@@ -24,30 +32,30 @@ def configure(
 
     continue_after_done_ = False
 
-    if env_name_.startswith('brax-'):
+    if env_name_.startswith("brax-"):
         # brax environment
-        device_ = 'cuda' if torch.cuda.is_available() else 'cpu'
+        device_ = "cuda" if torch.cuda.is_available() else "cpu"
         # torch allocation on device first, to prevent JAX from swallowing up all the
         # GPU memory. By default JAX will pre-allocate 90% of the available GPU memory:
         # https://jax.readthedocs.io/en/latest/gpu_memory_allocation.html
         v_ = torch.ones(1, device=device_)
+        assert v_
         # print(torch.cuda.memory_allocated(device='cuda'), 'bytes')
-        env_true_name = re.sub('-v.$', '', env_name_).removeprefix('brax-')
+        env_true_name = re.sub("-v.$", "", env_name_).removeprefix("brax-")
         gym_name = env_name_
         if gym_name not in gym.envs.registry.env_specs:
             entry_point = functools.partial(envs.create_gym_env, env_name=env_true_name)
             gym.register(gym_name, entry_point=entry_point)
-        env_ = gym.make(gym_name, batch_size=num_envs_,
-                        episode_length=episode_max_length_)
+        env_ = gym.make(
+            gym_name, batch_size=num_envs_, episode_length=episode_max_length_
+        )
         # automatically convert between jax ndarrays and torch tensors:
         env_ = to_torch.JaxToTorchWrapper(env_, device=device_)
         datatype_ = DataType.TORCH
-    elif env_name_.startswith('GMaze'):
+    elif env_name_.startswith("GMaze"):
         # GMaze environment
-        device_ = 'cuda' if torch.cuda.is_available() else 'cpu'
-        env_ = gym.make(env_name_,
-                        device=device_,
-                        batch_size=num_envs_)
+        device_ = "cuda" if torch.cuda.is_available() else "cpu"
+        env_ = gym.make(env_name_, device=device_, batch_size=num_envs_)
         datatype_ = DataType.TORCH
         continue_after_done_ = True
     else:
@@ -58,7 +66,7 @@ def configure(
         else:
             env_ = gym.make(env_name_)
         datatype_ = DataType.NUMPY
-        device_ = 'cpu'
+        device_ = "cpu"
 
     agent_params = {}
     goalsetter_params = {}
@@ -67,18 +75,14 @@ def configure(
         env_.seed(seed_)
         env_.action_space.seed(seed_)
         env_.observation_space.seed(seed_)
-        agent_params['seed'] = seed_
-        goalsetter_params['seed'] = seed_
+        agent_params["seed"] = seed_
+        goalsetter_params["seed"] = seed_
 
     is_goalenv = check_goalenv(env_)
     dimensions = get_dimensions(env_)
 
     replay_buffer_ = default_replay_buffer(
-        buffer_size_,
-        episode_max_length_,
-        env_,
-        datatype_,
-        device_
+        buffer_size_, episode_max_length_, env_, datatype_, device_
     )
 
     if is_goalenv:
@@ -88,20 +92,28 @@ def configure(
 
     if is_goalenv:
         agent_ = agent_class_(
-            dimensions['observation_dim'] + dimensions['desired_goal_dim'],
-            dimensions['action_dim'],
-            params=agent_params)
+            dimensions["observation_dim"] + dimensions["desired_goal_dim"],
+            dimensions["action_dim"],
+            params=agent_params,
+        )
     else:
-        agent_ = agent_class_(dimensions['observation_dim'],
-                              dimensions['action_dim'],
-                              params=agent_params)
+        agent_ = agent_class_(
+            dimensions["observation_dim"], dimensions["action_dim"], params=agent_params
+        )
 
-    goalsetter_params['agent'] = agent_
+    goalsetter_params["agent"] = agent_
 
-    goalsetter_ = goalsetter_class_(params=goalsetter_params,
-                                    num_envs=num_envs_,
-                                    datatype=datatype_,
-                                    device=device_)
+    goalsetter_ = goalsetter_class_(
+        params=goalsetter_params, num_envs=num_envs_, datatype=datatype_, device=device_
+    )
 
-    return agent_, goalsetter_, env_, continue_after_done_, \
-        replay_buffer_, sampler_, datatype_, device_
+    return (
+        agent_,
+        goalsetter_,
+        env_,
+        continue_after_done_,
+        replay_buffer_,
+        sampler_,
+        datatype_,
+        device_,
+    )

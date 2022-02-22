@@ -14,10 +14,10 @@ def timing():
     if timing_time_saved is None:
         timing_first_time_saved = time.time()
         timing_time_saved = timing_first_time_saved
-        interval_time = 0.
-        total_time = 0.
+        interval_time = 0.0
+        total_time = 0.0
     else:
-        interval_time = (time.time() - timing_time_saved) * 1000.
+        interval_time = (time.time() - timing_time_saved) * 1000.0
         total_time = time.time() - timing_first_time_saved
         timing_time_saved = time.time()
     return interval_time, total_time

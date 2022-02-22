@@ -36,6 +36,7 @@ class FeedForwardModel:
 @flax.struct.dataclass
 class TrainingState:
     """Contains training state for the learner."""
+
     policy_optimizer_state: optax.OptState
     policy_params: Params
     q_optimizer_state: optax.OptState
@@ -49,30 +50,34 @@ class TrainingState:
 
 class SAC(Agent, ABC):
     def __init__(
-            self,
-            observation_dim,
-            action_dim,
-            params=None,
-            discount=0.99,
-            reward_scale=1.0,
-            policy_lr=1e-3,
-            critic_lr=1e-3,
-            alpha_lr=3e-4,
-            soft_target_tau=0.005
+        self,
+        observation_dim,
+        action_dim,
+        params=None,
+        discount=0.99,
+        reward_scale=1.0,
+        policy_lr=1e-3,
+        critic_lr=1e-3,
+        alpha_lr=3e-4,
+        soft_target_tau=0.005,
     ):
-
         class CustomMLP(linen.Module):
             """MLP module."""
+
             layer_sizes: Sequence[int]
             activation: Callable[[jnp.ndarray], jnp.ndarray] = linen.relu
             kernel_init_hidden_layer: Callable[
-                ..., Any] = jax.nn.initializers.lecun_uniform()
+                ..., Any
+            ] = jax.nn.initializers.lecun_uniform()
             kernel_init_last_layer: Callable[
-                ..., Any] = jax.nn.initializers.lecun_uniform()
+                ..., Any
+            ] = jax.nn.initializers.lecun_uniform()
             bias_init_hidden_layer: Callable[
-                ..., Any] = jax.nn.initializers.lecun_uniform()
+                ..., Any
+            ] = jax.nn.initializers.lecun_uniform()
             bias_init_last_layer: Callable[
-                ..., Any] = jax.nn.initializers.lecun_uniform()
+                ..., Any
+            ] = jax.nn.initializers.lecun_uniform()
             activate_final: bool = False
             bias: bool = True
 
@@ -82,15 +87,15 @@ class SAC(Agent, ABC):
                 for i, hidden_size in enumerate(self.layer_sizes):
                     hidden = linen.Dense(
                         hidden_size,
-                        name=f'hidden_{i}',
-                        kernel_init=self.kernel_init_hidden_layer if (
-                                i != len(self.layer_sizes) - 1
-                        ) else self.kernel_init_last_layer,
-                        bias_init=self.bias_init_hidden_layer if (
-                                i != len(self.layer_sizes) - 1
-                        ) else self.bias_init_last_layer,
-                        use_bias=self.bias)(
-                        hidden)
+                        name=f"hidden_{i}",
+                        kernel_init=self.kernel_init_hidden_layer
+                        if (i != len(self.layer_sizes) - 1)
+                        else self.kernel_init_last_layer,
+                        bias_init=self.bias_init_hidden_layer
+                        if (i != len(self.layer_sizes) - 1)
+                        else self.bias_init_last_layer,
+                        use_bias=self.bias,
+                    )(hidden)
                     if i != len(self.layer_sizes) - 1 or self.activate_final:
                         hidden = self.activation(hidden)
                 return hidden
@@ -98,7 +103,7 @@ class SAC(Agent, ABC):
         def kernel_init_hidden_layer(key_, shape, dtype=jnp.float_):
             # len(shape) should be 2
             dtype = jax.dtypes.canonicalize_dtype(dtype)
-            mval = 1. / jnp.sqrt(jnp.maximum(shape[0], shape[1]))
+            mval = 1.0 / jnp.sqrt(jnp.maximum(shape[0], shape[1]))
             return jax.random.uniform(key_, shape, dtype, -mval, mval)
 
         def bias_init_hidden_layer(key_, shape, dtype=jnp.float_):
@@ -110,10 +115,10 @@ class SAC(Agent, ABC):
             return jax.random.uniform(key_, shape, dtype, -mval, mval)
 
         def make_sac_networks(
-                param_size: int,
-                obs_size: int,
-                action_size: int,
-                hidden_layer_sizes: Tuple[int, ...] = (256, 256),
+            param_size: int,
+            obs_size: int,
+            action_size: int,
+            hidden_layer_sizes: Tuple[int, ...] = (256, 256),
         ) -> Tuple[FeedForwardModel, FeedForwardModel]:
             """Creates a policy and value networks for SAC."""
             policy_module = CustomMLP(
@@ -122,11 +127,12 @@ class SAC(Agent, ABC):
                 kernel_init_hidden_layer=kernel_init_hidden_layer,
                 kernel_init_last_layer=init_last_layer,
                 bias_init_hidden_layer=bias_init_hidden_layer,
-                bias_init_last_layer=init_last_layer
+                bias_init_last_layer=init_last_layer,
             )
 
             class QModule(linen.Module):
                 """Q Module."""
+
                 n_critics: int = 2
 
                 @linen.compact
@@ -140,7 +146,7 @@ class SAC(Agent, ABC):
                             kernel_init_hidden_layer=kernel_init_hidden_layer,
                             kernel_init_last_layer=init_last_layer,
                             bias_init_hidden_layer=bias_init_hidden_layer,
-                            bias_init_last_layer=init_last_layer
+                            bias_init_last_layer=init_last_layer,
                         )(hidden)
                         res.append(q)
                     return jnp.concatenate(res, axis=-1)
@@ -151,10 +157,12 @@ class SAC(Agent, ABC):
             dummy_action = jnp.zeros((1, action_size))
             policy = FeedForwardModel(
                 init=lambda key_: policy_module.init(key_, dummy_obs),
-                apply=policy_module.apply)
+                apply=policy_module.apply,
+            )
             value = FeedForwardModel(
                 init=lambda key_: q_module.init(key_, dummy_obs, dummy_action),
-                apply=q_module.apply)
+                apply=q_module.apply,
+            )
             return policy, value
 
         self._config_string = str(list(locals().items())[1:])
@@ -164,23 +172,25 @@ class SAC(Agent, ABC):
         self.reward_scale = reward_scale
         self.soft_target_tau = soft_target_tau
 
-        if 'seed' in self.params:
-            start_seed = self.params['seed']
+        if "seed" in self.params:
+            start_seed = self.params["seed"]
         else:
             start_seed = 42
 
         self.key, local_key, key_models = jax.random.split(
-            jax.random.PRNGKey(start_seed), 3)
+            jax.random.PRNGKey(start_seed), 3
+        )
 
         self.policy_model, self.value_model = make_sac_networks(
-            2 * action_dim, observation_dim, action_dim)
+            2 * action_dim, observation_dim, action_dim
+        )
 
-        self.log_alpha = jnp.asarray(0., dtype=jnp.float32)
+        self.log_alpha = jnp.asarray(0.0, dtype=jnp.float32)
         self.alpha_optimizer = optax.adam(learning_rate=alpha_lr)
         self.alpha_optimizer_state = self.alpha_optimizer.init(self.log_alpha)
 
-        self.policy_optimizer = optax.adam(learning_rate=1. * policy_lr)
-        self.q_optimizer = optax.adam(learning_rate=1. * critic_lr)
+        self.policy_optimizer = optax.adam(learning_rate=1.0 * policy_lr)
+        self.q_optimizer = optax.adam(learning_rate=1.0 * critic_lr)
 
         key_policy, key_q = jax.random.split(key_models)
         self.policy_params = self.policy_model.init(key_policy)
@@ -194,13 +204,15 @@ class SAC(Agent, ABC):
                 self.scale = scale
 
             def sample(self, seed):
-                return jax.random.normal(
-                    seed, shape=self.loc.shape) * self.scale + self.loc
+                return (
+                    jax.random.normal(seed, shape=self.loc.shape) * self.scale
+                    + self.loc
+                )
 
         def create_dist(logits):
             loc, log_scale = jnp.split(logits, 2, axis=-1)
-            log_sig_max = 2.
-            log_sig_min = -20.
+            log_sig_max = 2.0
+            log_sig_min = -20.0
             log_scale_clip = jnp.clip(log_scale, log_sig_min, log_sig_max)
             scale = jnp.exp(log_scale_clip)
             dist = NormalDistribution(loc=loc, scale=scale)
@@ -215,28 +227,36 @@ class SAC(Agent, ABC):
         def dist_log_prob(logits, pre_tanh_action):
             action = jnp.tanh(pre_tanh_action)
             loc, log_scale = jnp.split(logits, 2, axis=-1)
-            log_sig_max = 2.
-            log_sig_min = -20.
+            log_sig_max = 2.0
+            log_sig_min = -20.0
             epsilon = 1e-6
             log_scale_clip = jnp.clip(log_scale, log_sig_min, log_sig_max)
             scale = jnp.exp(log_scale_clip)
             var = scale ** 2
-            normal_log_prob = -((pre_tanh_action - loc) ** 2) / (2 * var) - log_scale \
-                              - jnp.log(jnp.sqrt(2 * jnp.pi))
+            normal_log_prob = (
+                -((pre_tanh_action - loc) ** 2) / (2 * var)
+                - log_scale
+                - jnp.log(jnp.sqrt(2 * jnp.pi))
+            )
             log_prob = normal_log_prob - jnp.log(1 - action * action + epsilon)
             return jnp.sum(log_prob, axis=-1)
 
         self.sample_no_postprocessing = sample_no_postprocessing
         self.postprocess = postprocess
         self.dist_log_prob = dist_log_prob
-        target_entropy = -1. * action_dim
+        target_entropy = -1.0 * action_dim
 
         def alpha_loss(log_alpha: jnp.ndarray, log_pi: jnp.ndarray) -> jnp.ndarray:
             alpha_l = log_alpha * jax.lax.stop_gradient(-log_pi - target_entropy)
             return jnp.mean(alpha_l)
 
-        def actor_loss(policy_params: Params, q_params: Params, alpha: jnp.ndarray,
-                       observations, key_) -> jnp.ndarray:
+        def actor_loss(
+            policy_params: Params,
+            q_params: Params,
+            alpha: jnp.ndarray,
+            observations,
+            key_,
+        ) -> jnp.ndarray:
             dist_params = self.policy_model.apply(policy_params, observations)
             p_actions = self.sample_no_postprocessing(dist_params, key_)
             log_p = self.dist_log_prob(dist_params, p_actions)
@@ -246,32 +266,33 @@ class SAC(Agent, ABC):
             actor_l = alpha * log_p - min_q
             return jnp.mean(actor_l)
 
-        def critic_loss(q_params: Params,
-                        policy_params: Params,
-                        target_q_params: Params,
-                        alpha: jnp.ndarray,
-                        observations,
-                        actions,
-                        new_observations,
-                        rewards,
-                        done,
-                        key_) -> jnp.ndarray:
-            next_dist_params = self.policy_model.apply(policy_params,
-                                                       new_observations)
-            next_pre_actions = self.sample_no_postprocessing(next_dist_params,
-                                                             key_)
+        def critic_loss(
+            q_params: Params,
+            policy_params: Params,
+            target_q_params: Params,
+            alpha: jnp.ndarray,
+            observations,
+            actions,
+            new_observations,
+            rewards,
+            done,
+            key_,
+        ) -> jnp.ndarray:
+            next_dist_params = self.policy_model.apply(policy_params, new_observations)
+            next_pre_actions = self.sample_no_postprocessing(next_dist_params, key_)
             new_log_pi = self.dist_log_prob(next_dist_params, next_pre_actions)
             new_next_actions = self.postprocess(next_pre_actions)
             q_old_action = self.value_model.apply(q_params, observations, actions)
-            next_q = self.value_model.apply(target_q_params, new_observations,
-                                            new_next_actions)
+            next_q = self.value_model.apply(
+                target_q_params, new_observations, new_next_actions
+            )
             next_v = jnp.min(next_q, axis=-1) - alpha * new_log_pi
             target_q = jax.lax.stop_gradient(
-                rewards * self.reward_scale +
-                done * discount * jnp.expand_dims(next_v, -1)
+                rewards * self.reward_scale
+                + done * discount * jnp.expand_dims(next_v, -1)
             )
             q_error = q_old_action - target_q
-            q_loss = 2. * jnp.mean(jnp.square(q_error))
+            q_loss = 2.0 * jnp.mean(jnp.square(q_error))
             return q_loss
 
         self.alpha_grad = jax.value_and_grad(alpha_loss)
@@ -279,12 +300,7 @@ class SAC(Agent, ABC):
         self.actor_grad = jax.value_and_grad(actor_loss)
 
         def update_step(
-                state: TrainingState,
-                observations,
-                actions,
-                rewards,
-                new_observations,
-                done
+            state: TrainingState, observations, actions, rewards, new_observations, done
         ) -> TrainingState:
 
             key, key_alpha, key_critic, key_actor = jax.random.split(state.key, 4)
@@ -293,42 +309,51 @@ class SAC(Agent, ABC):
             pre_actions = self.sample_no_postprocessing(dist_params, key_alpha)
             log_pi = self.dist_log_prob(dist_params, pre_actions)
 
-            alpha_l, alpha_grads = self.alpha_grad(state.alpha_params,
-                                                   log_pi)
+            alpha_l, alpha_grads = self.alpha_grad(state.alpha_params, log_pi)
             alpha_params_update, alpha_optimizer_state = self.alpha_optimizer.update(
-                alpha_grads, state.alpha_optimizer_state)
+                alpha_grads, state.alpha_optimizer_state
+            )
             alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
             alpha = jnp.exp(alpha_params)
 
-            actor_l, actor_grads = self.actor_grad(state.policy_params,
-                                                   state.target_q_params,
-                                                   alpha,
-                                                   observations,
-                                                   key_actor)
+            actor_l, actor_grads = self.actor_grad(
+                state.policy_params,
+                state.target_q_params,
+                alpha,
+                observations,
+                key_actor,
+            )
 
             policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
-                actor_grads, state.policy_optimizer_state)
-            policy_params = optax.apply_updates(state.policy_params,
-                                                policy_params_update)
+                actor_grads, state.policy_optimizer_state
+            )
+            policy_params = optax.apply_updates(
+                state.policy_params, policy_params_update
+            )
 
-            critic_l, critic_grads = self.critic_grad(state.q_params,
-                                                      state.policy_params,
-                                                      state.target_q_params,
-                                                      alpha,
-                                                      observations,
-                                                      actions,
-                                                      new_observations,
-                                                      rewards,
-                                                      done,
-                                                      key_critic)
+            critic_l, critic_grads = self.critic_grad(
+                state.q_params,
+                state.policy_params,
+                state.target_q_params,
+                alpha,
+                observations,
+                actions,
+                new_observations,
+                rewards,
+                done,
+                key_critic,
+            )
 
             q_params_update, q_optimizer_state = self.q_optimizer.update(
-                critic_grads, state.q_optimizer_state)
+                critic_grads, state.q_optimizer_state
+            )
             q_params = optax.apply_updates(state.q_params, q_params_update)
 
             new_target_q_params = jax.tree_multimap(
                 lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
-                state.target_q_params, q_params)
+                state.target_q_params,
+                q_params,
+            )
 
             new_state = TrainingState(
                 policy_optimizer_state=policy_optimizer_state,
@@ -375,15 +400,15 @@ class SAC(Agent, ABC):
             key=local_key,
             steps=jnp.zeros((1,)),
             alpha_optimizer_state=self.alpha_optimizer_state,
-            alpha_params=self.log_alpha
+            alpha_params=self.log_alpha,
         )
 
     def value(self, observation, action):
         if torch.is_tensor(observation):
-            version = 'torch'
+            version = "torch"
         else:
-            version = 'numpy'
-        if version == 'numpy':
+            version = "numpy"
+        if version == "numpy":
             return self.q_value(
                 observation,
                 action,
@@ -405,19 +430,19 @@ class SAC(Agent, ABC):
         else:
             apply_func = self.select_action_probabilistic
         if torch.is_tensor(observation):
-            version = 'torch'
+            version = "torch"
         else:
-            version = 'numpy'
-        if version == 'numpy':
+            version = "numpy"
+        if version == "numpy":
             action = apply_func(
-                observation,
-                self.training_state.policy_params,
-                key_sample)
+                observation, self.training_state.policy_params, key_sample
+            )
         else:
             action = apply_func(
                 observation.detach().cpu().numpy(),
                 self.training_state.policy_params,
-                key_sample)
+                key_sample,
+            )
         if len(action.shape) == 1:
             return jnp.expand_dims(action, axis=0)
         else:
@@ -426,24 +451,25 @@ class SAC(Agent, ABC):
     def save(self, directory):
         os.makedirs(directory, exist_ok=True)
         for filename in self.training_state.__dict__.keys():
-            with open(os.path.join(directory, filename + '.joblib'), 'wb') as f_:
+            with open(os.path.join(directory, filename + ".joblib"), "wb") as f_:
                 joblib.dump(self.training_state.__dict__[filename], f_)
 
     def load(self, directory):
         load_all = {}
         for filename in self.training_state.__dict__.keys():
             load_all[filename] = jax.tree_util.tree_multimap(
-                jnp.array, joblib.load(os.path.join(directory, filename + '.joblib')))
+                jnp.array, joblib.load(os.path.join(directory, filename + ".joblib"))
+            )
         return TrainingState(
-            policy_optimizer_state=load_all['policy_optimizer_state'],
-            policy_params=load_all['policy_params'],
-            q_optimizer_state=load_all['q_optimizer_state'],
-            q_params=load_all['q_params'],
-            target_q_params=load_all['target_q_params'],
-            key=load_all['key'],
-            steps=load_all['steps'],
-            alpha_optimizer_state=load_all['alpha_optimizer_state'],
-            alpha_params=load_all['alpha_params'],
+            policy_optimizer_state=load_all["policy_optimizer_state"],
+            policy_params=load_all["policy_params"],
+            q_optimizer_state=load_all["q_optimizer_state"],
+            q_params=load_all["q_params"],
+            target_q_params=load_all["target_q_params"],
+            key=load_all["key"],
+            steps=load_all["steps"],
+            alpha_optimizer_state=load_all["alpha_optimizer_state"],
+            alpha_params=load_all["alpha_params"],
         )
 
     def write_config(self, output_file: str):
@@ -454,28 +480,23 @@ class SAC(Agent, ABC):
         self.train_on_batch(batch)
 
     def train_on_batch(self, batch):
-        if torch.is_tensor(batch['r']):
-            version = 'torch'
+        if torch.is_tensor(batch["r"]):
+            version = "torch"
         else:
-            version = 'numpy'
-        if version == 'numpy':
-            observations = jnp.array(batch['obs'])
-            actions = jnp.array(batch['actions'])
-            rewards = jnp.array(batch['r'])
-            new_observations = jnp.array(batch['obs_next'])
-            done = jnp.array(1.0 - batch['terminals'])
+            version = "numpy"
+        if version == "numpy":
+            observations = jnp.array(batch["obs"])
+            actions = jnp.array(batch["actions"])
+            rewards = jnp.array(batch["r"])
+            new_observations = jnp.array(batch["obs_next"])
+            done = jnp.array(1.0 - batch["terminals"])
         else:
-            observations = jnp.array(batch['obs'].detach().cpu().numpy())
-            actions = jnp.array(batch['actions'].detach().cpu().numpy())
-            rewards = jnp.array(batch['r'].detach().cpu().numpy())
-            new_observations = jnp.array(batch['obs_next'].detach().cpu().numpy())
-            done = jnp.array(1.0 - batch['terminals'].detach().cpu().numpy())
+            observations = jnp.array(batch["obs"].detach().cpu().numpy())
+            actions = jnp.array(batch["actions"].detach().cpu().numpy())
+            rewards = jnp.array(batch["r"].detach().cpu().numpy())
+            new_observations = jnp.array(batch["obs_next"].detach().cpu().numpy())
+            done = jnp.array(1.0 - batch["terminals"].detach().cpu().numpy())
 
         self.training_state = self.update_step(
-            self.training_state,
-            observations,
-            actions,
-            rewards,
-            new_observations,
-            done
+            self.training_state, observations, actions, rewards, new_observations, done
         )

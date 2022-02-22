@@ -9,8 +9,12 @@ from xpag.samplers.sampler import Sampler
 
 
 class HER(Sampler):
-    def __init__(self, compute_reward, replay_strategy: str = "future",
-                 datatype: DataType = DataType.TORCH):
+    def __init__(
+        self,
+        compute_reward,
+        replay_strategy: str = "future",
+        datatype: DataType = DataType.TORCH,
+    ):
         super().__init__(datatype)
         self.replay_strategy = replay_strategy
         self.replay_k = 4.0
@@ -39,12 +43,12 @@ class HER(Sampler):
         her_indexes = np.where(np.random.uniform(size=batch_size) < self.future_p)
 
         if self.datatype == DataType.TORCH:
-            future_offset = (torch.rand_like(t_max_episodes) * (
-                    t_max_episodes - t_samples
-            )).long()
+            future_offset = (
+                torch.rand_like(t_max_episodes) * (t_max_episodes - t_samples)
+            ).long()
         else:
             future_offset = np.random.uniform(size=batch_size) * (
-                    t_max_episodes - t_samples
+                t_max_episodes - t_samples
             )
             future_offset = future_offset.astype(int)
         future_t = (t_samples + future_offset)[her_indexes]
@@ -66,8 +70,9 @@ class HER(Sampler):
         }
         if self.datatype == DataType.TORCH:
             transitions["obs"] = torch.hstack((transitions["obs"], transitions["g"]))
-            transitions["obs_next"] = torch.hstack((transitions["obs_next"],
-                                                    transitions["g"]))
+            transitions["obs_next"] = torch.hstack(
+                (transitions["obs_next"], transitions["g"])
+            )
         else:
             transitions["obs"] = np.concatenate(
                 [transitions["obs"], transitions["g"]], axis=1
