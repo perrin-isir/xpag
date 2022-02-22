@@ -9,31 +9,37 @@ import numpy as np
 import gym
 import xpag
 from xpag.plotting.basics import plot_episode_2d
+from xpag.agents import SAC
+from xpag.samplers import DefaultSampler, HER
+from xpag.goalsetters import DefaultGoalSetter, SGS
+from xpag.tools.utils import debug
 
 # print(gym.envs.registry.all())
 
 gmaze_frame_skip = 2  # only used by gym-gmazes environments
 # gmaze_walls = []  # only used by gym-gmazes environments
 gmaze_walls = None  # only used by gym-gmazes environments
-env_name = 'HalfCheetah-v3'
+# env_name = 'HalfCheetah-v3'
 # env_name = 'brax-halfcheetah-v0'
-# env_name = 'GMazeGoalDubins-v0'
+env_name = 'GMazeGoalDubins-v0'
 num_envs = 3
-episode_max_length = 1000
-# episode_max_length = 70
-buffer_name = 'DefaultBuffer'
+# episode_max_length = 1000
+episode_max_length = 70
 buffer_size = 1e6
-sampler_name = 'DefaultSampler'
-goalenv_sampler_name = 'HER'  # only for environments with goals
-agent_name = 'SAC'
-goalsetter_name = 'DefaultGoalSetter'
-# goalsetter_name = 'SGS'
+# sampler_name = 'DefaultSampler'
+# goalenv_sampler_name = 'HER'  # only for environments with goals
+sampler_class = HER
+agent_class = SAC
+# goalsetter_name = 'DefaultGoalSetter'
+goalsetter_class = SGS
 seed = 0
+
+debug()
 
 agent, goalsetter, env, continue_after_done, replay_buffer, sampler, datatype, device\
     = xpag.tl.configure(env_name, num_envs, gmaze_frame_skip, gmaze_walls,
-                        episode_max_length, buffer_name, buffer_size, sampler_name,
-                        goalenv_sampler_name, agent_name, goalsetter_name, seed)
+                        episode_max_length, buffer_size, sampler_class,
+                        agent_class, goalsetter_class, seed)
 
 save_dir = os.path.join(os.path.expanduser("~"),
                         "results",
@@ -61,24 +67,24 @@ save_freq = 0
 #     ],
 #     [20, 20, 20]
 # )
-# goalsetter.set_sequence(
-#     [
-#         np.array([-0.75, -0.75]),
-#         np.array([-0.25, -0.75]),
-#         np.array([-0.25, 0.]),
-#         np.array([-0.25, 0.75]),
-#         np.array([0.25, 0.75]),
-#         np.array([0.25, 0.]),
-#         np.array([0.25, -0.75]),
-#         np.array([0.75, -0.75]),
-#         np.array([0.75, 0.0]),
-#         np.array([0.75, 0.75])
-#     ],
-#     # [20, 20, 20, 20, 20, 20, 20, 20]
-#     [20, 20, 20, 20, 20, 20, 20, 20, 20, 20]
-# )
+goalsetter.set_sequence(
+    [
+        np.array([-0.75, -0.75]),
+        np.array([-0.25, -0.75]),
+        np.array([-0.25, 0.]),
+        np.array([-0.25, 0.75]),
+        np.array([0.25, 0.75]),
+        np.array([0.25, 0.]),
+        np.array([0.25, -0.75]),
+        np.array([0.75, -0.75]),
+        np.array([0.75, 0.0]),
+        np.array([0.75, 0.75])
+    ],
+    # [20, 20, 20, 20, 20, 20, 20, 20]
+    [20, 20, 20, 20, 20, 20, 20, 20, 20, 20]
+)
 
 xpag.tl.learn(agent, goalsetter, env, continue_after_done, num_envs, episode_max_length,
               max_t, train_ratio, batch_size, start_random_t, eval_freq, eval_eps,
               save_freq, replay_buffer, sampler, datatype, device, save_dir=save_dir,
-              save_episode=True, plot_function=plot_episode)
+              save_episode=False, plot_function=plot_episode)

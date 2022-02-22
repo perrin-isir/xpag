@@ -67,22 +67,13 @@ class GMazeCommon:
     def __init__(
             self,
             device: str = 'cpu',
-            batch_size: int = 1,
-            frame_skip: int = 2,
-            walls=None,
-            reward_function=None,
-            success_function=None
+            batch_size: int = 1
     ):
         self.batch_size = batch_size
         self.device = device
         utils.EzPickle.__init__(**locals())
-        self.reward_function = (
-            reward_function  # the reward function is not defined by the environment
-        )
-        self.success_function = success_function
-        self.frame_skip = (
-            frame_skip  # a call to step() repeats the action frame_skip times
-        )
+        self.reward_function = None
+        self.frame_skip = 2
 
         # initial position + orientation
         self.init_qpos = torch.tensor(
@@ -90,15 +81,7 @@ class GMazeCommon:
         ).to(self.device)
         self.init_qvel = None  # velocities are not used
         self.state = self.init_qpos
-        if walls is None:
-            self.walls = [
-                ([0.5, -0.5], [0.5, 1.01]),
-                ([-0.5, -0.5], [-0.5, 1.01]),
-                ([0.0, -1.01], [0.0, 0.5]),
-            ]
-        else:
-            self.walls = walls
-
+        self.walls = None
         self._obs_dim = 3
         self._action_dim = 1
         self.num_steps = 0
@@ -107,6 +90,26 @@ class GMazeCommon:
         self.action_space = spaces.Box(
             low=low, high=high, dtype=np.float64
         )
+
+    def set_reward_function(self, reward_function):
+        self.reward_function = (
+            reward_function  # the reward function is not defined by the environment
+        )
+
+    def set_frame_skip(self, frame_skip: int = 2):
+        self.frame_skip = (
+            frame_skip  # a call to step() repeats the action frame_skip times
+        )
+
+    def set_walls(self, walls=None):
+        if walls is None:
+            self.walls = [
+                ([0.5, -0.5], [0.5, 1.01]),
+                ([-0.5, -0.5], [-0.5, 1.01]),
+                ([0.0, -1.01], [0.0, 0.5]),
+            ]
+        else:
+            self.walls = walls
 
     def plot(self, ax):
         lines = []
@@ -129,13 +132,14 @@ class GMazeDubins(GMazeCommon, gym.Env, utils.EzPickle, ABC):
     def __init__(
             self,
             device: str = 'cpu',
-            batch_size: int = 1,
-            frame_skip: int = 2,
-            walls=None,
-            reward_function=default_reward_fun,
+            batch_size: int = 1
     ):
         super().__init__(
-            device, batch_size, frame_skip, walls, reward_function)
+            device, batch_size)
+
+        self.set_frame_skip(2)
+        self.set_walls(None)
+        self.set_reward_function(default_reward_fun)
 
         high = np.tile(1.0 * np.ones(self._obs_dim), (self.batch_size, 1))
         low = -high
@@ -257,6 +261,7 @@ class GMazeGoalDubins(GMazeCommon, GoalEnv, utils.EzPickle, ABC):
             )
         )
         self.goal = None
+
         self.compute_reward = reward_function
         self._is_success = success_function
 
