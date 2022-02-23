@@ -50,7 +50,7 @@ class TD3(Agent, ABC):
         soft_target_tau=0.005,
     ):
         """
-        Jax implementation of SAC (https://arxiv.org/abs/1812.05905).
+        Jax implementation of TD3 (https://arxiv.org/abs/1802.09477).
         This version assumes that the actions are between -1 and 1 (for all
         dimensions).
         """
