@@ -1,14 +1,6 @@
 # Copyright 2022 Nicolas Perrin-Gilbert.
 #
 # Licensed under the BSD 3-Clause License.
-#
-# This file is an implementation of the SAC (Soft-Actor Critic) algorithm.
-# It is partially derived from the implementation of SAC in brax
-# [https://github.com/google/brax/blob/main/brax/training/sac.py]
-# which contains the following copyright notice:
-#
-# Copyright 2022 The Brax Authors.
-# Licensed under the Apache License, Version 2.0.
 
 from abc import ABC
 from typing import Any, Tuple, Sequence, Callable
