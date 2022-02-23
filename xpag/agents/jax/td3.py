@@ -42,13 +42,10 @@ class TrainingState:
     q_optimizer_state: optax.OptState
     q_params: Params
     target_q_params: Params
-    key: PRNGKey
     steps: jnp.ndarray
-    alpha_optimizer_state: optax.OptState
-    alpha_params: Params
 
 
-class SAC(Agent, ABC):
+class TD3(Agent, ABC):
     def __init__(
         self,
         observation_dim,
@@ -58,11 +55,12 @@ class SAC(Agent, ABC):
         reward_scale=1.0,
         policy_lr=1e-3,
         critic_lr=1e-3,
-        alpha_lr=3e-4,
         soft_target_tau=0.005,
     ):
         """
         Jax implementation of SAC (https://arxiv.org/abs/1812.05905).
+        This version assumes that the actions are between -1 and 1 (for all
+        dimensions).
         """
 
         class CustomMLP(linen.Module):
@@ -118,7 +116,7 @@ class SAC(Agent, ABC):
             mval = 1e-3
             return jax.random.uniform(key_, shape, dtype, -mval, mval)
 
-        def make_sac_networks(
+        def make_td3_networks(
             param_size: int,
             obs_size: int,
             action_size: int,
@@ -185,13 +183,9 @@ class SAC(Agent, ABC):
             jax.random.PRNGKey(start_seed), 3
         )
 
-        self.policy_model, self.value_model = make_sac_networks(
-            2 * action_dim, observation_dim, action_dim
+        self.policy_model, self.value_model = make_td3_networks(
+            action_dim, observation_dim, action_dim
         )
-
-        self.log_alpha = jnp.asarray(0.0, dtype=jnp.float32)
-        self.alpha_optimizer = optax.adam(learning_rate=alpha_lr)
-        self.alpha_optimizer_state = self.alpha_optimizer.init(self.log_alpha)
 
         self.policy_optimizer = optax.adam(learning_rate=1.0 * policy_lr)
         self.q_optimizer = optax.adam(learning_rate=1.0 * critic_lr)
@@ -202,95 +196,37 @@ class SAC(Agent, ABC):
         self.q_params = self.value_model.init(key_q)
         self.q_optimizer_state = self.q_optimizer.init(self.q_params)
 
-        class NormalDistribution:
-            def __init__(self, loc, scale):
-                self.loc = loc
-                self.scale = scale
-
-            def sample(self, seed):
-                return (
-                    jax.random.normal(seed, shape=self.loc.shape) * self.scale
-                    + self.loc
-                )
-
-        def create_dist(logits):
-            loc, log_scale = jnp.split(logits, 2, axis=-1)
-            log_sig_max = 2.0
-            log_sig_min = -20.0
-            log_scale_clip = jnp.clip(log_scale, log_sig_min, log_sig_max)
-            scale = jnp.exp(log_scale_clip)
-            dist = NormalDistribution(loc=loc, scale=scale)
-            return dist
-
-        def sample_no_postprocessing(logits, seed_):
-            return create_dist(logits).sample(seed=seed_)
-
         def postprocess(x):
             return jnp.tanh(x)
 
-        def dist_log_prob(logits, pre_tanh_action):
-            action = jnp.tanh(pre_tanh_action)
-            loc, log_scale = jnp.split(logits, 2, axis=-1)
-            log_sig_max = 2.0
-            log_sig_min = -20.0
-            epsilon = 1e-6
-            log_scale_clip = jnp.clip(log_scale, log_sig_min, log_sig_max)
-            scale = jnp.exp(log_scale_clip)
-            var = scale ** 2
-            normal_log_prob = (
-                -((pre_tanh_action - loc) ** 2) / (2 * var)
-                - log_scale
-                - jnp.log(jnp.sqrt(2 * jnp.pi))
-            )
-            log_prob = normal_log_prob - jnp.log(1 - action * action + epsilon)
-            return jnp.sum(log_prob, axis=-1)
-
-        self.sample_no_postprocessing = sample_no_postprocessing
         self.postprocess = postprocess
-        self.dist_log_prob = dist_log_prob
-        target_entropy = -1.0 * action_dim
-
-        def alpha_loss(log_alpha: jnp.ndarray, log_pi: jnp.ndarray) -> jnp.ndarray:
-            alpha_l = log_alpha * jax.lax.stop_gradient(-log_pi - target_entropy)
-            return jnp.mean(alpha_l)
 
         def actor_loss(
-            policy_params: Params,
-            q_params: Params,
-            alpha: jnp.ndarray,
-            observations,
-            key_,
+            policy_params: Params, q_params: Params, observations
         ) -> jnp.ndarray:
-            dist_params = self.policy_model.apply(policy_params, observations)
-            p_actions = self.sample_no_postprocessing(dist_params, key_)
-            log_p = self.dist_log_prob(dist_params, p_actions)
+            p_actions = self.policy_model.apply(policy_params, observations)
             p_actions = self.postprocess(p_actions)
             q_action = self.value_model.apply(q_params, observations, p_actions)
             min_q = jnp.min(q_action, axis=-1)
-            actor_l = alpha * log_p - min_q
-            return jnp.mean(actor_l)
+            return -0.5 * jnp.mean(min_q)
 
         def critic_loss(
             q_params: Params,
             policy_params: Params,
             target_q_params: Params,
-            alpha: jnp.ndarray,
             observations,
             actions,
             new_observations,
             rewards,
             done,
-            key_,
         ) -> jnp.ndarray:
-            next_dist_params = self.policy_model.apply(policy_params, new_observations)
-            next_pre_actions = self.sample_no_postprocessing(next_dist_params, key_)
-            new_log_pi = self.dist_log_prob(next_dist_params, next_pre_actions)
+            next_pre_actions = self.policy_model.apply(policy_params, new_observations)
             new_next_actions = self.postprocess(next_pre_actions)
             q_old_action = self.value_model.apply(q_params, observations, actions)
             next_q = self.value_model.apply(
                 target_q_params, new_observations, new_next_actions
             )
-            next_v = jnp.min(next_q, axis=-1) - alpha * new_log_pi
+            next_v = jnp.min(next_q, axis=-1)
             target_q = jax.lax.stop_gradient(
                 rewards * self.reward_scale
                 + done * discount * jnp.expand_dims(next_v, -1)
@@ -299,7 +235,6 @@ class SAC(Agent, ABC):
             q_loss = 2.0 * jnp.mean(jnp.square(q_error))
             return q_loss
 
-        self.alpha_grad = jax.value_and_grad(alpha_loss)
         self.critic_grad = jax.value_and_grad(critic_loss)
         self.actor_grad = jax.value_and_grad(actor_loss)
 
@@ -307,30 +242,14 @@ class SAC(Agent, ABC):
             state: TrainingState, observations, actions, rewards, new_observations, done
         ) -> TrainingState:
 
-            key, key_alpha, key_critic, key_actor = jax.random.split(state.key, 4)
-
-            dist_params = self.policy_model.apply(state.policy_params, observations)
-            pre_actions = self.sample_no_postprocessing(dist_params, key_alpha)
-            log_pi = self.dist_log_prob(dist_params, pre_actions)
-
-            alpha_l, alpha_grads = self.alpha_grad(state.alpha_params, log_pi)
-            alpha_params_update, alpha_optimizer_state = self.alpha_optimizer.update(
-                alpha_grads, state.alpha_optimizer_state
-            )
-            alpha_params = optax.apply_updates(state.alpha_params, alpha_params_update)
-            alpha = jnp.exp(alpha_params)
-
             actor_l, actor_grads = self.actor_grad(
-                state.policy_params,
-                state.target_q_params,
-                alpha,
-                observations,
-                key_actor,
+                state.policy_params, state.target_q_params, observations
             )
 
             policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
                 actor_grads, state.policy_optimizer_state
             )
+
             policy_params = optax.apply_updates(
                 state.policy_params, policy_params_update
             )
@@ -339,13 +258,11 @@ class SAC(Agent, ABC):
                 state.q_params,
                 state.policy_params,
                 state.target_q_params,
-                alpha,
                 observations,
                 actions,
                 new_observations,
                 rewards,
                 done,
-                key_critic,
             )
 
             q_params_update, q_optimizer_state = self.q_optimizer.update(
@@ -365,10 +282,7 @@ class SAC(Agent, ABC):
                 q_optimizer_state=q_optimizer_state,
                 q_params=q_params,
                 target_q_params=new_target_q_params,
-                key=key,
                 steps=state.steps + 1,
-                alpha_optimizer_state=alpha_optimizer_state,
-                alpha_params=alpha_params,
             )
 
             return new_state
@@ -376,14 +290,19 @@ class SAC(Agent, ABC):
         self.update_step = jax.jit(update_step)
 
         def select_action_probabilistic(observation, policy_params, key_):
-            logits = self.policy_model.apply(policy_params, observation)
-            actions = self.sample_no_postprocessing(logits, key_)
-            return self.postprocess(actions)
+            pre_action = self.policy_model.apply(policy_params, observation)
+            pre_action = self.postprocess(pre_action)
+            expl_noise = 0.1
+            return jnp.clip(
+                pre_action
+                + expl_noise * jax.random.normal(key_, shape=pre_action.shape),
+                -1.0,
+                1.0,
+            )
 
         def select_action_deterministic(observation, policy_params, key_=None):
-            logits = self.policy_model.apply(policy_params, observation)
-            loc, _ = jnp.split(logits, 2, axis=-1)
-            return self.postprocess(loc)
+            pre_action = self.policy_model.apply(policy_params, observation)
+            return self.postprocess(pre_action)
 
         self.select_action_probabilistic = jax.jit(select_action_probabilistic)
         self.select_action_deterministic = jax.jit(select_action_deterministic)
@@ -401,10 +320,7 @@ class SAC(Agent, ABC):
             q_optimizer_state=self.q_optimizer_state,
             q_params=self.q_params,
             target_q_params=self.q_params,
-            key=local_key,
             steps=jnp.zeros((1,)),
-            alpha_optimizer_state=self.alpha_optimizer_state,
-            alpha_params=self.log_alpha,
         )
 
     def value(self, observation, action):
@@ -470,10 +386,7 @@ class SAC(Agent, ABC):
             q_optimizer_state=load_all["q_optimizer_state"],
             q_params=load_all["q_params"],
             target_q_params=load_all["target_q_params"],
-            key=load_all["key"],
             steps=load_all["steps"],
-            alpha_optimizer_state=load_all["alpha_optimizer_state"],
-            alpha_params=load_all["alpha_params"],
         )
 
     def write_config(self, output_file: str):
