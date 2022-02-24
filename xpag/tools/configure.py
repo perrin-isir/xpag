@@ -69,11 +69,8 @@ def configure(
         continue_after_done_ = True
     else:
         # mujoco environment
-        if num_envs_ > 1:
-            env_ = gym.vector.make(env_name_, num_envs=num_envs_)
-            env_.spec = gym.envs.registration.EnvSpec(env_name_)
-        else:
-            env_ = gym.make(env_name_)
+        env_ = gym.vector.make(env_name_, num_envs=num_envs_)
+        env_.spec = gym.envs.registration.EnvSpec(env_name_)
         datatype_ = DataType.NUMPY
 
     backend = jax.lib.xla_bridge.get_backend().platform
