@@ -46,10 +46,10 @@ class TD3(Agent, ABC):
         action_dim,
         params=None,
         discount=0.99,
-        reward_scale=1.0,
-        policy_lr=1e-3,
-        critic_lr=1e-3,
-        soft_target_tau=0.0025,
+        reward_scale=10.0,
+        policy_lr=3e-4,
+        critic_lr=3e-4,
+        soft_target_tau=0.005,
     ):
         """
         Jax implementation of TD3 (https://arxiv.org/abs/1802.09477).
@@ -202,7 +202,7 @@ class TD3(Agent, ABC):
             p_actions = self.postprocess(p_actions)
             q_action = self.value_model.apply(q_params, observations, p_actions)
             min_q = jnp.min(q_action, axis=-1)
-            return -0.5 * jnp.mean(min_q)
+            return -jnp.mean(min_q)
 
         def critic_loss(
             q_params: Params,
