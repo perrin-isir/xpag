@@ -31,9 +31,11 @@ class TrainingState:
 
     policy_optimizer_state: optax.OptState
     policy_params: Params
+    target_policy_params: Params
     q_optimizer_state: optax.OptState
     q_params: Params
     target_q_params: Params
+    key: PRNGKey
     steps: jnp.ndarray
 
 
@@ -47,7 +49,7 @@ class TD3(Agent, ABC):
         reward_scale=1.0,
         policy_lr=1e-3,
         critic_lr=1e-3,
-        soft_target_tau=0.005,
+        soft_target_tau=0.0025,
     ):
         """
         Jax implementation of TD3 (https://arxiv.org/abs/1802.09477).
@@ -204,16 +206,33 @@ class TD3(Agent, ABC):
 
         def critic_loss(
             q_params: Params,
-            policy_params: Params,
+            target_policy_params: Params,
             target_q_params: Params,
             observations,
             actions,
             new_observations,
             rewards,
             done,
+            key_,
         ) -> jnp.ndarray:
-            next_pre_actions = self.policy_model.apply(policy_params, new_observations)
+            next_pre_actions = self.policy_model.apply(
+                target_policy_params, new_observations
+            )
             new_next_actions = self.postprocess(next_pre_actions)
+            policy_noise = 0.2
+            noise_clip = 0.5
+            new_next_actions = jnp.clip(
+                new_next_actions
+                + jnp.clip(
+                    policy_noise
+                    * jax.random.normal(key_, shape=new_next_actions.shape),
+                    -noise_clip,
+                    noise_clip,
+                ),
+                -1.0,
+                1.0,
+            )
+
             q_old_action = self.value_model.apply(q_params, observations, actions)
             next_q = self.value_model.apply(
                 target_q_params, new_observations, new_next_actions
@@ -234,6 +253,8 @@ class TD3(Agent, ABC):
             state: TrainingState, observations, actions, rewards, new_observations, done
         ) -> TrainingState:
 
+            key, key_critic = jax.random.split(state.key, 2)
+
             actor_l, actor_grads = self.actor_grad(
                 state.policy_params, state.target_q_params, observations
             )
@@ -248,13 +269,14 @@ class TD3(Agent, ABC):
 
             critic_l, critic_grads = self.critic_grad(
                 state.q_params,
-                state.policy_params,
+                state.target_policy_params,
                 state.target_q_params,
                 observations,
                 actions,
                 new_observations,
                 rewards,
                 done,
+                key_critic,
             )
 
             q_params_update, q_optimizer_state = self.q_optimizer.update(
@@ -268,12 +290,20 @@ class TD3(Agent, ABC):
                 q_params,
             )
 
+            new_target_policy_params = jax.tree_multimap(
+                lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
+                state.target_policy_params,
+                policy_params,
+            )
+
             new_state = TrainingState(
                 policy_optimizer_state=policy_optimizer_state,
                 policy_params=policy_params,
+                target_policy_params=new_target_policy_params,
                 q_optimizer_state=q_optimizer_state,
                 q_params=q_params,
                 target_q_params=new_target_q_params,
+                key=key,
                 steps=state.steps + 1,
             )
 
@@ -309,9 +339,11 @@ class TD3(Agent, ABC):
         self.training_state = TrainingState(
             policy_optimizer_state=self.policy_optimizer_state,
             policy_params=self.policy_params,
+            target_policy_params=self.policy_params,
             q_optimizer_state=self.q_optimizer_state,
             q_params=self.q_params,
             target_q_params=self.q_params,
+            key=local_key,
             steps=jnp.zeros((1,)),
         )
 
@@ -324,15 +356,15 @@ class TD3(Agent, ABC):
             return self.q_value(
                 observation,
                 action,
-                self.training_state.target_q_params
-                # self.training_state.q_params
+                # self.training_state.target_q_params
+                self.training_state.q_params,
             )
         else:
             return self.q_value(
                 observation.detach().cpu().numpy(),
                 action.detach().cpu().numpy(),
-                self.training_state.target_q_params
-                # self.training_state.q_params
+                # self.training_state.target_q_params
+                self.training_state.q_params,
             )
 
     def select_action(self, observation, deterministic=True):
@@ -375,9 +407,11 @@ class TD3(Agent, ABC):
         return TrainingState(
             policy_optimizer_state=load_all["policy_optimizer_state"],
             policy_params=load_all["policy_params"],
+            target_policy_params=load_all["target_policy_params"],
             q_optimizer_state=load_all["q_optimizer_state"],
             q_params=load_all["q_params"],
             target_q_params=load_all["target_q_params"],
+            key=load_all["key"],
             steps=load_all["steps"],
         )
 
