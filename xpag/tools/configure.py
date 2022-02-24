@@ -4,6 +4,7 @@
 
 import numpy as np
 import torch
+import jax
 import gym
 import gym_gmazes
 import functools
@@ -24,6 +25,7 @@ def configure(
     sampler_class_,
     agent_class_,
     goalsetter_class_,
+    device_: str = "cpu",
     seed_=None,
 ):
     if seed_ is not None:
@@ -34,7 +36,6 @@ def configure(
 
     if env_name_.startswith("brax-"):
         # brax environment
-        device_ = "cuda" if torch.cuda.is_available() else "cpu"
         # torch allocation on device first, to prevent JAX from swallowing up all the
         # GPU memory. By default JAX will pre-allocate 90% of the available GPU memory:
         # https://jax.readthedocs.io/en/latest/gpu_memory_allocation.html
@@ -44,7 +45,16 @@ def configure(
         env_true_name = re.sub("-v.$", "", env_name_).removeprefix("brax-")
         gym_name = env_name_
         if gym_name not in gym.envs.registry.env_specs:
-            entry_point = functools.partial(envs.create_gym_env, env_name=env_true_name)
+            entry_point = functools.partial(
+                envs.create_gym_env,
+                env_name=env_true_name,
+                backend="gpu"
+                if (
+                    device_ == "cuda"
+                    and jax.lib.xla_bridge.get_backend().platform == "gpu"
+                )
+                else "cpu",
+            )
             gym.register(gym_name, entry_point=entry_point)
         env_ = gym.make(
             gym_name, batch_size=num_envs_, episode_length=episode_max_length_
@@ -54,7 +64,6 @@ def configure(
         datatype_ = DataType.TORCH
     elif env_name_.startswith("GMaze"):
         # GMaze environment
-        device_ = "cuda" if torch.cuda.is_available() else "cpu"
         env_ = gym.make(env_name_, device=device_, batch_size=num_envs_)
         datatype_ = DataType.TORCH
         continue_after_done_ = True
@@ -66,9 +75,9 @@ def configure(
         else:
             env_ = gym.make(env_name_)
         datatype_ = DataType.NUMPY
-        device_ = "cpu"
 
-    agent_params = {}
+    backend = jax.lib.xla_bridge.get_backend().platform
+    agent_params = {"backend": backend}
     goalsetter_params = {}
     # Set seeds
     if seed_ is not None:
@@ -115,5 +124,4 @@ def configure(
         replay_buffer_,
         sampler_,
         datatype_,
-        device_,
     )

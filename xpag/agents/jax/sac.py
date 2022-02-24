@@ -65,6 +65,11 @@ class SAC(Agent, ABC):
         Jax implementation of SAC (https://arxiv.org/abs/1812.05905).
         """
 
+        if "backend" in params:
+            self.backend = params["backend"]
+        else:
+            self.backend = "cpu"
+
         class CustomMLP(linen.Module):
             """MLP module."""
 
@@ -373,7 +378,7 @@ class SAC(Agent, ABC):
 
             return new_state
 
-        self.update_step = jax.jit(update_step)
+        self.update_step = jax.jit(update_step, backend=self.backend)
 
         def select_action_probabilistic(observation, policy_params, key_):
             logits = self.policy_model.apply(policy_params, observation)
@@ -385,15 +390,19 @@ class SAC(Agent, ABC):
             loc, _ = jnp.split(logits, 2, axis=-1)
             return self.postprocess(loc)
 
-        self.select_action_probabilistic = jax.jit(select_action_probabilistic)
-        self.select_action_deterministic = jax.jit(select_action_deterministic)
+        self.select_action_probabilistic = jax.jit(
+            select_action_probabilistic, backend=self.backend
+        )
+        self.select_action_deterministic = jax.jit(
+            select_action_deterministic, backend=self.backend
+        )
 
         def q_value(observation, action, q_params):
             q_action = self.value_model.apply(q_params, observation, action)
             min_q = jnp.min(q_action, axis=-1)
             return min_q
 
-        self.q_value = jax.jit(q_value)
+        self.q_value = jax.jit(q_value, backend=self.backend)
 
         self.training_state = TrainingState(
             policy_optimizer_state=self.policy_optimizer_state,
