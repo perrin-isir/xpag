@@ -5,9 +5,22 @@
 
 <details><summary>Option 1 (pip)</summary>
 <p>
-```
-pip install git+https://github.com/perrin-isir/xpag#egg=xpag
-```
+
+    ```bash
+    pip install git+https://github.com/perrin-isir/xpag#egg=xpag
+    ```
+</p>
+</details>
+
+<details><summary>CLICK ME</summary>
+<p>
+
+#### We can hide anything, even code!
+
+    ```ruby
+      puts "Hello World"
+    ```
+
 </p>
 </details>
 
