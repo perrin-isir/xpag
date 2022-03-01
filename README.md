@@ -1,4 +1,4 @@
-# xpag
+# *xpag*
 *xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning platform, currently in beta version.
 
 ## Installation
