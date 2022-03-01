@@ -6,15 +6,12 @@ import numpy as np
 import torch
 import jax
 import gym
-import gym_gmazes
 import functools
 from brax import envs
 from brax.envs import to_torch
 from xpag.tools.utils import DataType
 from xpag.tools.learn import check_goalenv, get_dimensions, default_replay_buffer
 import re
-
-assert gym_gmazes
 
 
 def configure(
