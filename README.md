@@ -48,6 +48,8 @@ To install JAX, follow these guidelines:
 *Remark:* to verify that the installation went well, check the backend used by JAX
 with the following command (in a python console and with `jax` imported and configured):
 
-    print(jax.lib.xla_bridge.get_backend().platform)
+```python
+print(jax.lib.xla_bridge.get_backend().platform)
+```
 
 It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
