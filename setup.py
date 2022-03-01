@@ -14,6 +14,7 @@ setup(
             "xpag",
             "xpag.*",
             "xpag.agents.*",
+            "xpag.agents.jax.*",
             "xpag.buffers.*",
             "xpag.goalsetters.*",
             "xpag.plotting.*",
