@@ -3,23 +3,36 @@
 
 ## Installation
 
-<details><summary>Option 1 (pip)</summary>
+<details><summary>Option 1: pip</summary>
 <p>
 
-    ```bash
     pip install git+https://github.com/perrin-isir/xpag#egg=xpag
-    ```
+
 </p>
 </details>
 
-<details><summary>CLICK ME</summary>
+<details><summary>Option 2: conda</summary>
 <p>
 
-#### We can hide anything, even code!
+    git clone https://github.com/perrin-isir/xpag.git
+    cd xpag
 
-    ```ruby
-      puts "Hello World"
-    ```
+Choose a conda environmnent name, for instance `xpagenv`.  
+The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](environment.yaml):
+
+    conda env create --name xpagenv --file environment.yaml
+
+If you prefer to update an existing environment (`existing_env`):
+
+    conda env update --name existing_env --file environment.yml
+
+To activate the `xpagenv` environment:
+
+    conda activate xpagenv
+
+Finally, to install the *xpag* library in the activated virtual environment:
+
+    pip install -e .
 
 </p>
 </details>
