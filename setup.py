@@ -10,7 +10,6 @@ setup(
     url="https://github.com/perrin-isir/xpag",
     packages=find_packages(
         include=[
-            "envs.gym-gmazes",
             "xpag",
             "xpag.*",
             "xpag.agents.*",
@@ -31,6 +30,7 @@ setup(
         "torch>=1.10.1",
         "mujoco_py>=2.1.2.14",
         "IPython>=8.0.1",
+        "-e envs/gym-gmazes",
     ],
     license="LICENSE",
 )
