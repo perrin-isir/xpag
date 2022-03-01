@@ -8,7 +8,19 @@ setup(
     author="Nicolas Perrin-Gilbert",
     description="xpag: Exploring Agents",
     url="https://github.com/perrin-isir/xpag",
-    packages=find_packages(include=["xpag", "xpag.*", "envs.gym-gmazes"]),
+    packages=find_packages(
+        include=[
+            "xpag",
+            "xpag.*",
+            "xpag.agents.*",
+            "xpag.buffers.*",
+            "xpag.goalsetters.*",
+            "xpag.plotting.*",
+            "xpag.samplers.*",
+            "xpag.tools.*",
+            "envs.gym-gmazes",
+        ]
+    ),
     install_requires=[
         "psutil>=5.8.0",
         "numpy>=1.21.5",
