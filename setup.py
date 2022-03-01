@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # Install with 'pip install -e .'
 
@@ -8,6 +8,16 @@ setup(
     author="Nicolas Perrin-Gilbert",
     description="xpag: Exploring Agents",
     url="https://github.com/perrin-isir/xpag",
-    packages=["xpag"],
+    packages=find_packages(include=["xpag", "xpag.*", "envs.gym-gmazes"]),
+    install_requires=[
+        "psutil>=5.8.0",
+        "numpy>=1.21.5",
+        "matplotlib>=3.5.1",
+        "joblib>=1.1.0",
+        "gym>=0.22.0",
+        "torch>=1.10.1",
+        "mujoco_py>=2.1.2.14",
+        "IPython>=8.0.1",
+    ],
     license="LICENSE",
 )
