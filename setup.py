@@ -21,7 +21,8 @@ setup(
             "xpag.tools.*",
             "envs",
             "envs.*",
-            "envs.gym-gmazes.*" "envs.gym-gmazes.gym_gmazes.*",
+            "envs.gym-gmazes.*",
+            "envs.gym-gmazes.gym_gmazes.*",
         ]
     ),
     install_requires=[
