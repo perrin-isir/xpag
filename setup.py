@@ -16,7 +16,7 @@ setup(
         "joblib>=1.1.0",
         "gym>=0.22.0",
         "torch>=1.10.1",
-        "IPython>=8.0.1",
+        "IPython>=7.32.0",
     ],
     license="LICENSE",
 )
