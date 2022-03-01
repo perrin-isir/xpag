@@ -37,50 +37,17 @@ Finally, to install the *xpag* library in the activated virtual environment:
 </p>
 </details>
 
-Recommended installation steps (with conda): 
-```
-git clone https://github.com/perrin-isir/xpag.git
-cd xpag
-```
-Choose a conda environmnent name, for instance `xpagenv`.  
-The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](environment.yaml):
-```
-conda env create --name xpagenv --file environment.yaml
-```
-If you prefer to update an existing environment (`existing_env`), use the command:
-```
-conda env update --name existing_env --file environment.yml
-```
-To activate the `xpagenv` environment:
-```
-conda activate xpagenv
-```
-Use the following command to install the *xpag* library in the activated virtual environment:
-```
-pip install -e .
-```
+#### JAX installation
 
-Two more steps:
-* You need to properly install `jax` and `brax` in the xpagenv environment.  
-Follow these guidelines:  
+The *xpag* agents are written in JAX, which is not automatically installed as a dependency.
+
+
+To install JAX, follow these guidelines:  
 [https://github.com/google/jax#Installation](https://github.com/google/jax#Installation)  
-[https://github.com/google/brax#readme](https://github.com/google/brax#readme)  
-If you have installed `jax` on GPU and want to verify that it is working, try (in a python console):
-```python
-import jax
-print(jax.lib.xla_bridge.get_backend().platform)
-```
-It will print "cpu" or "gpu" depending on the platform that jax is using.
 
-* *xpag* also uses `mujoco_py`, which requires mujoco.  
-You can download it here: [https://mujoco.org/download](https://mujoco.org/download).
-`mujoco_py` may require mujoco to be put in a specific folder, for instance
-`~/.mujoco/mujoco210/`, with the following line added to your `~/.bashrc`:
-```
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin
-```
-To test mujoco, run (from the mujoco folder):
-```
-./bin/testspeed ./model/humanoid.xml 2000
-```
-Remark: on Ubuntu, `mujoco_py` may also require the installation of `libglew-dev` and `patchelf`.
+*Remark:* to verify that the installation went well, check the backend used by JAX
+with the following command (in a python console and with `jax` imported and configured):
+
+    print(jax.lib.xla_bridge.get_backend().platform)
+
+It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
