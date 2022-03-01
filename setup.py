@@ -3,26 +3,6 @@ from setuptools import setup, find_packages
 # Install with 'pip install -e .'
 
 setup(
-    name="gym_gmazes",
-    version="0.1.0",
-    author="Nicolas Perrin-Gilbert",
-    description="gym maze environments",
-    url="https://github.com/perrin-isir/xpag/tree/main/envs/gym-gmazes",
-    packages=find_packages(
-        include=[
-            "envs.gym-gmazes",
-            "envs.gym-gmazes.*",
-            "envs.gym-gmazes.env.*",
-        ]
-    ),
-    install_requires=[
-        "gym>=0.22.0",
-        "torch>=1.10.1",
-    ],
-    license="LICENSE",
-)
-
-setup(
     name="xpag",
     version="0.1.0",
     author="Nicolas Perrin-Gilbert",
@@ -60,19 +40,20 @@ setup(
     author="Nicolas Perrin-Gilbert",
     description="xpag: Exploring Agents",
     url="https://github.com/perrin-isir/xpag",
-    packages=find_packages(
-        include=[
-            "xpag",
-            "xpag.*",
-            "xpag.agents.*",
-            "xpag.agents.jax.*",
-            "xpag.buffers.*",
-            "xpag.goalsetters.*",
-            "xpag.plotting.*",
-            "xpag.samplers.*",
-            "xpag.tools.*",
-        ]
-    ),
+    # packages=find_packages(
+    #     include=[
+    #         "xpag",
+    #         "xpag.*",
+    #         "xpag.agents.*",
+    #         "xpag.agents.jax.*",
+    #         "xpag.buffers.*",
+    #         "xpag.goalsetters.*",
+    #         "xpag.plotting.*",
+    #         "xpag.samplers.*",
+    #         "xpag.tools.*",
+    #     ]
+    # ),
+    packages=find_packages(),
     install_requires=[
         "psutil>=5.8.0",
         "numpy>=1.21.5",
