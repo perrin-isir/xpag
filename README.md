@@ -3,6 +3,14 @@
 
 ## Installation
 
+<details><summary>Option 1 (pip)</summary>
+<p>
+```
+pip install git+https://github.com/perrin-isir/xpag#egg=xpag
+```
+</p>
+</details>
+
 Recommended installation steps (with conda): 
 ```
 git clone https://github.com/perrin-isir/xpag.git

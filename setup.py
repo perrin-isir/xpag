@@ -19,10 +19,6 @@ setup(
             "xpag.plotting.*",
             "xpag.samplers.*",
             "xpag.tools.*",
-            "envs",
-            "envs.*",
-            "envs.gym-gmazes.*",
-            "envs.gym-gmazes.gym_gmazes.*",
         ]
     ),
     install_requires=[
@@ -32,7 +28,6 @@ setup(
         "joblib>=1.1.0",
         "gym>=0.22.0",
         "torch>=1.10.1",
-        "mujoco_py>=2.1.2.14",
         "IPython>=8.0.1",
     ],
     license="LICENSE",
