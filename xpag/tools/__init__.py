@@ -7,7 +7,6 @@ from xpag.tools.utils import (
     max_func,
     datatype_convert,
     register_step_in_episode,
-    debug,
 )
 from xpag.tools.learn import (
     learn,
