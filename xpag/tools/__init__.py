@@ -1,4 +1,4 @@
-from .utils import (
+from xpag.tools.utils import (
     DataType,
     define_step_data,
     step_data_select,
@@ -9,12 +9,12 @@ from .utils import (
     register_step_in_episode,
     debug,
 )
-from .learn import (
+from xpag.tools.learn import (
     learn,
     SaveEpisode,
     default_replay_buffer,
     check_goalenv,
     get_dimensions,
 )
-from .timing import timing
-from .configure import configure
+from xpag.tools.timing import timing
+from xpag.tools.configure import configure

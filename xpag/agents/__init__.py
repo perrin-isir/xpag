@@ -1,5 +1,5 @@
-from .agent import (
+from xpag.agents.agent import (
     Agent,
 )
-from .jax.sac import SAC
-from .jax.td3 import TD3
+from xpag.agents.jax.sac import SAC
+from xpag.agents.jax.td3 import TD3

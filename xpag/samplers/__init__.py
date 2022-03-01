@@ -1,5 +1,5 @@
-from .sampler import (
+from xpag.samplers.sampler import (
     Sampler,
     DefaultSampler,
 )
-from .HER import HER
+from xpag.samplers.HER import HER

@@ -1,9 +1,9 @@
-from . import tools as tl
-from . import plotting as pl
-from . import samplers as sa
-from . import buffers as bf
-from . import agents as ag
-from . import goalsetters as gs
+from xpag import tools as tl
+from xpag import plotting as pl
+from xpag import samplers as sa
+from xpag import buffers as bf
+from xpag import agents as ag
+from xpag import goalsetters as gs
 
 import sys
 
