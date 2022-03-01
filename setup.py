@@ -15,7 +15,7 @@ setup(
         "matplotlib>=3.5.1",
         "joblib>=1.1.0",
         "gym>=0.22.0",
-        "torch>=1.10.1",
+        "torch>=1.10.0",
     ],
     license="LICENSE",
 )
