@@ -6,7 +6,7 @@
 <details><summary>Option 1: pip</summary>
 <p>
 
-    pip install git+https://github.com/perrin-isir/xpag#egg=xpag
+    pip install git+https://github.com/perrin-isir/xpag
 
 </p>
 </details>

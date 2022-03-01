@@ -8,19 +8,6 @@ setup(
     author="Nicolas Perrin-Gilbert",
     description="xpag: Exploring Agents",
     url="https://github.com/perrin-isir/xpag",
-    # packages=find_packages(
-    #     include=[
-    #         "xpag",
-    #         "xpag.*",
-    #         "xpag.agents.*",
-    #         "xpag.agents.jax.*",
-    #         "xpag.buffers.*",
-    #         "xpag.goalsetters.*",
-    #         "xpag.plotting.*",
-    #         "xpag.samplers.*",
-    #         "xpag.tools.*",
-    #     ]
-    # ),
     packages=find_packages(),
     install_requires=[
         "psutil>=5.8.0",
