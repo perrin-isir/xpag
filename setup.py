@@ -10,6 +10,7 @@ setup(
     url="https://github.com/perrin-isir/xpag",
     packages=find_packages(
         include=[
+            "envs.gym-gmazes",
             "xpag",
             "xpag.*",
             "xpag.agents.*",
@@ -18,7 +19,6 @@ setup(
             "xpag.plotting.*",
             "xpag.samplers.*",
             "xpag.tools.*",
-            "envs.gym-gmazes",
         ]
     ),
     install_requires=[
