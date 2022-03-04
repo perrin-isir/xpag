@@ -14,6 +14,15 @@ from xpag.tools.learn import check_goalenv, get_dimensions, default_replay_buffe
 import re
 
 
+def removeprefix(input_string, prefix):
+    """
+    in Python 3.9+, .removeprefix() exists by default and can be used on strings
+    """
+    if prefix and input_string.startswith(prefix):
+        return input_string[len(prefix) :]
+    return input_string
+
+
 def configure(
     env_name_,
     num_envs_,
@@ -41,7 +50,8 @@ def configure(
         v_ = torch.ones(1, device=torch_device_)
         assert v_
         # print(torch.cuda.memory_allocated(device='cuda'), 'bytes')
-        env_true_name = re.sub("-v.$", "", env_name_).removeprefix("brax-")
+        env_true_name = removeprefix(re.sub("-v.$", "", env_name_), "brax-")
+        # env_true_name = re.sub("-v.$", "", env_name_).removeprefix("brax-")
         gym_name = env_name_
         if gym_name not in gym.envs.registry.env_specs:
             entry_point = functools.partial(
