@@ -55,7 +55,7 @@ class SAC(Agent, ABC):
         action_dim,
         params=None,
         discount=0.99,
-        reward_scale=10.0,
+        reward_scale=1.0,
         policy_lr=1e-3,
         critic_lr=1e-3,
         alpha_lr=3e-4,
