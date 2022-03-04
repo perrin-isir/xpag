@@ -22,8 +22,10 @@ def configure(
     sampler_class_,
     agent_class_,
     goalsetter_class_,
-    device_: str = "cpu",
     seed_=None,
+    torch_device_: str = "cpu",
+    agent_backend_=None,
+    brax_env_backend_=None,
 ):
     if seed_ is not None:
         torch.manual_seed(seed_)
@@ -36,7 +38,7 @@ def configure(
         # torch allocation on device first, to prevent JAX from swallowing up all the
         # GPU memory. By default JAX will pre-allocate 90% of the available GPU memory:
         # https://jax.readthedocs.io/en/latest/gpu_memory_allocation.html
-        v_ = torch.ones(1, device=device_)
+        v_ = torch.ones(1, device=torch_device_)
         assert v_
         # print(torch.cuda.memory_allocated(device='cuda'), 'bytes')
         env_true_name = re.sub("-v.$", "", env_name_).removeprefix("brax-")
@@ -45,23 +47,20 @@ def configure(
             entry_point = functools.partial(
                 envs.create_gym_env,
                 env_name=env_true_name,
-                backend="gpu"
-                if (
-                    device_ == "cuda"
-                    and jax.lib.xla_bridge.get_backend().platform == "gpu"
-                )
-                else "cpu",
+                backend=jax.lib.xla_bridge.get_backend().platform
+                if brax_env_backend_ is None
+                else brax_env_backend_,
             )
             gym.register(gym_name, entry_point=entry_point)
         env_ = gym.make(
             gym_name, batch_size=num_envs_, episode_length=episode_max_length_
         )
         # automatically convert between jax ndarrays and torch tensors:
-        env_ = to_torch.JaxToTorchWrapper(env_, device=device_)
+        env_ = to_torch.JaxToTorchWrapper(env_, device=torch_device_)
         datatype_ = DataType.TORCH
     elif env_name_.startswith("GMaze"):
         # GMaze environment
-        env_ = gym.make(env_name_, device=device_, batch_size=num_envs_)
+        env_ = gym.make(env_name_, device=torch_device_, batch_size=num_envs_)
         datatype_ = DataType.TORCH
         continue_after_done_ = True
     else:
@@ -70,7 +69,11 @@ def configure(
         env_.spec = gym.envs.registration.EnvSpec(env_name_)
         datatype_ = DataType.NUMPY
 
-    backend = jax.lib.xla_bridge.get_backend().platform
+    backend = (
+        jax.lib.xla_bridge.get_backend().platform
+        if agent_backend_ is None
+        else agent_backend_
+    )
     agent_params = {"backend": backend}
     goalsetter_params = {}
     # Set seeds
@@ -85,7 +88,7 @@ def configure(
     dimensions = get_dimensions(env_)
 
     replay_buffer_ = default_replay_buffer(
-        buffer_size_, episode_max_length_, env_, datatype_, device_
+        buffer_size_, episode_max_length_, env_, datatype_, torch_device_
     )
 
     if is_goalenv:
@@ -107,7 +110,10 @@ def configure(
     goalsetter_params["agent"] = agent_
 
     goalsetter_ = goalsetter_class_(
-        params=goalsetter_params, num_envs=num_envs_, datatype=datatype_, device=device_
+        params=goalsetter_params,
+        num_envs=num_envs_,
+        datatype=datatype_,
+        device=torch_device_,
     )
 
     return (
