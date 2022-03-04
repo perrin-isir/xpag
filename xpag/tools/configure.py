@@ -4,7 +4,6 @@
 
 import numpy as np
 import torch
-import jax
 import gym
 import functools
 from brax import envs
@@ -33,8 +32,8 @@ def configure(
     goalsetter_class_,
     seed_=None,
     torch_device_: str = "cpu",
-    agent_backend_=None,
-    brax_env_backend_=None,
+    agent_cpu_backend_=False,
+    brax_env_cpu_backend_=False,
 ):
     if seed_ is not None:
         torch.manual_seed(seed_)
@@ -57,9 +56,7 @@ def configure(
             entry_point = functools.partial(
                 envs.create_gym_env,
                 env_name=env_true_name,
-                backend=jax.lib.xla_bridge.get_backend().platform
-                if brax_env_backend_ is None
-                else brax_env_backend_,
+                backend="cpu" if brax_env_cpu_backend_ else None,
             )
             gym.register(gym_name, entry_point=entry_point)
         env_ = gym.make(
@@ -79,11 +76,7 @@ def configure(
         env_.spec = gym.envs.registration.EnvSpec(env_name_)
         datatype_ = DataType.NUMPY
 
-    backend = (
-        jax.lib.xla_bridge.get_backend().platform
-        if agent_backend_ is None
-        else agent_backend_
-    )
+    backend = "cpu" if agent_cpu_backend_ else None
     agent_params = {"backend": backend}
     goalsetter_params = {}
     # Set seeds
