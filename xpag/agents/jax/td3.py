@@ -256,7 +256,7 @@ class TD3(Agent, ABC):
 
         def update_step(
             state: TrainingState, observations, actions, rewards, new_observations, done
-        ) -> TrainingState:
+        ) -> (TrainingState, dict):
 
             key, key_critic = jax.random.split(state.key, 2)
 
@@ -312,7 +312,9 @@ class TD3(Agent, ABC):
                 steps=state.steps + 1,
             )
 
-            return new_state
+            metrics = {}
+
+            return new_state, metrics
 
         self.update_step = jax.jit(update_step, backend=self.backend)
 
@@ -429,7 +431,7 @@ class TD3(Agent, ABC):
 
     def train(self, pre_sample, sampler, batch_size):
         batch = sampler.sample(pre_sample, batch_size)
-        self.train_on_batch(batch)
+        return self.train_on_batch(batch)
 
     def train_on_batch(self, batch):
         if torch.is_tensor(batch["r"]):
@@ -449,6 +451,8 @@ class TD3(Agent, ABC):
             new_observations = jnp.array(batch["obs_next"].detach().cpu().numpy())
             done = jnp.array(1.0 - batch["terminals"].detach().cpu().numpy())
 
-        self.training_state = self.update_step(
+        self.training_state, metrics = self.update_step(
             self.training_state, observations, actions, rewards, new_observations, done
         )
+
+        return metrics

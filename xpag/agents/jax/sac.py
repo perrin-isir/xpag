@@ -55,9 +55,9 @@ class SAC(Agent, ABC):
         action_dim,
         params=None,
         discount=0.99,
-        reward_scale=1.0,
-        policy_lr=3e-4,
-        critic_lr=3e-4,
+        reward_scale=10.0,
+        policy_lr=1e-3,
+        critic_lr=1e-3,
         alpha_lr=3e-4,
         soft_target_tau=0.005,
     ):
@@ -253,10 +253,13 @@ class SAC(Agent, ABC):
         self.sample_no_postprocessing = sample_no_postprocessing
         self.postprocess = postprocess
         self.dist_log_prob = dist_log_prob
-        target_entropy = -1.0 * action_dim
+        target_entropy = -0.5 * action_dim
 
         def alpha_loss(log_alpha: jnp.ndarray, log_pi: jnp.ndarray) -> jnp.ndarray:
-            alpha_l = log_alpha * jax.lax.stop_gradient(-log_pi - target_entropy)
+            # alpha_l = log_alpha * jax.lax.stop_gradient(-log_pi - target_entropy)
+            alpha_l = jnp.exp(log_alpha) * jax.lax.stop_gradient(
+                -log_pi - target_entropy
+            )
             return jnp.mean(alpha_l)
 
         def actor_loss(
@@ -301,7 +304,7 @@ class SAC(Agent, ABC):
                 + done * discount * jnp.expand_dims(next_v, -1)
             )
             q_error = q_old_action - target_q
-            q_loss = 2.0 * jnp.mean(jnp.square(q_error))
+            q_loss = 0.5 * jnp.mean(jnp.square(q_error))
             return q_loss
 
         self.alpha_grad = jax.value_and_grad(alpha_loss)
@@ -310,7 +313,7 @@ class SAC(Agent, ABC):
 
         def update_step(
             state: TrainingState, observations, actions, rewards, new_observations, done
-        ) -> TrainingState:
+        ) -> (TrainingState, dict):
 
             key, key_alpha, key_critic, key_actor = jax.random.split(state.key, 4)
 
@@ -376,7 +379,24 @@ class SAC(Agent, ABC):
                 alpha_params=alpha_params,
             )
 
-            return new_state
+            metrics = {}
+            # metrics = {
+            #     "log_pi_mean": jnp.mean(log_pi),
+            #     "log_alpha": alpha_params,
+            #     "policy_params_sum": sum(jax.tree_flatten(
+            #         jax.tree_map(lambda x: x.sum(), state.policy_params))[0]),
+            #     "q_params_sum": sum(jax.tree_flatten(
+            #         jax.tree_map(lambda x: x.sum(), state.q_params))[0]),
+            #     "target_q_params_sum": sum(jax.tree_flatten(
+            #         jax.tree_map(lambda x: x.sum(), state.target_q_params))[0]),
+            #     "mean_target_value": jnp.mean(self.value_model.apply(
+            #         state.target_q_params, observations, actions)),
+            #     "alpha_loss": alpha_l,
+            #     "actor_loss": actor_l,
+            #     "critic_loss": critic_l
+            # }
+
+            return new_state, metrics
 
         self.update_step = jax.jit(update_step, backend=self.backend)
 
@@ -490,7 +510,7 @@ class SAC(Agent, ABC):
 
     def train(self, pre_sample, sampler, batch_size):
         batch = sampler.sample(pre_sample, batch_size)
-        self.train_on_batch(batch)
+        return self.train_on_batch(batch)
 
     def train_on_batch(self, batch):
         if torch.is_tensor(batch["r"]):
@@ -502,14 +522,18 @@ class SAC(Agent, ABC):
             actions = jnp.array(batch["actions"])
             rewards = jnp.array(batch["r"])
             new_observations = jnp.array(batch["obs_next"])
-            done = jnp.array(1.0 - batch["terminals"])
+            # SAC seems unstable when dealing with terminal transitions
+            done = jnp.array(1.0 - 0.0 * batch["terminals"])
         else:
             observations = jnp.array(batch["obs"].detach().cpu().numpy())
             actions = jnp.array(batch["actions"].detach().cpu().numpy())
             rewards = jnp.array(batch["r"].detach().cpu().numpy())
             new_observations = jnp.array(batch["obs_next"].detach().cpu().numpy())
-            done = jnp.array(1.0 - batch["terminals"].detach().cpu().numpy())
+            # SAC seems unstable when dealing with terminal transitions
+            done = jnp.array(1.0 - 0.0 * batch["terminals"].detach().cpu().numpy())
 
-        self.training_state = self.update_step(
+        self.training_state, metrics = self.update_step(
             self.training_state, observations, actions, rewards, new_observations, done
         )
+
+        return metrics

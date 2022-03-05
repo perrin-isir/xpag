@@ -66,6 +66,7 @@ def configure(
         # automatically convert between jax ndarrays and torch tensors:
         # env_ = to_torch.JaxToTorchWrapper(env_, device=torch_device_)
         datatype_ = DataType.NUMPY
+        # datatype_ = DataType.TORCH
     elif env_name_.startswith("GMaze"):
         # GMaze environment
         env_ = gym.make(env_name_, device=torch_device_, batch_size=num_envs_)

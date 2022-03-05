@@ -285,7 +285,7 @@ def learn(
     num_envs: int,  # nr of environments that run in parallel (//)
     episode_max_length: int,  # maximum length of eps (1 ep = num_envs // rollouts)
     max_t: int,  # total max nr of ts (1 ts = 1 time step in each of the // envs)
-    train_ratio: float,  # nr of gradient steps per ts
+    train_ratio: int,  # nr of gradient steps per ts
     batch_size: int,  # size of the batches
     start_random_t: int,  # starting with random actions for start_random_t ts
     eval_freq: int,  # evaluation every eval_freq ts
@@ -344,7 +344,7 @@ def learn(
     total_t = 0
     t_since_eval = 0
     t_since_save = 0
-    episode_num = 0
+    episode_num = 1
     episode_mean_reward = 0
     episode_rewards = datatype_convert(np.zeros((num_envs, 1)), datatype, device)
     episode_success = datatype_convert(np.zeros((num_envs, 1)), datatype, device)
@@ -360,6 +360,7 @@ def learn(
     timing()
     eval_time = 0.0
     training_time = 0.0
+    # metrics = {}
     while total_t < max_t:
 
         # as soon as one episode is done we terminate all the episodes
@@ -394,9 +395,9 @@ def learn(
                     # replay_buffer.store_episode(1, episode_argmax, episode_t)
                     replay_buffer.store_episode(num_envs, episode, episode_t)
 
-                    for _ in range(int(train_ratio * episode_t)):
-                        pre_sample = replay_buffer.pre_sample()
-                        agent.train(pre_sample, sampler, batch_size)
+                    # for _ in range(int(train_ratio * episode_t)):
+                    #     pre_sample = replay_buffer.pre_sample()
+                    #     agent.train(pre_sample, sampler, batch_size)
 
                     interval_time, _ = timing()
                     training_time += interval_time / 1000.0
@@ -493,10 +494,18 @@ def learn(
                 )
 
         new_o, reward, done, info = env.step(action)
+
         if is_goalenv:
             o, action, new_o, reward, done, info = goalsetter.step(
                 o, action, new_o, reward, done, info
             )
+
+        if episode_num > 1:
+            for _ in range(train_ratio):
+                pre_sample = replay_buffer.pre_sample()
+                _ = agent.train(pre_sample, sampler, batch_size)
+                # if not total_t % 100:
+                #     print(metrics)
 
         if save_episode:
             save_ep.update()
