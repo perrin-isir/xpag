@@ -495,6 +495,10 @@ def learn(
 
         new_o, reward, done, info = env.step(action)
 
+        from IPython import embed
+
+        embed()
+
         if is_goalenv:
             o, action, new_o, reward, done, info = goalsetter.step(
                 o, action, new_o, reward, done, info

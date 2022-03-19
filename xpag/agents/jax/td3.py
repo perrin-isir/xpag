@@ -121,7 +121,7 @@ class TD3(Agent, ABC):
             action_size: int,
             hidden_layer_sizes: Tuple[int, ...] = (256, 256),
         ) -> Tuple[FeedForwardModel, FeedForwardModel]:
-            """Creates a policy and value networks for SAC."""
+            """Creates a policy and value networks for TD3."""
             policy_module = CustomMLP(
                 layer_sizes=hidden_layer_sizes + (param_size,),
                 activation=linen.relu,
@@ -167,7 +167,7 @@ class TD3(Agent, ABC):
             return policy, value
 
         self._config_string = str(list(locals().items())[1:])
-        super().__init__("SAC", observation_dim, action_dim, params)
+        super().__init__("TD3", observation_dim, action_dim, params)
 
         self.discount = discount
         self.reward_scale = reward_scale
