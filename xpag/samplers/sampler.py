@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from jaxlib.xla_extension import DeviceArray
 from typing import Union, Dict
-from xtmp.tools.utils import DataType
+from xpag.tools.utils import DataType
 
 
 class Sampler(ABC):

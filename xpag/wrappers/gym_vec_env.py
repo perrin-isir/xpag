@@ -11,8 +11,8 @@ from gym.vector.utils import (
 )
 from gym.vector import VectorEnv, AsyncVectorEnv
 from gym.envs.mujoco.mujoco_env import MujocoEnv
-from xtmp.wrappers.reset_done import ResetDoneWrapper
-from xtmp.tools.utils import get_env_dimensions
+from xpag.wrappers.reset_done import ResetDoneWrapper
+from xpag.tools.utils import get_env_dimensions
 
 
 def check_goalenv(env) -> bool:

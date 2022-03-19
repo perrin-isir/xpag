@@ -5,7 +5,7 @@
 import os
 import logging
 from typing import Union, Any
-from xtmp.agents.agent import Agent
+from xpag.agents.agent import Agent
 
 global_first_eval_log_done = None
 global_eval_logger = None

@@ -3,14 +3,14 @@
 # Licensed under the BSD 3-Clause License.
 
 from typing import ClassVar, Optional
-from xtmp.wrappers.reset_done import ResetDoneBraxWrapper
+from xpag.wrappers.reset_done import ResetDoneBraxWrapper
 from brax import jumpy as jp
 import jax
 import gym
 from gym import spaces
 from gym.vector import utils
 from brax import envs
-from xtmp.tools.utils import get_env_dimensions
+from xpag.tools.utils import get_env_dimensions
 
 _envs_episode_length = {
     "acrobot": 1000,

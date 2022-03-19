@@ -5,11 +5,11 @@
 import os
 from typing import Union, Dict, Any
 import numpy as np
-from xtmp.agents.agent import Agent
-from xtmp.tools.utils import hstack
-from xtmp.tools.timing import timing
-from xtmp.tools.logging import eval_log
-from xtmp.plotting.plotting import single_episode_plot
+from xpag.agents.agent import Agent
+from xpag.tools.utils import hstack
+from xpag.tools.timing import timing
+from xpag.tools.logging import eval_log
+from xpag.plotting.plotting import single_episode_plot
 
 
 class SaveEpisode:

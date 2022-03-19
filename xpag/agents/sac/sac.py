@@ -5,9 +5,9 @@
 from abc import ABC
 import numpy as np
 import os
-from xtmp.agents.agent import Agent
-from xtmp.agents.sac.sac_from_jaxrl import Batch, SACLearner
-from xtmp.tools.utils import squeeze
+from xpag.agents.agent import Agent
+from xpag.agents.sac.sac_from_jaxrl import Batch, SACLearner
+from xpag.tools.utils import squeeze
 
 
 class SAC(Agent, ABC):

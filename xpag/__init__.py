@@ -1,9 +1,9 @@
-from xtmp import tools
-from xtmp import plotting
-from xtmp import wrappers
-from xtmp import buffers
-from xtmp import samplers
-from xtmp import agents
-from xtmp import goalsetters
+from xpag import tools
+from xpag import plotting
+from xpag import wrappers
+from xpag import buffers
+from xpag import samplers
+from xpag import agents
+from xpag import goalsetters
 
 __version__ = "0.1.0"

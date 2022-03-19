@@ -12,7 +12,7 @@ from flax import linen
 import jax
 import jax.numpy as jnp
 import optax
-from xtmp.agents.agent import Agent
+from xpag.agents.agent import Agent
 import os
 import joblib
 

@@ -1,4 +1,4 @@
-from xtmp.tools.utils import (
+from xpag.tools.utils import (
     DataType,
     reshape,
     hstack,
@@ -6,7 +6,7 @@ from xtmp.tools.utils import (
     datatype_convert,
     get_env_dimensions,
 )
-from xtmp.tools.eval import single_rollout_eval
-from xtmp.tools.timing import timing
-from xtmp.tools.logging import eval_log
-from xtmp.tools.learn import learn
+from xpag.tools.eval import single_rollout_eval
+from xpag.tools.timing import timing
+from xpag.tools.logging import eval_log
+from xpag.tools.learn import learn

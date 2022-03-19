@@ -1,4 +1,4 @@
-from xtmp.agents.agent import (
+from xpag.agents.agent import (
     Agent,
 )
-from xtmp.agents.sac.sac import SAC
+from xpag.agents.sac.sac import SAC

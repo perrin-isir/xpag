@@ -7,8 +7,8 @@ import numpy as np
 import torch
 from jaxlib.xla_extension import DeviceArray
 from typing import Union, Dict, Any
-from xtmp.tools.utils import DataType, datatype_convert
-from xtmp.samplers.sampler import Sampler
+from xpag.tools.utils import DataType, datatype_convert
+from xpag.samplers.sampler import Sampler
 
 
 class Buffer(ABC):

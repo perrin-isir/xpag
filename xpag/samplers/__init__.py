@@ -1,5 +1,5 @@
-from xtmp.samplers.sampler import (
+from xpag.samplers.sampler import (
     Sampler,
     DefaultEpisodicSampler,
 )
-from xtmp.samplers.HER import HER
+from xpag.samplers.HER import HER

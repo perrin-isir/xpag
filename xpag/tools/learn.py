@@ -1,9 +1,10 @@
 import os
 import numpy as np
-from xtmp.tools import single_rollout_eval, hstack
-from xtmp.buffers import Buffer
-from xtmp.agents.agent import Agent
-from xtmp.goalsetters.goalsetter import GoalSetter
+from xpag.tools.eval import single_rollout_eval
+from xpag.tools.utils import hstack
+from xpag.buffers import Buffer
+from xpag.agents.agent import Agent
+from xpag.goalsetters.goalsetter import GoalSetter
 from typing import Dict, Any, Union
 
 

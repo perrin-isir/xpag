@@ -4,8 +4,8 @@
 
 import numpy as np
 import torch
-from xtmp.tools.utils import DataType
-from xtmp.samplers.sampler import Sampler
+from xpag.tools.utils import DataType
+from xpag.samplers.sampler import Sampler
 
 
 class HER(Sampler):
