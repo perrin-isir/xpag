@@ -3,11 +3,11 @@ from setuptools import setup, find_packages
 # Install with 'pip install -e .'
 
 setup(
-    name="xtmp",
+    name="xpag",
     version="0.1.0",
     author="Nicolas Perrin-Gilbert",
     description="xpag: Exploring Agents",
-    url="https://github.com/perrin-isir/xtmp",
+    url="https://github.com/perrin-isir/xpag",
     packages=find_packages(),
     install_requires=[
         "psutil>=5.8.0",

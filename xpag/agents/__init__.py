@@ -1,4 +1,4 @@
-from xpag.agents.agent import (
+from xtmp.agents.agent import (
     Agent,
 )
-from xpag.agents.jax.td3 import TD3
+from xtmp.agents.sac.sac import SAC

@@ -1,1 +1,1 @@
-from xpag.goalsetters.goalsetter import GoalSetter, DefaultGoalSetter
+from xtmp.goalsetters.goalsetter import GoalSetter, DefaultGoalSetter

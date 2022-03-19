@@ -1,19 +1,12 @@
-from xpag.tools.utils import (
+from xtmp.tools.utils import (
     DataType,
-    define_step_data,
-    step_data_select,
-    reshape_func,
-    hstack_func,
-    max_func,
+    reshape,
+    hstack,
+    maximum,
     datatype_convert,
-    register_step_in_episode,
+    get_env_dimensions,
 )
-from xpag.tools.learn import (
-    learn,
-    SaveEpisode,
-    default_replay_buffer,
-    check_goalenv,
-    get_dimensions,
-)
-from xpag.tools.timing import timing
-from xpag.tools.configure import configure
+from xtmp.tools.eval import single_rollout_eval
+from xtmp.tools.timing import timing
+from xtmp.tools.logging import eval_log
+from xtmp.tools.learn import learn

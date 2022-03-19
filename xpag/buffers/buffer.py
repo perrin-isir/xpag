@@ -5,72 +5,157 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import torch
-from typing import Union, Dict, NamedTuple
-from xpag.tools.utils import DataType
+from jaxlib.xla_extension import DeviceArray
+from typing import Union, Dict, Any
+from xtmp.tools.utils import DataType, datatype_convert
+from xtmp.samplers.sampler import Sampler
 
 
 class Buffer(ABC):
+    """Base class for buffers"""
+
     def __init__(
         self,
-        episode_max_length: int,
         buffer_size: int,
-        datatype: DataType = DataType.TORCH,
-        device: str = "cpu",
+        sampler: Sampler,
     ):
-        assert datatype == DataType.TORCH or datatype == DataType.NUMPY
-        self.T = episode_max_length
         self.buffer_size = buffer_size
-        self.datatype = datatype
-        self.device = device
-        self.size = int(buffer_size // self.T)
         self.current_size = 0
         self.buffers = {}
+        self.sampler = sampler
 
     @abstractmethod
-    def store_episode(self, num_envs: int, episode: NamedTuple, episode_length: int):
-        """Store one or several episodes in the buffer"""
+    def insert(self, step: Dict[str, Any]):
+        """Inserts a transition in the buffer"""
         pass
 
     @abstractmethod
-    def pre_sample(self) -> Dict[str, Union[torch.Tensor, np.ndarray]]:
-        """Return a part of the buffer from which the sampler will extract samples"""
+    def pre_sample(self) -> Dict[str, Union[torch.Tensor, np.ndarray, DeviceArray]]:
+        """Returns a part of the buffer from which the sampler will extract samples"""
         pass
 
+    def sample(
+        self, batch_size
+    ) -> Dict[str, Union[torch.Tensor, np.ndarray, DeviceArray]]:
+        """Returns a batch of transitions"""
+        return self.sampler.sample(self.pre_sample(), batch_size)
 
-class DefaultBuffer(Buffer):
+
+class EpisodicBuffer(Buffer):
+    """Base class for episodic buffers"""
+
     def __init__(
         self,
-        dict_sizes: dict,
-        episode_max_length: int,
         buffer_size: int,
-        datatype: DataType,
-        device: str = "cpu",
+        sampler: Sampler,
     ):
-        super().__init__(episode_max_length, buffer_size, datatype, device)
-        self.dict_sizes = dict_sizes
+        super().__init__(buffer_size, sampler)
+
+    @abstractmethod
+    def store_done(self):
+        """Stores the episodes that are done"""
+        pass
+
+
+class DefaultEpisodicBuffer(EpisodicBuffer):
+    def __init__(
+        self,
+        max_episode_steps: int,
+        buffer_size: int,
+        sampler: Sampler,
+        datatype: DataType = DataType.NUMPY,
+    ):
+        assert (
+            datatype == DataType.TORCH_CPU
+            or datatype == DataType.TORCH_CUDA
+            or datatype == DataType.NUMPY
+        ), (
+            "datatype must be DataType.TORCH_CPU, "
+            "DataType.TORCH_CUDA or DataType.NUMPY."
+        )
+        super().__init__(buffer_size, sampler)
+        self.datatype = datatype
+        self.T = max_episode_steps
+        self.size = int(buffer_size // self.T)
+        self.dict_sizes = None
+        self.num_envs = None
+        self.keys = None
+        self.current_t = None
+        self.zeros = None
+        self.where = None
+        self.current_idxs = None
+        self.first_insert_done = False
+
+    def init_buffer(self, step: Dict[str, Any]):
+        self.dict_sizes = {}
+        self.keys = list(step.keys())
+        assert "done" in self.keys
+        for key in self.keys:
+            if isinstance(step[key], dict):
+                for k in step[key]:
+                    assert len(step[key][k].shape) == 2
+                    self.dict_sizes[key + "." + k] = step[key][k].shape[1]
+            else:
+                assert len(step[key].shape) == 2
+                self.dict_sizes[key] = step[key].shape[1]
+        self.num_envs = step["done"].shape[0]
         self.dict_sizes["episode_length"] = 1
-        for key in dict_sizes:
-            if self.datatype == DataType.TORCH:
+        for key in self.dict_sizes:
+            if (
+                self.datatype == DataType.TORCH_CPU
+                or self.datatype == DataType.TORCH_CUDA
+            ):
+                device = "cpu" if self.datatype == DataType.TORCH_CPU else "cuda"
                 self.buffers[key] = torch.empty(
-                    [self.size, self.T, dict_sizes[key]], device=self.device
+                    [self.size, self.T, self.dict_sizes[key]], device=device
                 )
             else:
-                self.buffers[key] = np.empty([self.size, self.T, dict_sizes[key]])
-
-    def store_episode(self, num_envs: int, episode: NamedTuple, episode_length: int):
-        idxs = self._get_storage_idx(inc=num_envs)
-        episode_dict = episode._asdict()
-        if self.datatype == DataType.TORCH:
-            ep_length = torch.full(
-                (num_envs, self.T, 1), float(episode_length), device=self.device
-            )
+                self.buffers[key] = np.empty([self.size, self.T, self.dict_sizes[key]])
+        if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
+            device = "cpu" if self.datatype == DataType.TORCH_CPU else "cuda"
+            self.current_t = torch.zeros(self.num_envs, dtype=torch.int, device=device)
+            self.zeros = lambda i: torch.zeros(i, device=device, dtype=torch.int)
+            self.where = torch.where
         else:
-            ep_length = np.full((num_envs, self.T, 1), float(episode_length))
-        for key in episode._fields:
-            self.buffers[key][idxs, :episode_length, :] = episode_dict[key][
-                :, :episode_length, :
-            ]
-        self.buffers["episode_length"][idxs] = ep_length
+            self.current_t = np.zeros(self.num_envs).astype("int")
+            self.zeros = lambda i: np.zeros(i).astype("int")
+            self.where = np.where
+        self.current_idxs = self._get_storage_idx(inc=self.num_envs)
+        self.first_insert_done = True
+
+    def insert(self, step: Dict[str, Any]):
+        if not self.first_insert_done:
+            self.init_buffer(step)
+        for key in self.keys:
+            if isinstance(step[key], dict):
+                for k in step[key]:
+                    self.buffers[key + "." + k][
+                        self.current_idxs, self.current_t, :
+                    ] = datatype_convert(step[key][k], self.datatype).reshape(
+                        (self.num_envs, self.dict_sizes[key + "." + k])
+                    )
+            else:
+                self.buffers[key][
+                    self.current_idxs, self.current_t, :
+                ] = datatype_convert(step[key], self.datatype).reshape(
+                    (self.num_envs, self.dict_sizes[key])
+                )
+        self.current_t += 1
+        self.buffers["episode_length"][
+            self.current_idxs, self.zeros(self.num_envs), :
+        ] = self.current_t.reshape((self.num_envs, 1))
+
+    def store_done(self):
+        where_done = self.where(
+            self.buffers["done"][self.current_idxs, self.current_t - 1].reshape(
+                self.num_envs
+            )
+            == 1
+        )[0]
+        k_envs = len(where_done)
+        new_idxs = self._get_storage_idx(inc=k_envs)
+        self.current_idxs[where_done] = [new_idxs]
+        self.current_t[where_done] = 0
 
     def pre_sample(self):
         temp_buffers = {}
@@ -90,6 +175,8 @@ class DefaultBuffer(Buffer):
         else:
             idx = np.random.randint(0, self.size, inc)
         self.current_size = min(self.size, self.current_size + inc)
-        if inc == 1:
-            idx = idx[0]
+
+        self.buffers["episode_length"][idx, self.zeros(inc), :] = self.zeros(
+            inc
+        ).reshape((inc, 1))
         return idx

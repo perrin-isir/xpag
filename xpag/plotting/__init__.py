@@ -1,1 +1,1 @@
-from xpag.plotting.basics import plot_episode_2d
+from xtmp.plotting.plotting import single_episode_plot

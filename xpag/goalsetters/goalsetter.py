@@ -3,30 +3,23 @@
 # Licensed under the BSD 3-Clause License.
 
 from abc import ABC, abstractmethod
-from xpag.tools.utils import DataType
+from typing import Tuple
 
 
 class GoalSetter(ABC):
-    def __init__(
-        self,
-        name: str,
-        params: dict,
-        num_envs: int = 1,
-        datatype: DataType = DataType.TORCH,
-        device: str = "cpu",
-    ):
+    def __init__(self, name: str):
         self.name = name
-        self.params = params
-        self.num_envs = num_envs
-        self.datatype = datatype
-        self.device = device
 
     @abstractmethod
-    def reset(self, obs):
+    def reset(self, observation):
         pass
 
     @abstractmethod
-    def step(self, o, action, new_o, reward, done, info):
+    def reset_done(self, observation):
+        pass
+
+    @abstractmethod
+    def step(self, observation, reward, done, info) -> Tuple:
         pass
 
     @abstractmethod
@@ -43,22 +36,17 @@ class GoalSetter(ABC):
 
 
 class DefaultGoalSetter(GoalSetter, ABC):
-    def __init__(
-        self,
-        params=None,
-        num_envs: int = 1,
-        datatype: DataType = DataType.TORCH,
-        device: str = "cpu",
-    ):
-        if params is None:
-            params = {}
-        super().__init__("DefaultGoalSetter", params, num_envs, datatype, device)
+    def __init__(self):
+        super().__init__("DefaultGoalSetter")
 
-    def reset(self, obs):
-        return obs
+    def reset(self, observation):
+        return observation
 
-    def step(self, o, action, new_o, reward, done, info):
-        return o, action, new_o, reward, done, info
+    def reset_done(self, observation):
+        return observation
+
+    def step(self, observation, reward, done, info):
+        return observation, reward, done, info
 
     def write_config(self, output_file: str):
         pass

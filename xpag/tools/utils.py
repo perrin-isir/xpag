@@ -3,9 +3,7 @@
 # Licensed under the BSD 3-Clause License.
 
 from enum import Enum
-from typing import Tuple, Union
-import collections
-import functools
+from typing import Tuple, Union, Dict
 import torch
 import numpy as np
 from jaxlib.xla_extension import DeviceArray
@@ -13,116 +11,23 @@ import jax.numpy as jnp
 
 
 class DataType(Enum):
-    TORCH = "data represented as torch tensors"
+    TORCH_CPU = "data represented as torch tensors on CPU"
+    TORCH_CUDA = "data represented as torch tensors on GPU"
     NUMPY = "data represented as numpy arrays"
     JAX = "data represented as jax DeviceArrays"
 
 
-def define_step_data(
-    is_goalenv: bool,
-    num_envs: int,
-    observation_dim: int,
-    achieved_goal_dim: Union[int, None],
-    desired_goal_dim: Union[int, None],
-    action_dim: int,
-    episode_max_length: int,
-    datatype: DataType = DataType.TORCH,
-    device: str = "cpu",
-) -> Tuple[collections.namedtuple, collections.namedtuple]:
-    if is_goalenv:
-        fields = (
-            "obs",
-            "obs_next",
-            "ag",
-            "ag_next",
-            "g",
-            "g_next",
-            "actions",
-            "terminals",
-        )
-        sizes = [
-            observation_dim,
-            observation_dim,
-            achieved_goal_dim,
-            achieved_goal_dim,
-            desired_goal_dim,
-            desired_goal_dim,
-            action_dim,
-            1,
-        ]
-    else:
-        fields = ("obs", "obs_next", "actions", "r", "terminals")
-        sizes = [observation_dim, observation_dim, action_dim, 1, 1]
-
-    empty_func = None
-    if datatype == DataType.TORCH:
-        empty_func = functools.partial(torch.empty, device=device)
-    elif datatype == DataType.NUMPY:
-        empty_func = np.empty
-
-    def defaults(k):
-        return [empty_func((k, episode_max_length, siz)) for siz in sizes]
-
-    return (
-        collections.namedtuple("StepDataUnique", fields, defaults=defaults(1)),
-        collections.namedtuple("StepDataMultiple", fields, defaults=defaults(num_envs)),
-    )
-
-
-def register_step_in_episode(
-    episode, episode_t, is_goalenv, num_envs, o, action, new_o, reward, done
-):
-    episode.terminals[:, episode_t, :] = done
-    episode.actions[:, episode_t, :] = reshape_func(
-        action, (num_envs, episode.actions.shape[-1])
-    )
-    if is_goalenv:
-        episode.obs[:, episode_t, :] = reshape_func(
-            o["observation"], (num_envs, episode.obs.shape[-1])
-        )
-        episode.obs_next[:, episode_t, :] = reshape_func(
-            new_o["observation"], (num_envs, episode.obs_next.shape[-1])
-        )
-        episode.ag[:, episode_t, :] = reshape_func(
-            o["achieved_goal"], (num_envs, episode.ag.shape[-1])
-        )
-        episode.ag_next[:, episode_t, :] = reshape_func(
-            new_o["achieved_goal"], (num_envs, episode.ag_next.shape[-1])
-        )
-        episode.g[:, episode_t, :] = reshape_func(
-            o["desired_goal"], (num_envs, episode.g.shape[-1])
-        )
-        episode.g_next[:, episode_t, :] = reshape_func(
-            new_o["desired_goal"], (num_envs, episode.g_next.shape[-1])
-        )
-    else:
-        episode.r[:, episode_t, :] = reward
-        episode.obs[:, episode_t, :] = reshape_func(
-            o, (num_envs, episode.obs.shape[-1])
-        )
-        episode.obs_next[:, episode_t, :] = reshape_func(
-            new_o, (num_envs, episode.obs_next.shape[-1])
-        )
-
-
-def step_data_select(
-    sd_one: collections.namedtuple, sd_m: collections.namedtuple, i: int
-):
-    for f in sd_one._fields:
-        sd_one._asdict()[f][0] = sd_m._asdict()[f][i]
-
-
-def reshape_func(
+def reshape(
     x: Union[torch.Tensor, np.ndarray, DeviceArray, list, float, np.float],
     shape: Tuple[int, ...],
-) -> Union[torch.Tensor, np.ndarray]:
+) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
     if torch.is_tensor(x) or type(x) == np.ndarray or type(x) == DeviceArray:
         return x.reshape(shape)
     else:
         return np.array(x).reshape(shape)
 
 
-def hstack_func(
+def hstack(
     x: Union[torch.Tensor, np.ndarray, DeviceArray],
     y: Union[torch.Tensor, np.ndarray, DeviceArray],
 ) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
@@ -134,32 +39,54 @@ def hstack_func(
         return np.hstack((x, y))
 
 
-def max_func(
-    x: Union[torch.Tensor, np.ndarray], y: Union[torch.Tensor, np.ndarray]
-) -> Union[torch.Tensor, np.ndarray]:
+def maximum(
+    x: Union[torch.Tensor, np.ndarray, DeviceArray],
+    y: Union[torch.Tensor, np.ndarray, DeviceArray],
+) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
     if torch.is_tensor(x) and torch.is_tensor(y):
         return torch.maximum(x, y)
     elif type(x) == DeviceArray and type(y) == DeviceArray:
-        return jnp.maximum((x, y))
+        return jnp.maximum(x, y)
     else:
         return np.maximum(x, y)
 
 
+def squeeze(
+    x: Union[torch.Tensor, np.ndarray, DeviceArray]
+) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
+    if torch.is_tensor(x):
+        return torch.squeeze(x)
+    elif type(x) == DeviceArray:
+        return jnp.squeeze(x)
+    else:
+        return np.squeeze(x)
+
+
 def datatype_convert(
     x: Union[torch.Tensor, np.ndarray, DeviceArray, list, float, np.float],
-    datatype: DataType = DataType.TORCH,
-    device: str = "cpu",
+    datatype: DataType = DataType.NUMPY,
 ) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
-    if datatype == DataType.TORCH:
+    if datatype == DataType.TORCH_CPU or datatype == DataType.TORCH_CUDA:
         if torch.is_tensor(x):
-            return x.to(device=device)
+            if datatype == DataType.TORCH_CPU:
+                return x.to(device="cpu")
+            else:
+                return x.to(device="cuda")
         elif type(x) == DeviceArray:
-            return torch.tensor(np.array(x), device=device)
+            if datatype == DataType.TORCH_CPU:
+                return torch.tensor(np.array(x), device="cpu")
+            else:
+                return torch.tensor(np.array(x), device="cuda")
         else:
-            return torch.tensor(x, device=device)
+            if datatype == DataType.TORCH_CPU:
+                return torch.tensor(x, device="cpu")
+            else:
+                return torch.tensor(x, device="cuda")
     elif datatype == DataType.NUMPY:
         if torch.is_tensor(x):
             return x.detach().cpu().numpy()
+        elif type(x) == np.ndarray:
+            return x
         else:
             return np.array(x)
     elif datatype == DataType.JAX:
@@ -169,3 +96,47 @@ def datatype_convert(
             return x
         else:
             return jnp.array(x)
+
+
+def get_env_dimensions(info: dict, is_goalenv: bool, env) -> Dict[str, int]:
+    """
+    Return the important dimensions associated with an environment (observation_dim,
+    action_dim, ...)
+    """
+    is_goalenv = is_goalenv
+    if hasattr(env, "is_vector_env"):
+        gymvecenv = env.is_vector_env
+    else:
+        gymvecenv = False
+    dims = {}
+    if gymvecenv:
+        info["action_dim"] = env.single_action_space.shape[-1]
+        info["observation_dim"] = (
+            env.single_observation_space["observation"].shape[-1]
+            if is_goalenv
+            else env.single_observation_space.shape[-1]
+        )
+        info["achieved_goal_dim"] = (
+            env.single_observation_space["achieved_goal"].shape[-1]
+            if is_goalenv
+            else None
+        )
+        info["desired_goal_dim"] = (
+            env.single_observation_space["desired_goal"].shape[-1]
+            if is_goalenv
+            else None
+        )
+    else:
+        info["action_dim"] = env.action_space.shape[-1]
+        info["observation_dim"] = (
+            env.observation_space["observation"].shape[-1]
+            if is_goalenv
+            else env.observation_space.shape[-1]
+        )
+        info["achieved_goal_dim"] = (
+            env.observation_space["achieved_goal"].shape[-1] if is_goalenv else None
+        )
+        info["desired_goal_dim"] = (
+            env.observation_space["desired_goal"].shape[-1] if is_goalenv else None
+        )
+    return dims

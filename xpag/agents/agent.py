@@ -5,8 +5,8 @@
 from abc import ABC, abstractmethod
 from typing import Union, Dict
 import torch
+from jaxlib.xla_extension import DeviceArray
 import numpy as np
-from xpag.samplers.sampler import Sampler
 
 
 class Agent(ABC):
@@ -23,18 +23,18 @@ class Agent(ABC):
         self.params = params
 
     @abstractmethod
-    def train(
+    def train_on_batch(
         self,
-        pre_sample: Dict[str, Union[torch.Tensor, np.ndarray]],
-        sampler: Sampler,
-        batch_size: int,
-    ):
+        batch: Dict[str, Union[torch.Tensor, np.ndarray, DeviceArray]],
+    ) -> dict:
         pass
 
     @abstractmethod
     def select_action(
-        self, observation: Union[torch.Tensor, np.ndarray], deterministic=True
-    ):
+        self,
+        observation: Union[torch.Tensor, np.ndarray, DeviceArray],
+        deterministic=True,
+    ) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
         pass
 
     @abstractmethod

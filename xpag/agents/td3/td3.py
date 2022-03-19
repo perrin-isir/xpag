@@ -5,13 +5,14 @@
 from abc import ABC
 from typing import Any, Tuple, Sequence, Callable
 import dataclasses
+import numpy as np
 import torch
 import flax
 from flax import linen
 import jax
 import jax.numpy as jnp
 import optax
-from xpag.agents.agent import Agent
+from xtmp.agents.agent import Agent
 import os
 import joblib
 
@@ -45,11 +46,6 @@ class TD3(Agent, ABC):
         observation_dim,
         action_dim,
         params=None,
-        discount=0.99,
-        reward_scale=10.0,
-        policy_lr=3e-4,
-        critic_lr=3e-4,
-        soft_target_tau=0.005,
     ):
         """
         Jax implementation of TD3 (https://arxiv.org/abs/1802.09477).
@@ -57,10 +53,14 @@ class TD3(Agent, ABC):
         dimensions).
         """
 
-        if "backend" in params:
-            self.backend = params["backend"]
-        else:
-            self.backend = "cpu"
+        discount = 0.99 if "discount" not in params else params["discount"]
+        reward_scale = 1.0 if "reward_scale" not in params else params["reward_scale"]
+        policy_lr = 3e-4 if "policy_lr" not in params else params["policy_lr"]
+        critic_lr = 3e-4 if "critic_lr" not in params else params["critic_lr"]
+        soft_target_tau = (
+            0.005 if "soft_target_tau" not in params else params["soft_target_tau"]
+        )
+        self.backend = None if "backend" not in params else params["backend"]
 
         class CustomMLP(linen.Module):
             """MLP module."""
@@ -217,7 +217,7 @@ class TD3(Agent, ABC):
             actions,
             new_observations,
             rewards,
-            done,
+            mask,
             key_,
         ) -> jnp.ndarray:
             next_pre_actions = self.policy_model.apply(
@@ -245,7 +245,7 @@ class TD3(Agent, ABC):
             next_v = jnp.min(next_q, axis=-1)
             target_q = jax.lax.stop_gradient(
                 rewards * self.reward_scale
-                + done * discount * jnp.expand_dims(next_v, -1)
+                + mask * discount * jnp.expand_dims(next_v, -1)
             )
             q_error = q_old_action - target_q
             q_loss = 2.0 * jnp.mean(jnp.square(q_error))
@@ -255,7 +255,7 @@ class TD3(Agent, ABC):
         self.actor_grad = jax.value_and_grad(actor_loss)
 
         def update_step(
-            state: TrainingState, observations, actions, rewards, new_observations, done
+            state: TrainingState, observations, actions, rewards, new_observations, mask
         ) -> (TrainingState, dict):
 
             key, key_critic = jax.random.split(state.key, 2)
@@ -280,7 +280,7 @@ class TD3(Agent, ABC):
                 actions,
                 new_observations,
                 rewards,
-                done,
+                mask,
                 key_critic,
             )
 
@@ -399,9 +399,9 @@ class TD3(Agent, ABC):
                 key_sample,
             )
         if len(action.shape) == 1:
-            return jnp.expand_dims(action, axis=0)
+            return np.asarray(jnp.expand_dims(action, axis=0))
         else:
-            return action
+            return np.asarray(action)
 
     def save(self, directory):
         os.makedirs(directory, exist_ok=True)
@@ -415,7 +415,7 @@ class TD3(Agent, ABC):
             load_all[filename] = jax.tree_util.tree_multimap(
                 jnp.array, joblib.load(os.path.join(directory, filename + ".joblib"))
             )
-        return TrainingState(
+        self.training_state = TrainingState(
             policy_optimizer_state=load_all["policy_optimizer_state"],
             policy_params=load_all["policy_params"],
             target_policy_params=load_all["target_policy_params"],
@@ -429,30 +429,28 @@ class TD3(Agent, ABC):
     def write_config(self, output_file: str):
         print(self._config_string, file=output_file)
 
-    def train(self, pre_sample, sampler, batch_size):
-        batch = sampler.sample(pre_sample, batch_size)
-        return self.train_on_batch(batch)
-
     def train_on_batch(self, batch):
-        if torch.is_tensor(batch["r"]):
+        if torch.is_tensor(batch["reward"]):
             version = "torch"
         else:
-            version = "numpy"
-        if version == "numpy":
-            observations = jnp.array(batch["obs"])
-            actions = jnp.array(batch["actions"])
-            rewards = jnp.array(batch["r"])
-            new_observations = jnp.array(batch["obs_next"])
-            done = jnp.array(1.0 - batch["terminals"])
+            version = "numpy or jax"
+        if version == "numpy or jax":
+            observations = batch["observation"]
+            actions = batch["action"]
+            rewards = batch["reward"]
+            new_observations = batch["next_observation"]
+            mask = 1 - batch["done"] * (1 - batch["truncation"])
         else:
-            observations = jnp.array(batch["obs"].detach().cpu().numpy())
-            actions = jnp.array(batch["actions"].detach().cpu().numpy())
-            rewards = jnp.array(batch["r"].detach().cpu().numpy())
-            new_observations = jnp.array(batch["obs_next"].detach().cpu().numpy())
-            done = jnp.array(1.0 - batch["terminals"].detach().cpu().numpy())
+            observations = batch["observation"].detach().cpu().numpy()
+            actions = batch["action"].detach().cpu().numpy()
+            rewards = batch["reward"].detach().cpu().numpy()
+            new_observations = batch["next_observation"].detach().cpu().numpy()
+            mask = 1 - batch["done"].detach().cpu().numpy() * (
+                1 - batch["truncation"].detach().cpu().numpy()
+            )
 
         self.training_state, metrics = self.update_step(
-            self.training_state, observations, actions, rewards, new_observations, done
+            self.training_state, observations, actions, rewards, new_observations, mask
         )
 
         return metrics

@@ -1,4 +1,5 @@
-from xpag.buffers.buffer import (
+from xtmp.buffers.buffer import (
     Buffer,
-    DefaultBuffer,
+    EpisodicBuffer,
+    DefaultEpisodicBuffer,
 )
