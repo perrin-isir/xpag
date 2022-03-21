@@ -16,6 +16,8 @@ setup(
         "joblib>=1.1.0",
         "gym>=0.22.0",
         "torch>=1.10.0",
+        "Pillow>=9.0.1",
+        "ipywidgets>=7.6.5",
     ],
     license="LICENSE",
 )

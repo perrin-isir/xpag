@@ -57,7 +57,7 @@ def mujoco_notebook_replay(load_dir: str):
         # interval=1000,
         value=0,
         min=0,
-        max=len(qpos),
+        max=len(qpos) - 1,
         step=1,
         description="Press play",
         disabled=False,
@@ -78,13 +78,19 @@ def mujoco_notebook_replay(load_dir: str):
 
     slider = ipywidgets.IntSlider(
         min=0,
-        max=len(qpos),
+        max=len(qpos) - 1,
         step=1,
         value=0,
         readout=True,
         layout=ipywidgets.Layout(width="400px"),
     )
     ipywidgets.jslink((play, "value"), (slider, "value"))
+    display.display(
+        display.HTML(
+            """<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/
+        font-awesome/4.7.0/css/font-awesome.min.css"> """
+        )
+    )
     display.display(ipywidgets.HBox([play]))
     # display_sequence(img_list, slider)
     display_sequence(slider)
