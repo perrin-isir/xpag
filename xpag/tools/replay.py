@@ -85,12 +85,6 @@ def mujoco_notebook_replay(load_dir: str):
         layout=ipywidgets.Layout(width="400px"),
     )
     ipywidgets.jslink((play, "value"), (slider, "value"))
-    display.display(
-        display.HTML(
-            """<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/
-        font-awesome/4.7.0/css/font-awesome.min.css"> """
-        )
-    )
     display.display(ipywidgets.HBox([play]))
     # display_sequence(img_list, slider)
     display_sequence(slider)
