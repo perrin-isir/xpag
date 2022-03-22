@@ -25,19 +25,20 @@ class DownloadButton(ipywidgets.Button):
 
     def __on_click(self, b):
         # contents: bytes = self.contents().encode('utf-8')
-        contents: bytes = self.contents()
+        # self.description = "clicked"
+        contents: bytes = self.contents(self)
         b64 = base64.b64encode(contents)
         payload = b64.decode()
         digest = hashlib.md5(contents).hexdigest()  # bypass browser cache
         id_ = f"dl_{digest}"
-
+        self.description = "99%"
         display.display(
             display.HTML(
                 f"""
 <html>
 <body>
 <a id="{id_}" download="{self.filename}" href=
-"data:image/png;base64,{payload}" download>
+"data:image/gif;base64,{payload}" download>
 </a>
 
 <script>
@@ -51,6 +52,7 @@ document.getElementById('{id_}').click();
 """
             )
         )
+        self.description = "Download gif"
 
 
 def mujoco_notebook_replay(load_dir: str):
@@ -76,15 +78,18 @@ def mujoco_notebook_replay(load_dir: str):
         disabled=False,
     )
 
+    def compute_image(step):
+        env_replay.set_state(qpos[step], qvel[step])
+        img_ = Image.fromarray(env_replay.render(mode="rgb_array"))
+        ImageDraw.Draw(img_).text((0, 0), f"step: {step}", (255, 255, 255))
+        return img_
+
     def display_sequence(slider_):
         def _show(step):
             if step in img_dict:
                 return img_dict[step]
             else:
-                env_replay.set_state(qpos[step], qvel[step])
-                img_ = Image.fromarray(env_replay.render(mode="rgb_array"))
-                ImageDraw.Draw(img_).text((0, 0), f"step: {step}", (255, 255, 255))
-                img_dict[step] = img_
+                img_dict[step] = compute_image(step)
                 return img_dict[step]
 
         return ipywidgets.interact(_show, step=slider_)
@@ -101,18 +106,29 @@ def mujoco_notebook_replay(load_dir: str):
     display.display(ipywidgets.HBox([play]))
     display_sequence(slider)
 
-    def create_gif():
+    def create_gif(button):
+        latest_percent = 0
+        for step in range(len(qpos)):
+            new_percent = min(int(step / len(qpos) * 100.0), 95)
+            if new_percent > latest_percent:
+                latest_percent = new_percent
+                button.description = f"{latest_percent}%"
+            if step not in img_dict:
+                img_dict[step] = compute_image(step)
         f = io.BytesIO()
         img_dict[0].save(
             f,
-            format="png",
-            # append_images=[img_dict[0]],
-            # save_all=True,
-            # duration=env_replay.model.opt.timestep * 1000,
-            # loop=0,
+            format="gif",
+            append_images=[img_dict[k] for k in range(1, len(qpos))],
+            save_all=True,
+            duration=env_replay.model.opt.timestep * 1000,
+            loop=0,
         )
+        button.description = "98%"
         return f.getvalue()
 
     display.display(
-        DownloadButton(filename="foo.png", contents=create_gif, description="download")
+        DownloadButton(
+            filename="episode.gif", contents=create_gif, description="Download gif"
+        )
     )
