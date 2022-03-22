@@ -16,7 +16,6 @@ class DownloadButton(ipywidgets.Button):
     The content is generated using a callback when the button is clicked.
     """
 
-    # def __init__(self, filename: str, contents: Callable[[], str], **kwargs):
     def __init__(self, filename: str, contents: Callable[[], bytes], **kwargs):
         super(DownloadButton, self).__init__(**kwargs)
         self.filename = filename
@@ -24,8 +23,6 @@ class DownloadButton(ipywidgets.Button):
         self.on_click(self.__on_click)
 
     def __on_click(self, b):
-        # contents: bytes = self.contents().encode('utf-8')
-        # self.description = "clicked"
         contents: bytes = self.contents(self)
         b64 = base64.b64encode(contents)
         payload = b64.decode()
