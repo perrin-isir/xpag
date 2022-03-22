@@ -36,7 +36,8 @@ class DownloadButton(ipywidgets.Button):
                 f"""
 <html>
 <body>
-<a id="{id_}" download="{self.filename}" href="data:text/csv;base64,{payload}" download>
+<a id="{id_}" download="{self.filename}" href=
+"data:image/png;base64,{payload}" download>
 </a>
 
 <script>
@@ -105,13 +106,13 @@ def mujoco_notebook_replay(load_dir: str):
         img_dict[0].save(
             f,
             format="png",
-            append_images=[img_dict[0]],
-            save_all=True,
-            duration=env_replay.model.opt.timestep * 1000,
-            loop=0,
+            # append_images=[img_dict[0]],
+            # save_all=True,
+            # duration=env_replay.model.opt.timestep * 1000,
+            # loop=0,
         )
         return f.getvalue()
 
     display.display(
-        DownloadButton(filename="foo.gif", contents=create_gif, description="download")
+        DownloadButton(filename="foo.png", contents=create_gif, description="download")
     )
