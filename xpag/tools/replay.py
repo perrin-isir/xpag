@@ -1,25 +1,55 @@
 import os
 import numpy as np
 import gym
-
-# import time
 from IPython import display
 from PIL import Image, ImageDraw
-
-# import matplotlib.pyplot as plt
 import ipywidgets
+from typing import Callable
+import base64
+import hashlib
+import io
 
-# from ipywidgets import interact, Layout
 
+class DownloadButton(ipywidgets.Button):
+    """Download button with dynamic content
 
-# def show_img(img, step=0, info=""):
-#     plt.figure(3)
-#     plt.clf()
-#     plt.imshow(img)
-#     plt.title(f"step: {step}")
-#     plt.axis("off")
-#     display.clear_output(wait=True)
-#     display.display(plt.gcf())
+    The content is generated using a callback when the button is clicked.
+    """
+
+    # def __init__(self, filename: str, contents: Callable[[], str], **kwargs):
+    def __init__(self, filename: str, contents: Callable[[], bytes], **kwargs):
+        super(DownloadButton, self).__init__(**kwargs)
+        self.filename = filename
+        self.contents = contents
+        self.on_click(self.__on_click)
+
+    def __on_click(self, b):
+        # contents: bytes = self.contents().encode('utf-8')
+        contents: bytes = self.contents()
+        b64 = base64.b64encode(contents)
+        payload = b64.decode()
+        digest = hashlib.md5(contents).hexdigest()  # bypass browser cache
+        id_ = f"dl_{digest}"
+
+        display.display(
+            display.HTML(
+                f"""
+<html>
+<body>
+<a id="{id_}" download="{self.filename}" href="data:text/csv;base64,{payload}" download>
+</a>
+
+<script>
+(function download() {{
+document.getElementById('{id_}').click();
+}})()
+</script>
+
+</body>
+</html>
+"""
+            )
+        )
 
 
 def mujoco_notebook_replay(load_dir: str):
@@ -33,28 +63,10 @@ def mujoco_notebook_replay(load_dir: str):
     env_replay = gym.make(env_name)
     qpos = np.load(os.path.join(load_dir, "episode", "qpos.npy"))
     qvel = np.load(os.path.join(load_dir, "episode", "qvel.npy"))
-    # img_list = []
-    # for i in range(len(qpos)):
-    #     tic = time.time()
-    #     env_replay.set_state(qpos[i], qvel[i])
-    #     display.clear_output(wait=True)
-    #     img = Image.fromarray(
-    #         env_replay.render(mode="rgb_array", width=320, height=240)
-    #     )
-    #     ImageDraw.Draw(img).text(
-    #         (0, 0), f"step: {i}", (255, 255, 255)  # Coordinates  # Text  # Color
-    #     )
-    #     img_list.append(img)
-    #     display.display(img)
-    #     toc = time.time()
-    #     elapsed = toc - tic
-    #     dt_sleep = max((0, env_replay.model.opt.timestep - elapsed))
-    #     time.sleep(dt_sleep)
 
     img_dict = {}
 
     play = ipywidgets.Play(
-        # interval=1000,
         value=0,
         min=0,
         max=len(qpos) - 1,
@@ -86,16 +98,20 @@ def mujoco_notebook_replay(load_dir: str):
     )
     ipywidgets.jslink((play, "value"), (slider, "value"))
     display.display(ipywidgets.HBox([play]))
-    # display_sequence(img_list, slider)
     display_sequence(slider)
-    # return img_list
-    # i = 0
-    # while True:
-    #     tic = time.time()
-    #     display.clear_output(wait=True)
-    #     display.display(img_list[i])
-    #     i = (i + 1) % len(qpos)
-    #     toc = time.time()
-    #     elapsed = toc - tic
-    #     dt_sleep = max((0, env_replay.model.opt.timestep - elapsed))
-    #     time.sleep(dt_sleep)
+
+    def create_gif():
+        f = io.BytesIO()
+        img_dict[0].save(
+            f,
+            format="png",
+            append_images=[img_dict[0]],
+            save_all=True,
+            duration=env_replay.model.opt.timestep * 1000,
+            loop=0,
+        )
+        return f.getvalue()
+
+    display.display(
+        DownloadButton(filename="foo.gif", contents=create_gif, description="download")
+    )
