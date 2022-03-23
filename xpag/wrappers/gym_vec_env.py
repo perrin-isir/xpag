@@ -10,7 +10,6 @@ from gym.vector.utils import (
     write_to_shared_memory,
 )
 from gym.vector import VectorEnv, AsyncVectorEnv
-from gym.envs.mujoco.mujoco_env import MujocoEnv
 from xpag.wrappers.reset_done import ResetDoneWrapper
 from xpag.tools.utils import get_env_dimensions
 
@@ -79,7 +78,19 @@ def gym_vec_env_(env_name, num_envs):
         )
         env._spec = dummy_env.spec
         max_episode_steps = dummy_env.spec.max_episode_steps
-        env_type = "Mujoco" if isinstance(dummy_env.unwrapped, MujocoEnv) else "Gym"
+        # env_type = "Mujoco" if isinstance(dummy_env.unwrapped, MujocoEnv) else "Gym"
+        # To avoid imposing  a dependency to mujoco, we simply guess that the
+        # environment is a mujoco environment when it has the 'init_qpos', 'init_qvel'
+        # and 'state_vector' attributes:
+        env_type = (
+            "Mujoco"
+            if hasattr(dummy_env.unwrapped, "init_qpos")
+            and hasattr(dummy_env.unwrapped, "init_qvel")
+            and hasattr(dummy_env.unwrapped, "state_vector")
+            else "Gym"
+        )
+        # The 'init_qpos' and 'state_vector' attributes are the one required to
+        # save mujoco episodes (cf. class SaveEpisode in xpag/tools/eval.py).
     is_goalenv = check_goalenv(env)
     env_info = {
         "env_type": env_type,
