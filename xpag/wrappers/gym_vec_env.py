@@ -34,7 +34,7 @@ def check_goalenv(env) -> bool:
     return True
 
 
-def gym_vec_env_(env_name, num_envs):
+def gym_vec_env_(env_name, num_envs, make_function):
     if "num_envs" in inspect.signature(
         gym.envs.registration.load(
             gym.envs.registry.spec(env_name).entry_point
@@ -45,7 +45,7 @@ def gym_vec_env_(env_name, num_envs):
     ):
         # no need to create a VecEnv and wrap it if the env accepts 'num_envs' as an
         # argument at __init__ and has a reset_done() method.
-        env = gym.make(env_name, num_envs=num_envs)
+        env = make_function(env_name, num_envs=num_envs)
         # We force the environment to have a time limit, but
         # env.spec.max_episode_steps cannot exist as it would automatically trigger
         # the TimeLimit wrapper of gym, which does not handle batch envs. We require
@@ -64,7 +64,7 @@ def gym_vec_env_(env_name, num_envs):
         max_episode_steps = env.max_episode_steps
         env_type = "Gym"
     else:
-        dummy_env = gym.make(env_name)
+        dummy_env = make_function(env_name)
         # We force the env to have a standard gym time limit:
         assert (
             hasattr(dummy_env.spec, "max_episode_steps")
@@ -72,7 +72,7 @@ def gym_vec_env_(env_name, num_envs):
         ), "Only allowing gym envs with time limit (spec.max_episode_steps)."
         env = ResetDoneVecWrapper(
             AsyncVectorEnv(
-                [lambda: ResetDoneWrapper(gym.make(env_name))] * num_envs,
+                [lambda: ResetDoneWrapper(make_function(env_name))] * num_envs,
                 worker=_worker_shared_memory_no_auto_reset,
             )
         )

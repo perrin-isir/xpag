@@ -4,12 +4,11 @@
 
 from typing import ClassVar, Optional
 from xpag.wrappers.reset_done import ResetDoneBraxWrapper
-from brax import jumpy as jp
 import jax
+import jax.numpy as jnp
 import gym
 from gym import spaces
 from gym.vector import utils
-from brax import envs
 from xpag.tools.utils import get_env_dimensions
 
 _envs_episode_length = {
@@ -32,11 +31,11 @@ _envs_episode_length = {
 }
 
 
-def brax_vec_env_(env_name, num_envs, force_cpu_backend=False):
+def brax_vec_env_(env_name, num_envs, create_function, force_cpu_backend=False):
     assert env_name in _envs_episode_length, f"{env_name}: unknown environment."
     env = ResetDoneBraxToGymWrapper(
         ResetDoneBraxWrapper(
-            envs.create(
+            create_function(
                 env_name=env_name,
                 episode_length=_envs_episode_length[env_name],
                 batch_size=num_envs,
@@ -45,7 +44,7 @@ def brax_vec_env_(env_name, num_envs, force_cpu_backend=False):
         ),
         backend="cpu" if force_cpu_backend else None,
     )
-    is_goalenv = False  # No Brax GoalEnv support so
+    is_goalenv = False  # No Brax GoalEnv support so far
     env_info = {
         "env_type": "Brax",
         "name": env_name,
@@ -91,20 +90,20 @@ class ResetDoneBraxToGymWrapper(gym.Env):
         self.backend = backend
         self._state = None
 
-        obs_high = jp.inf * jp.ones(self._env.observation_size, dtype="float32")
+        obs_high = jnp.inf * jnp.ones(self._env.observation_size, dtype="float32")
         self.single_observation_space = spaces.Box(-obs_high, obs_high, dtype="float32")
         self.observation_space = utils.batch_space(
             self.single_observation_space, self.num_envs
         )
 
-        action_high = jp.ones(self._env.action_size, dtype="float32")
+        action_high = jnp.ones(self._env.action_size, dtype="float32")
         self.single_action_space = spaces.Box(
             -action_high, action_high, dtype="float32"
         )
         self.action_space = utils.batch_space(self.single_action_space, self.num_envs)
 
         def reset(key):
-            key1, key2 = jp.random_split(key)
+            key1, key2 = jnp.random_split(key)
             state = self._env.reset(key2)
             return state, state.obs, key1
 
@@ -165,7 +164,7 @@ class ResetDoneBraxToGymWrapper(gym.Env):
 
         if mode == "rgb_array":
             sys = self._env.sys
-            qp = jp.take(self._state.qp, 0)
+            qp = jnp.take(self._state.qp, 0)
             return image.render_array(sys, qp, 256, 256)
         else:
             return super().render(mode=mode)  # just raise an exception
