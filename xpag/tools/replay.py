@@ -5,9 +5,6 @@ from IPython import display
 from PIL import Image, ImageDraw
 import ipywidgets
 from typing import Callable
-import base64
-import hashlib
-import io
 
 
 class DownloadButton(ipywidgets.Button):
@@ -16,40 +13,16 @@ class DownloadButton(ipywidgets.Button):
     The content is generated using a callback when the button is clicked.
     """
 
-    def __init__(self, filename: str, contents: Callable[[], bytes], **kwargs):
+    def __init__(self, contents: Callable[[], str], **kwargs):
         super(DownloadButton, self).__init__(**kwargs)
-        self.filename = filename
         self.contents = contents
         self.on_click(self.__on_click)
 
     def __on_click(self, b):
-        contents: bytes = self.contents(self)
-        b64 = base64.b64encode(contents)
-        payload = b64.decode()
-        digest = hashlib.md5(contents).hexdigest()  # bypass browser cache
-        id_ = f"dl_{digest}"
+        filepath = self.contents(self)
         self.description = "99%"
-        display.display(
-            display.HTML(
-                f"""
-<html>
-<body>
-<a id="{id_}" download="{self.filename}" href=
-"data:image/gif;base64,{payload}" download>
-</a>
-
-<script>
-(function download() {{
-document.getElementById('{id_}').click();
-}})()
-</script>
-
-</body>
-</html>
-"""
-            )
-        )
-        self.description = "Download gif"
+        self.description = "Generate gif"
+        print(f"gif saved to: {filepath}")
 
 
 def mujoco_notebook_replay(load_dir: str):
@@ -112,9 +85,8 @@ def mujoco_notebook_replay(load_dir: str):
                 button.description = f"{latest_percent}%"
             if step not in img_dict:
                 img_dict[step] = compute_image(step)
-        f = io.BytesIO()
         img_dict[0].save(
-            f,
+            os.path.join(load_dir, "episode", "episode.gif"),
             format="gif",
             append_images=[img_dict[k] for k in range(1, len(qpos))],
             save_all=True,
@@ -122,10 +94,6 @@ def mujoco_notebook_replay(load_dir: str):
             loop=0,
         )
         button.description = "98%"
-        return f.getvalue()
+        return os.path.join(load_dir, "episode", "episode.gif")
 
-    display.display(
-        DownloadButton(
-            filename="episode.gif", contents=create_gif, description="Download gif"
-        )
-    )
+    display.display(DownloadButton(contents=create_gif, description="Generate gif"))
