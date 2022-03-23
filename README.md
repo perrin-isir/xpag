@@ -37,7 +37,9 @@ Finally, to install the *xpag* library in the activated virtual environment:
 </p>
 </details>
 
-#### JAX and Brax installation
+
+<details><summary>JAX and Brax installation</summary>
+<p>
 
 The *xpag* agents are written in JAX,
 and some functionalities specific to Brax environments require it to be 
@@ -58,7 +60,10 @@ installed.
 - Once JAX is installed, `pip install brax` should install Brax. Otherwise, follow these guidelines:
 
   [https://github.com/google/brax#readme](https://github.com/google/brax#readme) 
-  
+
+</p>
+</details>
+
 ## Tutorials
 
 The package 'xpag-tutorials' contains a list of tutorials (colab notebooks) for *xpag*:  
