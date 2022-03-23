@@ -2,6 +2,8 @@ import os
 import numpy as np
 from xpag.tools.eval import single_rollout_eval
 from xpag.tools.utils import hstack
+from xpag.tools.logging import eval_log_reset
+from xpag.tools.timing import timing_reset
 from xpag.buffers import Buffer
 from xpag.agents.agent import Agent
 from xpag.goalsetters.goalsetter import GoalSetter
@@ -25,7 +27,8 @@ def learn(
     save_episode: bool = False,
     plot_projection=None,
 ):
-
+    eval_log_reset()
+    timing_reset()
     observation = goalsetter.reset(env.reset())
 
     for i in range(max_steps // env_info["num_envs"]):

@@ -20,6 +20,16 @@ class LevelFilter(logging.Filter):
         return logrecord.levelno == self.__level
 
 
+def eval_log_reset():
+    global global_first_eval_log_done, global_eval_logger
+    if global_eval_logger is not None:
+        for handler in global_eval_logger.handlers[:]:
+            global_eval_logger.removeHandler(handler)
+            handler.close()
+    global_first_eval_log_done = None
+    global_eval_logger = None
+
+
 def eval_log(
     steps: int,
     elapsed_time: float,

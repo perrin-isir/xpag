@@ -4,20 +4,25 @@
 
 import time
 
+global_timing_time_saved = None
+global_timing_first_time_saved = None
+
+
+def timing_reset():
+    global global_timing_time_saved, global_timing_first_time_saved
+    global_timing_time_saved = None
+    global_timing_first_time_saved = None
+
 
 def timing():
-    global timing_time_saved, timing_first_time_saved
-    try:
-        timing_time_saved
-    except NameError:
-        timing_time_saved = None
-    if timing_time_saved is None:
-        timing_first_time_saved = time.time()
-        timing_time_saved = timing_first_time_saved
+    global global_timing_time_saved, global_timing_first_time_saved
+    if global_timing_time_saved is None or global_timing_first_time_saved is None:
+        global_timing_first_time_saved = time.time()
+        global_timing_time_saved = global_timing_first_time_saved
         interval_time = 0.0
         total_time = 0.0
     else:
-        interval_time = (time.time() - timing_time_saved) * 1000.0
-        total_time = time.time() - timing_first_time_saved
-        timing_time_saved = time.time()
+        interval_time = (time.time() - global_timing_time_saved) * 1000.0
+        total_time = time.time() - global_timing_first_time_saved
+        global_timing_time_saved = time.time()
     return interval_time, total_time
