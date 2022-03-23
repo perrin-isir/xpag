@@ -61,4 +61,5 @@ installed.
   
 ## Tutorials
 
-The package 'xpag-tutorials' contains a list of tutorials (colab notebooks) for *xpag*: [https://github.com/perrin-isir/xpag-tutorials](https://github.com/perrin-isir/xpag-tutorials)
+The package 'xpag-tutorials' contains a list of tutorials (colab notebooks) for *xpag*:  
+[https://github.com/perrin-isir/xpag-tutorials](https://github.com/perrin-isir/xpag-tutorials)
