@@ -18,7 +18,7 @@ class DataType(Enum):
 
 
 def reshape(
-    x: Union[torch.Tensor, np.ndarray, DeviceArray, list, float, np.float],
+    x: Union[torch.Tensor, np.ndarray, DeviceArray, list, float],
     shape: Tuple[int, ...],
 ) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
     if torch.is_tensor(x) or type(x) == np.ndarray or type(x) == DeviceArray:
@@ -63,7 +63,7 @@ def squeeze(
 
 
 def datatype_convert(
-    x: Union[torch.Tensor, np.ndarray, DeviceArray, list, float, np.float],
+    x: Union[torch.Tensor, np.ndarray, DeviceArray, list, float],
     datatype: DataType = DataType.NUMPY,
 ) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
     if datatype == DataType.TORCH_CPU or datatype == DataType.TORCH_CUDA:
