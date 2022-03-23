@@ -5,6 +5,10 @@ from IPython import display
 from PIL import Image, ImageDraw
 import ipywidgets
 from typing import Callable
+from IPython.display import HTML
+from brax import envs
+from brax.physics.base import QP
+from brax.io import html
 
 
 class DownloadButton(ipywidgets.Button):
@@ -28,7 +32,6 @@ class DownloadButton(ipywidgets.Button):
 def mujoco_notebook_replay(load_dir: str):
     """
     Episode replay for mujoco environments.
-    In a notebook, use '%matplotlib inline' for a correct display.
     """
     env_name = str(
         np.loadtxt(os.path.join(load_dir, "episode", "env_name.txt"), dtype="str")
@@ -97,3 +100,22 @@ def mujoco_notebook_replay(load_dir: str):
         return os.path.join(load_dir, "episode", "episode.gif")
 
     display.display(DownloadButton(contents=create_gif, description="Generate gif"))
+
+
+def brax_notebook_replay(load_dir: str):
+    """
+    Episode replay for brax environments.
+    """
+    env_name = str(
+        np.loadtxt(os.path.join(load_dir, "episode", "env_name.txt"), dtype="str")
+    )
+    qp_pos = np.load(os.path.join(load_dir, "episode", "qp_pos.npy"))
+    qp_rot = np.load(os.path.join(load_dir, "episode", "qp_rot.npy"))
+    qp_vel = np.load(os.path.join(load_dir, "episode", "qp_vel.npy"))
+    qp_ang = np.load(os.path.join(load_dir, "episode", "qp_ang.npy"))
+    env = envs.create(env_name=env_name)
+    episode_length = len(qp_pos)
+    episode = [
+        QP(qp_pos[i], qp_rot[i], qp_vel[i], qp_ang[i]) for i in range(episode_length)
+    ]
+    display.display(HTML(html.render(env.sys, episode)))
