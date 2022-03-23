@@ -37,7 +37,7 @@ Finally, to install the *xpag* library in the activated virtual environment:
 </p>
 </details>
 
-#### JAX, Flax and Brax installation
+#### JAX and Brax installation
 
 The *xpag* agents are written in JAX,
 and some functionalities specific to Brax environments require it to be 
