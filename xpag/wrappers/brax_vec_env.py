@@ -75,9 +75,7 @@ class ResetDoneBraxToGymWrapper(gym.Env):
     # `_reset` as signs of a deprecated gym Env API.
     _gym_disable_underscore_compat: ClassVar[bool] = True
 
-    def __init__(
-        self, env: ResetDoneBraxWrapper, seed: int = 0, backend: Optional[str] = None
-    ):
+    def __init__(self, env: ResetDoneBraxWrapper, backend: Optional[str] = None):
         self._env = env
         self.metadata = {
             "render.modes": ["human", "rgb_array"],
@@ -87,7 +85,6 @@ class ResetDoneBraxToGymWrapper(gym.Env):
             raise ValueError("underlying env must be batched")
 
         self.num_envs = self._env.batch_size
-        self.seed(seed)
         self.backend = backend
         self._state = None
         self._key = None
