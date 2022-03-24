@@ -144,6 +144,10 @@ class ResetDoneVecWrapper(gym.Wrapper):
 def _worker_shared_memory_no_auto_reset(
     index, env_fn, pipe, parent_pipe, shared_memory, error_queue
 ):
+    """
+    This function is derived from _worker_shared_memory() in gym. See:
+    https://github.com/openai/gym/blob/master/gym/vector/async_vector_env.py
+    """
     assert shared_memory is not None
     env = env_fn()
     observation_space = env.observation_space
@@ -174,15 +178,15 @@ def _worker_shared_memory_no_auto_reset(
                     observation_space, index, observation, shared_memory
                 )
                 pipe.send(((None, reward, done, info), True))
-            elif command == "seed":
-                env.seed(data)
-                pipe.send((None, True))
+            # elif command == "seed":
+            #     env.seed(data)
+            #     pipe.send((None, True))
             elif command == "close":
                 pipe.send((None, True))
                 break
             elif command == "_call":
                 name, args, kwargs = data
-                if name in ["reset", "step", "seed", "close"]:
+                if name in ["reset", "step", "close"]:
                     raise ValueError(
                         f"Trying to call function `{name}` with "
                         f"`_call`. Use `{name}` directly instead."
@@ -203,7 +207,7 @@ def _worker_shared_memory_no_auto_reset(
             else:
                 raise RuntimeError(
                     f"Received unknown command `{command}`. Must "
-                    "be one of {`reset`, `step`, `seed`, `close`, `_call`, "
+                    "be one of {`reset`, `step`, `close`, `_call`, "
                     "`_setattr`, `_check_spaces`}."
                 )
     except (KeyboardInterrupt, Exception):
