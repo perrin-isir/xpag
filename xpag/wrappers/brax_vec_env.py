@@ -90,6 +90,7 @@ class ResetDoneBraxToGymWrapper(gym.Env):
         self.seed(seed)
         self.backend = backend
         self._state = None
+        self._key = None
 
         obs_high = jp.inf * jp.ones(self._env.observation_size, dtype="float32")
         self.single_observation_space = spaces.Box(-obs_high, obs_high, dtype="float32")
@@ -119,11 +120,12 @@ class ResetDoneBraxToGymWrapper(gym.Env):
 
         self._step = jax.jit(step, backend=self.backend)
 
-        def reset_done(state):
+        def reset_done(state, key):
+            key1, key2 = jp.random_split(key)
             if state is None:
                 raise ValueError("Use reset() for the first reset, not reset_done().")
-            state = self._env.reset_done(state)
-            return state, state.obs
+            state = self._env.reset_done(state, key2)
+            return state, state.obs, key1
 
         self._reset_done = jax.jit(reset_done, backend=self.backend)
 
@@ -134,7 +136,8 @@ class ResetDoneBraxToGymWrapper(gym.Env):
         options: Optional[dict] = None,
     ):
         if seed is None:
-            self._key = jax.random.PRNGKey(0)
+            if self._key is None:
+                self._key = jax.random.PRNGKey(0)
         else:
             self._key = jax.random.PRNGKey(seed)
         self._state, obs, self._key = self._reset(self._key)
@@ -156,7 +159,12 @@ class ResetDoneBraxToGymWrapper(gym.Env):
         return_info: bool = False,
         options: Optional[dict] = None,
     ):
-        self._state, obs = self._reset_done(self._state)
+        if seed is None:
+            if self._key is None:
+                self._key = jax.random.PRNGKey(0)
+        else:
+            self._key = jax.random.PRNGKey(seed)
+        self._state, obs, self._key = self._reset_done(self._state, self._key)
         return obs
 
     def render(self, mode="human"):

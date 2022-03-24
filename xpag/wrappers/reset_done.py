@@ -53,8 +53,7 @@ class ResetDoneBraxWrapper(brax_env.Wrapper):
     def step(self, state: brax_env.State, action: jp.ndarray) -> brax_env.State:
         return self.env.step(state, action)
 
-    @staticmethod
-    def reset_done(state: brax_env.State):
+    def reset_done(self, state: brax_env.State, rng: jp.ndarray):
         if "steps" in state.info:
             steps = state.info["steps"]
             steps = jp.where(state.done, jp.zeros_like(steps), steps)
@@ -68,7 +67,10 @@ class ResetDoneBraxWrapper(brax_env.Wrapper):
                 )  # type: ignore
             return jp.where(done, x, y)
 
-        qp = jp.tree_map(where_done, state.info["first_qp"], state.qp)
-        obs = where_done(state.info["first_obs"], state.obs)
+        reset_state = self.env.reset(rng)
+        qp = jp.tree_map(where_done, reset_state.qp, state.qp)
+        obs = where_done(reset_state.obs, state.obs)
+        # qp = jp.tree_map(where_done, state.info["first_qp"], state.qp)
+        # obs = where_done(state.info["first_obs"], state.obs)
         state = state.replace(qp=qp, obs=obs)
         return state.replace(done=jp.zeros_like(state.done))
