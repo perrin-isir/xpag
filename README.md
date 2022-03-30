@@ -1,4 +1,8 @@
-# *xpag*
+# ![alt text](logo.png "logo")
+
+![version](https://img.shields.io/badge/version-0.1.0-blue)
+[![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 *xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning platform, currently in beta version.
 
 ## Installation
