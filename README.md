@@ -5,7 +5,8 @@
 
 *xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning platform, currently in beta version.
 
-## Installation
+-----
+## Install
 
 <details><summary>Option 1: pip</summary>
 <p>
@@ -68,6 +69,7 @@ installed.
 </p>
 </details>
 
+-----
 ## Tutorials
 
 The *xpag-tutorials* repository contains a list of tutorials (colab notebooks) for *xpag*:  
