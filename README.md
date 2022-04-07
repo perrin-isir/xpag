@@ -72,3 +72,18 @@ installed.
 
 The *xpag-tutorials* repository contains a list of tutorials (colab notebooks) for *xpag*:  
 [https://github.com/perrin-isir/xpag-tutorials](https://github.com/perrin-isir/xpag-tutorials)
+
+-----
+## Citing the project
+To cite this repository in publications:
+
+```bibtex
+@misc{xpag,
+  author = {Perrin-Gilbert, Nicolas},
+  title = {xpag},
+  year = {2022},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/perrin-isir/xpag}},
+}
+```
