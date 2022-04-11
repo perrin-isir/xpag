@@ -6,6 +6,7 @@ import os
 from typing import Union, Dict, Any
 import numpy as np
 from xpag.agents.agent import Agent
+from xpag.goalsetters.goalsetter import GoalSetter
 from xpag.tools.utils import hstack
 from xpag.tools.timing import timing
 from xpag.tools.logging import eval_log
@@ -13,7 +14,7 @@ from xpag.plotting.plotting import single_episode_plot
 
 
 class SaveEpisode:
-    """ To save episodes in Brax or Mujoco environments """
+    """To save episodes in Brax or Mujoco environments"""
 
     def __init__(self, env, env_info):
         self.env = env
@@ -82,13 +83,14 @@ def single_rollout_eval(
     eval_env: Any,
     env_info: Dict[str, Any],
     agent: Agent,
+    goalsetter: GoalSetter,
     save_dir: Union[str, None] = None,
     plot_projection=None,
     save_episode: bool = False,
 ):
     # Evaluation performed on a single run
     interval_time, _ = timing()
-    observation = eval_env.reset()
+    observation = goalsetter.reset(eval_env, eval_env.reset())
     if save_episode and save_dir is not None:
         save_ep = SaveEpisode(eval_env, env_info)
         save_ep.update()
@@ -101,8 +103,8 @@ def single_rollout_eval(
             if not env_info["is_goalenv"]
             else hstack(observation["observation"], observation["desired_goal"])
         )
-        next_observation, reward, done, info = eval_env.step(
-            agent.select_action(obs, deterministic=True)
+        next_observation, reward, done, info = goalsetter.step(
+            eval_env, *eval_env.step(agent.select_action(obs, deterministic=True))
         )
         if save_episode and save_dir is not None:
             save_ep.update()

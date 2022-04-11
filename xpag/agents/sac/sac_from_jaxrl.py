@@ -53,6 +53,7 @@ import numpy as np
 from tensorflow_probability.substrates import jax as tfp
 
 
+# def default_init(scale: Optional[float] = jnp.sqrt(0.2)):
 def default_init(scale: Optional[float] = jnp.sqrt(2)):
     return nn.initializers.orthogonal(scale)
 
@@ -337,7 +338,7 @@ class Dataset(object):
         for traj in trajs:
             mc_return = 0.0
             for i, (_, _, reward, _, _, _) in enumerate(traj):
-                mc_return += reward * (discount ** i)
+                mc_return += reward * (discount**i)
             mc_returns.append(mc_return)
 
         return np.asarray(mc_returns)

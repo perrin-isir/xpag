@@ -75,6 +75,36 @@ installed.
 The *xpag-tutorials* repository contains a list of tutorials (colab notebooks) for *xpag*:  
 [https://github.com/perrin-isir/xpag-tutorials](https://github.com/perrin-isir/xpag-tutorials)
 
+
+-----
+## Structure
+<details><summary><B><I>A reinforcement learning platform for goal-conditioned reinforcement learning</I></B></summary>
+
+*xpag* allows standard reinforcement learning, but it has been designed with
+goal-conditioned reinforcement learning (GCRL) in mind (check out the [train_gmazes.ipynb](https://colab.research.google.com/github/perrin-isir/xpag-tutorials/blob/main/train_gmazes.ipynb)
+tutorial for a simple example of GCRL). 
+
+In GCRL, agents follow a goal, and the reward depends on how well this goal is being achieved. 
+In some cases, goals are defined by the environment, but in others, they are defined by
+the agent itself, and can possibly be changed several times during an episode. 
+For this reason, *xpag* introduces a dedicated module called 
+"goal-setter", which can either be considered as a part of the environment, or as 
+a part of the agent.
+
+Overall, *xpag* relies on a fixed reinforcement learning loop (the `learn()`
+function in [xpag/tools/learn.py](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py)), but with components that are 
+easy to modify. They are:
+
+- the environment
+- the agent
+- the buffer
+- the sampler
+- the goal-setter
+
+The figure below summarizes the RL loop and the interactions between the components:
+
+</details>
+
 -----
 ## Citing the project
 To cite this repository in publications:
