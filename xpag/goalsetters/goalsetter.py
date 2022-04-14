@@ -19,7 +19,9 @@ class GoalSetter(ABC):
         pass
 
     @abstractmethod
-    def step(self, env, observation, reward, done, info) -> Tuple:
+    def step(
+        self, env, observation, action, new_observation, reward, done, info
+    ) -> Tuple:
         pass
 
     @abstractmethod
@@ -45,8 +47,8 @@ class DefaultGoalSetter(GoalSetter, ABC):
     def reset_done(self, env, observation):
         return observation
 
-    def step(self, env, observation, reward, done, info):
-        return observation, reward, done, info
+    def step(self, env, observation, action, new_observation, reward, done, info):
+        return new_observation, reward, done, info
 
     def write_config(self, output_file: str):
         pass

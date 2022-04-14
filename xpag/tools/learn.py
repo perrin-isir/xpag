@@ -60,7 +60,9 @@ def learn(
             for _ in range(max(round(gd_steps_per_step * env_info["num_envs"]), 1)):
                 _ = agent.train_on_batch(buffer.sample(batch_size))
 
-        next_observation, reward, done, info = goalsetter.step(env, *env.step(action))
+        next_observation, reward, done, info = goalsetter.step(
+            env, observation, action, *env.step(action)
+        )
 
         step = {
             "observation": observation,

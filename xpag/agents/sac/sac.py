@@ -8,6 +8,23 @@ import os
 from xpag.agents.agent import Agent
 from xpag.agents.sac.sac_from_jaxrl import Batch, SACLearner
 from xpag.tools.utils import squeeze
+import functools
+from typing import Callable, Any, Tuple
+import flax
+import jax
+import jax.numpy as jnp
+
+
+@functools.partial(jax.jit, static_argnames="critic_apply_fn")
+def _qvalue(
+    critic_apply_fn: Callable[..., Any],
+    critic_params: flax.core.FrozenDict[str, Any],
+    observations: np.ndarray,
+    actions: np.ndarray,
+) -> Tuple[jnp.ndarray]:
+    return jnp.minimum(
+        *critic_apply_fn({"params": critic_params}, observations, actions)
+    )
 
 
 class SAC(Agent, ABC):
@@ -46,6 +63,13 @@ class SAC(Agent, ABC):
             np.zeros((1, 1, observation_dim)),
             np.zeros((1, 1, action_dim)),
             **self.jaxrl_params
+        )
+
+    def value(self, observation, action):
+        return np.asarray(
+            _qvalue(
+                self.sac.critic.apply_fn, self.sac.critic.params, observation, action
+            )
         )
 
     def select_action(self, observation, deterministic=True):
