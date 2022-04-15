@@ -25,6 +25,8 @@ def _qvalue(
     return jnp.minimum(
         *critic_apply_fn({"params": critic_params}, observations, actions)
     )
+    # c1, _ = critic_apply_fn({"params": critic_params}, observations, actions)
+    # return c1
 
 
 class SAC(Agent, ABC):
