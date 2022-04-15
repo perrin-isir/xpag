@@ -90,7 +90,7 @@ def single_rollout_eval(
 ):
     # Evaluation performed on a single run
     interval_time, _ = timing()
-    observation = goalsetter.reset(eval_env, eval_env.reset())
+    observation = goalsetter.reset(eval_env, eval_env.reset(), eval_mode=True)
     if save_episode and save_dir is not None:
         save_ep = SaveEpisode(eval_env, env_info)
         save_ep.update()
@@ -105,7 +105,7 @@ def single_rollout_eval(
         )
         action = agent.select_action(obs, deterministic=True)
         next_observation, reward, done, info = goalsetter.step(
-            eval_env, observation, action, *eval_env.step(action)
+            eval_env, observation, action, *eval_env.step(action), eval_mode=True
         )
         if save_episode and save_dir is not None:
             save_ep.update()

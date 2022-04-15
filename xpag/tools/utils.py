@@ -3,7 +3,7 @@
 # Licensed under the BSD 3-Clause License.
 
 from enum import Enum
-from typing import Tuple, Union, Dict
+from typing import Tuple, Union, Dict, Any
 import torch
 import numpy as np
 from jaxlib.xla_extension import DeviceArray
@@ -60,6 +60,19 @@ def squeeze(
         return jnp.squeeze(x)
     else:
         return np.squeeze(x)
+
+
+def where(
+    condition: Any,
+    x: Union[torch.Tensor, np.ndarray, DeviceArray],
+    y: Union[torch.Tensor, np.ndarray, DeviceArray],
+) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
+    if torch.is_tensor(x) and torch.is_tensor(y):
+        return torch.where(condition, x, y)
+    elif type(x) == DeviceArray and type(y) == DeviceArray:
+        return jnp.where(condition, x, y)
+    else:
+        return np.where(condition, x, y)
 
 
 def datatype_convert(
