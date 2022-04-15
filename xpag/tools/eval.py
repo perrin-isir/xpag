@@ -103,7 +103,7 @@ def single_rollout_eval(
             if not env_info["is_goalenv"]
             else hstack(observation["observation"], observation["desired_goal"])
         )
-        action = agent.select_action(obs, deterministic=True)
+        action = agent.select_action(obs, eval_mode=True)
         next_observation, reward, done, info = goalsetter.step(
             eval_env, observation, action, *eval_env.step(action), eval_mode=True
         )

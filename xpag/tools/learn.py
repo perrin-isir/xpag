@@ -55,7 +55,7 @@ def learn(
                 observation
                 if not env_info["is_goalenv"]
                 else hstack(observation["observation"], observation["desired_goal"]),
-                deterministic=False,
+                eval_mode=False,
             )
             for _ in range(max(round(gd_steps_per_step * env_info["num_envs"]), 1)):
                 _ = agent.train_on_batch(buffer.sample(batch_size))

@@ -72,10 +72,10 @@ class SAC(Agent, ABC):
             )
         )
 
-    def select_action(self, observation, deterministic=True):
+    def select_action(self, observation, eval_mode=False):
         # return self.sac.sample_actions(observation)
         return self.sac.sample_actions(
-            observation, distribution="det" if deterministic else "log_prob"
+            observation, distribution="det" if eval_mode else "log_prob"
         )
 
     def train_on_batch(self, batch):

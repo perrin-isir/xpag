@@ -33,7 +33,7 @@ class Agent(ABC):
     def select_action(
         self,
         observation: Union[torch.Tensor, np.ndarray, DeviceArray],
-        deterministic=True,
+        eval_mode=False,
     ) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
         pass
 
