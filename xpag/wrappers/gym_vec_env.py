@@ -6,9 +6,7 @@ import sys
 import inspect
 import numpy as np
 import gym
-from gym.vector.utils import (
-    write_to_shared_memory,
-)
+from gym.vector.utils import write_to_shared_memory, concatenate, create_empty_array
 from gym.vector import VectorEnv, AsyncVectorEnv
 from xpag.wrappers.reset_done import ResetDoneWrapper
 from xpag.tools.utils import get_env_dimensions
@@ -131,7 +129,11 @@ class ResetDoneVecWrapper(gym.Wrapper):
         return self.env.reset(**kwargs)
 
     def reset_done(self, **kwargs):
-        return np.array(self.env.call("reset_done", **kwargs))
+        results = self.env.call("reset_done", **kwargs)
+        observations = create_empty_array(
+            self.env.single_observation_space, n=self.num_envs, fn=np.empty
+        )
+        return concatenate(self.env.single_observation_space, results, observations)
 
     def step(self, action):
         obs, reward, done, info_ = self.env.step(action)
