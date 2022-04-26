@@ -115,12 +115,4 @@ class HER(Sampler):
                 axis=1,
             )
 
-        # TODO: transfer the 'is_success' property to relabelled transitions?
-        # add done to transitions relabelled as successful
-        # diff_reward_done = transitions["done"] - transitions["reward"] / 1.
-        # missing_dones = (diff_reward_done < 0)  # .int()
-        # transitions["done"] = transitions["done"] + missing_dones
-        # assert (transitions["done"][:] <= 1).all()
-        # assert (transitions["done"][:] >= 0).all()
-
         return transitions
