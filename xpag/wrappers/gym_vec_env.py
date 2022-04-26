@@ -79,7 +79,12 @@ def gym_vec_env_(env_name, num_envs):
         ), "Only allowing gym envs with time limit (spec.max_episode_steps)."
         env = ResetDoneVecWrapper(
             AsyncVectorEnv(
-                [lambda: ResetDoneWrapper(gym.make(env_name))] * num_envs,
+                [
+                    (lambda: gym.make(env_name))
+                    if hasattr(dummy_env, "reset_done")
+                    else (lambda: ResetDoneWrapper(gym.make(env_name)))
+                ]
+                * num_envs,
                 worker=_worker_shared_memory_no_auto_reset,
             )
         )
