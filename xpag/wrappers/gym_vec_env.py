@@ -65,10 +65,17 @@ def gym_vec_env_(env_name, num_envs):
         env_type = "Gym"
     else:
         dummy_env = gym.make(env_name)
-        # We force the env to have a standard gym time limit:
+        # We force the env to have either a standard gym time limit (with the max number
+        # of steps defined in .spec.max_episode_steps), or that the max number of steps
+        # is stored in .max_episode_steps (and in this case we assume that the
+        # environment appropriately prevents episodes from exceeding max_episode_steps
+        # steps).
         assert (
             hasattr(dummy_env.spec, "max_episode_steps")
             and dummy_env.spec.max_episode_steps is not None
+        ) or (
+            hasattr(dummy_env, "max_episode_steps")
+            and dummy_env.max_episode_steps is not None
         ), "Only allowing gym envs with time limit (spec.max_episode_steps)."
         env = ResetDoneVecWrapper(
             AsyncVectorEnv(

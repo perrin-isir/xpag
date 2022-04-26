@@ -78,25 +78,39 @@ The *xpag-tutorials* repository contains a list of tutorials (colab notebooks) f
 
 -----
 ## Structure
-<details><summary><B><I>A reinforcement learning platform for goal-conditioned reinforcement learning</I></B></summary>
+<details><summary><B><I>A platform for goal-conditioned RL</I></B></summary>
 
 *xpag* allows standard reinforcement learning, but it has been designed with
 goal-conditioned reinforcement learning (GCRL) in mind (check out the [train_gmazes.ipynb](https://colab.research.google.com/github/perrin-isir/xpag-tutorials/blob/main/train_gmazes.ipynb)
 tutorial for a simple example of GCRL). 
 
-In GCRL, agents follow a goal, and the reward depends on how well this goal is being achieved. 
+In GCRL, agents follow a goal, and the reward depends on 
+the degree of achievement of that goal. 
 In some cases, goals are defined by the environment, but in others, they are defined by
 the agent itself, and can possibly be changed several times during an episode. 
 For this reason, *xpag* introduces a dedicated module called 
 "goal-setter", which can either be considered as a part of the environment, or as 
 a part of the agent.
 
-Overall, *xpag* relies on a fixed reinforcement learning loop (the `learn()`
-function in [xpag/tools/learn.py](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py)), but with components that are 
-easy to modify. They are:
+*xpag* relies on a single reinforcement learning loop (the `learn()`
+function in [xpag/tools/learn.py](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py)),
+with components that can be independently modified. These components are:
 
-- the environment
+<details><summary>the environment</summary>
+
+Environments are assumed to have the following methods: `reset()`,
+`reset_done()` and `step()`.
+
+`env.reset()` returns...
+
+See https://gym.openai.com/docs/#environments
+
+</details>
+
 - the agent
+
+*xpag* only considers the case of a unique off-policy agent. 
+
 - the buffer
 - the sampler
 - the goal-setter
