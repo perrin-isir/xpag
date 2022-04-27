@@ -89,7 +89,7 @@ def gym_vec_env_(env_name, num_envs):
         env._spec = dummy_env.spec
         max_episode_steps = dummy_env.spec.max_episode_steps
         # env_type = "Mujoco" if isinstance(dummy_env.unwrapped, MujocoEnv) else "Gym"
-        # To avoid imposing  a dependency to mujoco, we simply guess that the
+        # To avoid imposing a dependency to mujoco, we simply guess that the
         # environment is a mujoco environment when it has the 'init_qpos', 'init_qvel'
         # and 'state_vector' attributes:
         env_type = (
