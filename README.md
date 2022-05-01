@@ -78,7 +78,7 @@ The *xpag-tutorials* repository contains a list of tutorials (colab notebooks) f
 
 -----
 ## Structure
-<details><summary><B><I>A platform for goal-conditioned RL</I></B></summary>
+<details><summary><B><I>xpag</I>: a platform for goal-conditioned RL</B></summary>
 
 *xpag* allows standard reinforcement learning, but it has been designed with
 goal-conditioned reinforcement learning (GCRL) in mind (check out the [train_gmazes.ipynb](https://colab.research.google.com/github/perrin-isir/xpag-tutorials/blob/main/train_gmazes.ipynb)

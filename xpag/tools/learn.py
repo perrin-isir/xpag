@@ -22,7 +22,7 @@ def learn(
     start_training_after_x_steps: int = 0,
     max_steps: int = 1_000_000_000,
     evaluate_every_x_steps: int = np.inf,
-    save_agent_every_x_steps: int = np.inf,
+    save_every_x_steps: int = np.inf,
     save_dir: Union[None, str] = None,
     save_episode: bool = False,
     plot_projection=None,
@@ -44,9 +44,10 @@ def learn(
                 save_episode=save_episode,
             )
 
-        if not i % max(save_agent_every_x_steps // env_info["num_envs"], 1):
+        if not i % max(save_every_x_steps // env_info["num_envs"], 1):
             if save_dir is not None:
                 agent.save(os.path.join(save_dir, "agent"))
+                goalsetter.save(os.path.join(save_dir, "goalsetter"))
 
         if i * env_info["num_envs"] < start_training_after_x_steps:
             action = env_info["action_space"].sample()
@@ -57,8 +58,9 @@ def learn(
                 else hstack(observation["observation"], observation["desired_goal"]),
                 eval_mode=False,
             )
-            for _ in range(max(round(gd_steps_per_step * env_info["num_envs"]), 1)):
-                _ = agent.train_on_batch(buffer.sample(batch_size))
+            if i > 0:
+                for _ in range(max(round(gd_steps_per_step * env_info["num_envs"]), 1)):
+                    _ = agent.train_on_batch(buffer.sample(batch_size))
 
         next_observation, reward, done, info = goalsetter.step(
             env, observation, action, *env.step(action)

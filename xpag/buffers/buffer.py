@@ -9,6 +9,8 @@ from jaxlib.xla_extension import DeviceArray
 from typing import Union, Dict, Any
 from xpag.tools.utils import DataType, datatype_convert
 from xpag.samplers.sampler import Sampler
+import joblib
+import os
 
 
 class Buffer(ABC):
@@ -180,3 +182,46 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
             inc
         ).reshape((inc, 1))
         return idx
+
+    def save(self, directory: str):
+        os.makedirs(directory, exist_ok=True)
+        list_vars = [
+            ("buffer_size", self.buffer_size),
+            ("current_size", self.current_size),
+            ("buffers", self.buffers),
+            ("datatype", self.datatype),
+            ("T", self.T),
+            ("size", self.size),
+            ("dict_sizes", self.dict_sizes),
+            ("num_envs", self.num_envs),
+            ("keys", self.keys),
+            ("current_t", self.current_t),
+            ("current_idxs", self.current_idxs),
+            ("first_insert_done", self.first_insert_done),
+        ]
+        for cpl in list_vars:
+            with open(os.path.join(directory, cpl[0] + ".joblib"), "wb") as f_:
+                joblib.dump(cpl[1], f_)
+
+    def load(self, directory: str):
+        self.buffer_size = joblib.load(os.path.join(directory, "buffer_size.joblib"))
+        self.current_size = joblib.load(os.path.join(directory, "current_size.joblib"))
+        self.buffers = joblib.load(os.path.join(directory, "buffers.joblib"))
+        self.datatype = joblib.load(os.path.join(directory, "datatype.joblib"))
+        self.T = joblib.load(os.path.join(directory, "T.joblib"))
+        self.size = joblib.load(os.path.join(directory, "size.joblib"))
+        self.dict_sizes = joblib.load(os.path.join(directory, "dict_sizes.joblib"))
+        self.num_envs = joblib.load(os.path.join(directory, "num_envs.joblib"))
+        self.keys = joblib.load(os.path.join(directory, "keys.joblib"))
+        self.current_t = joblib.load(os.path.join(directory, "current_t.joblib"))
+        self.current_idxs = joblib.load(os.path.join(directory, "current_idxs.joblib"))
+        self.first_insert_done = joblib.load(
+            os.path.join(directory, "first_insert_done.joblib")
+        )
+        if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
+            device = "cpu" if self.datatype == DataType.TORCH_CPU else "cuda"
+            self.zeros = lambda i: torch.zeros(i, device=device, dtype=torch.int)
+            self.where = torch.where
+        else:
+            self.zeros = lambda i: np.zeros(i).astype("int")
+            self.where = np.where
