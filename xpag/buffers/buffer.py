@@ -22,8 +22,6 @@ class Buffer(ABC):
         sampler: Sampler,
     ):
         self.buffer_size = buffer_size
-        self.current_size = 0
-        self.buffers = {}
         self.sampler = sampler
 
     @abstractmethod
@@ -76,6 +74,8 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
             "DataType.TORCH_CUDA or DataType.NUMPY."
         )
         super().__init__(buffer_size, sampler)
+        self.current_size = 0
+        self.buffers = {}
         self.datatype = datatype
         self.T = max_episode_steps
         self.size = int(buffer_size // self.T)
