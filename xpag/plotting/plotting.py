@@ -66,13 +66,13 @@ def single_episode_plot(
         rgbs.append(
             (1.0 - j / episode_length / 2.0, 0.2, 0.2 + j / episode_length / 2.0, 1)
         )
-    ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=1.0))
-    if goalenv:
-        ax.scatter(gx, gy, s=10, c="green", alpha=0.8)
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
     if plot_env_function is not None:
         plot_env_function(ax)
+    if goalenv:
+        ax.scatter(gx, gy, s=10, c="green", alpha=0.8)
+    ax.add_collection(mc.LineCollection(lines, colors=rgbs, linewidths=1.0))
     fig.savefig(filename, dpi=200)
     fig.clf()
     ax.cla()

@@ -57,24 +57,26 @@ def gym_vec_env_(env_name, num_envs):
             and env.max_episode_steps is not None
         ), (
             "Trying to create a batch environment. env.max_episode_steps must exist, "
-            "and env.spec.max_episode_steps must be None."
+            "and env.spec.max_episode_steps must not (or be None)."
         )
         max_episode_steps = env.max_episode_steps
         env_type = "Gym"
     else:
         dummy_env = gym.make(env_name)
         # We force the env to have either a standard gym time limit (with the max number
-        # of steps defined in .spec.max_episode_steps), or that the max number of steps
-        # is stored in .max_episode_steps (and in this case we assume that the
-        # environment appropriately prevents episodes from exceeding max_episode_steps
-        # steps).
+        # of steps defined in .spec.max_episode_steps), or the max number of steps
+        # defined in .max_episode_steps (and in this case we trust the environment
+        # to appropriately prevent episodes from exceeding max_episode_steps steps).
         assert (
             hasattr(dummy_env.spec, "max_episode_steps")
             and dummy_env.spec.max_episode_steps is not None
         ) or (
             hasattr(dummy_env, "max_episode_steps")
             and dummy_env.max_episode_steps is not None
-        ), "Only allowing gym envs with time limit (spec.max_episode_steps)."
+        ), (
+            "Only allowing gym envs with time limit (defined in "
+            ".spec.max_episode_steps or .max_episode_steps)."
+        )
         env = ResetDoneVecWrapper(
             AsyncVectorEnv(
                 [
@@ -87,7 +89,13 @@ def gym_vec_env_(env_name, num_envs):
             )
         )
         env._spec = dummy_env.spec
-        max_episode_steps = dummy_env.spec.max_episode_steps
+        if (
+            hasattr(dummy_env.spec, "max_episode_steps")
+            and dummy_env.spec.max_episode_steps is not None
+        ):
+            max_episode_steps = dummy_env.spec.max_episode_steps
+        else:
+            max_episode_steps = dummy_env.max_episode_steps
         # env_type = "Mujoco" if isinstance(dummy_env.unwrapped, MujocoEnv) else "Gym"
         # To avoid imposing a dependency to mujoco, we simply guess that the
         # environment is a mujoco environment when it has the 'init_qpos', 'init_qvel'
