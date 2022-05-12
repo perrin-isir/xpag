@@ -1,7 +1,7 @@
 """
 This is the SAC agent from JAXRL (https://github.com/ikostrikov/jaxrl),
 put in a single file.
-It implements of the version of Soft-Actor-Critic described in
+It implements the version of Soft-Actor-Critic described in
 https://arxiv.org/abs/1812.05905.
 The only small modifications are:
     - the save() and load() methods of the Model class,
