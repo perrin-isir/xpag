@@ -26,14 +26,20 @@ def learn(
     save_dir: Union[None, str] = None,
     save_episode: bool = False,
     plot_projection=None,
+    rollout_eval_function=None,
 ):
     eval_log_reset()
     timing_reset()
     observation = goalsetter.reset(env, env.reset())
 
+    if rollout_eval_function is None:
+        rollout_eval = single_rollout_eval
+    else:
+        rollout_eval = rollout_eval_function
+
     for i in range(max_steps // env_info["num_envs"]):
         if not i % max(evaluate_every_x_steps // env_info["num_envs"], 1):
-            single_rollout_eval(
+            rollout_eval(
                 i * env_info["num_envs"],
                 eval_env,
                 env_info,
