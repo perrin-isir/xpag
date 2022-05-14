@@ -90,7 +90,9 @@ def single_rollout_eval(
 ):
     # Evaluation performed on a single run
     interval_time, _ = timing()
-    observation = goalsetter.reset(eval_env, eval_env.reset(), eval_mode=True)
+    observation, _ = goalsetter.reset(
+        eval_env, *eval_env.reset(return_info=True), eval_mode=True
+    )
     if save_episode and save_dir is not None:
         save_ep = SaveEpisode(eval_env, env_info)
         save_ep.update()

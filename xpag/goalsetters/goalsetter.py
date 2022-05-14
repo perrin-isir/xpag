@@ -11,11 +11,11 @@ class GoalSetter(ABC):
         self.name = name
 
     @abstractmethod
-    def reset(self, env, observation, eval_mode=False):
+    def reset(self, env, observation, info=None, eval_mode=False):
         pass
 
     @abstractmethod
-    def reset_done(self, env, observation, eval_mode=False):
+    def reset_done(self, env, observation, info=None, eval_mode=False):
         pass
 
     @abstractmethod
@@ -49,11 +49,17 @@ class DefaultGoalSetter(GoalSetter, ABC):
     def __init__(self):
         super().__init__("DefaultGoalSetter")
 
-    def reset(self, env, observation, eval_mode=False):
-        return observation
+    def reset(self, env, observation, info=None, eval_mode=False):
+        if info is None:
+            return observation
+        else:
+            return observation, info
 
-    def reset_done(self, env, observation, eval_mode=False):
-        return observation
+    def reset_done(self, env, observation, info=None, eval_mode=False):
+        if info is None:
+            return observation
+        else:
+            return observation, info
 
     def step(
         self,

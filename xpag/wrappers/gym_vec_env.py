@@ -134,14 +134,28 @@ class ResetDoneVecWrapper(gym.Wrapper):
         super().__init__(env)
 
     def reset(self, **kwargs):
-        return self.env.reset(**kwargs)
+        if "return_info" in kwargs and kwargs["return_info"]:
+            obs, info_ = self.env.reset(**kwargs)
+            return obs, {"info_tuple": tuple(info_)}
+        else:
+            return self.env.reset(**kwargs)
 
     def reset_done(self, **kwargs):
-        results = self.env.call("reset_done", **kwargs)
+        if "return_info" in kwargs and kwargs["return_info"]:
+            results, info_ = tuple(zip(*self.env.call("reset_done", **kwargs)))
+        else:
+            results = self.env.call("reset_done", **kwargs)
         observations = create_empty_array(
             self.env.single_observation_space, n=self.num_envs, fn=np.empty
         )
-        return concatenate(self.env.single_observation_space, results, observations)
+        if "return_info" in kwargs and kwargs["return_info"]:
+            info = {"info_tuple": info_}
+            return (
+                concatenate(self.env.single_observation_space, results, observations),
+                info,
+            )
+        else:
+            return concatenate(self.env.single_observation_space, results, observations)
 
     def step(self, action):
         obs, reward, done, info_ = self.env.step(action)
@@ -153,10 +167,13 @@ class ResetDoneVecWrapper(gym.Wrapper):
                     for elt in info_
                 ]
             ).reshape((self.env.num_envs, -1)),
+            "is_success": np.array(
+                [[elt["is_success"] if "is_success" in elt else 0] for elt in info_]
+            ).reshape((self.env.num_envs, -1)),
         }
 
         return (
-            obs.reshape((self.env.num_envs, -1)),
+            obs,
             reward.reshape((self.env.num_envs, -1)),
             done.reshape((self.env.num_envs, -1)),
             info,

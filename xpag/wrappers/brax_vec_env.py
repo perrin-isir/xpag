@@ -128,6 +128,7 @@ class ResetDoneBraxToGymWrapper(gym.Env):
 
     def reset(
         self,
+        *,
         seed: Optional[int] = None,
         return_info: bool = False,
         options: Optional[dict] = None,
@@ -138,7 +139,10 @@ class ResetDoneBraxToGymWrapper(gym.Env):
         else:
             self._key = jax.random.PRNGKey(seed)
         self._state, obs, self._key = self._reset(self._key)
-        return obs
+        if return_info:
+            return obs, {}
+        else:
+            return obs
 
     def step(self, action):
         self._state, obs, reward, done, info = self._step(self._state, action)
@@ -152,6 +156,7 @@ class ResetDoneBraxToGymWrapper(gym.Env):
 
     def reset_done(
         self,
+        *,
         seed: Optional[int] = None,
         return_info: bool = False,
         options: Optional[dict] = None,
@@ -162,7 +167,10 @@ class ResetDoneBraxToGymWrapper(gym.Env):
         else:
             self._key = jax.random.PRNGKey(seed)
         self._state, obs, self._key = self._reset_done(self._state, self._key)
-        return obs
+        if return_info:
+            return obs, {}
+        else:
+            return obs
 
     def render(self, mode="human"):
         # pylint:disable=g-import-not-at-top
