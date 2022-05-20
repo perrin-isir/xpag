@@ -121,8 +121,7 @@ the [Gym-Robotics](https://github.com/Farama-Foundation/gym-robotics) library
 (see [core.py](https://github.com/Farama-Foundation/Gym-Robotics/blob/main/gym_robotics/core.py)):
 their observation spaces are of type [gym.spaces.Dict](https://github.com/openai/gym/blob/master/gym/spaces/dict.py), with the following keys 
 in the observation dictionaries: "observation", "achieved_goal", "desired_goal".
-They must also have a `compute_reward()` function that computes rewards based on 
-achieved and desired goals. *xpag* also assumes that, for goal-based
+They must also have a `compute_reward()` function that, in the default case, computes rewards based on the difference between achieved and desired goals. *xpag* also assumes that, for goal-based
 environments, the `info` dictionary returned by the step function contains 
 `info["is_success"]`, an array of Booleans (one per rollout) that are `True` if the corresponding
 transition is a successfull achievement of the desired goal, and `False` otherwise.
@@ -157,7 +156,7 @@ This can be useful to sample random actions.
 
 <details><summary><B>the agent</B></summary>
 
-*xpag* only considers the case of a unique off-policy agent. 
+*xpag* only considers the case of a unique off-policy agent training on parallel rollouts. 
 
 </details>
 
