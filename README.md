@@ -101,12 +101,13 @@ in which the following components interact:
 In *xpag*, environments must allow parallel rollouts, and *xpag* keeps the same API even in the case of a single rollout (`num_envs == 1`).
 Following the gym Vector API
 (see [https://www.gymlibrary.ml/content/vector_api](https://www.gymlibrary.ml/content/vector_api)), environments have 
-a `reset()` function that returns an observation (which is a batch of observations for all parallel rollouts) and an optional dictionary `info` (when `return_info` is True, see [https://www.gymlibrary.ml/content/vector_api/#reset](https://www.gymlibrary.ml/content/vector_api/#reset)), and a `step()` function that takes in input 
+a `reset()` function that returns an observation (which is a batch of observations for all parallel rollouts) and an optional dictionary `info` (when the `return_info` argument is True, see [https://www.gymlibrary.ml/content/vector_api/#reset](https://www.gymlibrary.ml/content/vector_api/#reset)), and a `step()` function that takes in input 
 an action (which is, again, a batch of actions) and returns:
 `observation`, `reward`, `done`, `info` (cf. [https://www.gymlibrary.ml/content/api/#stepping](https://www.gymlibrary.ml/content/api/#stepping)).
-There are small differences with the gym Vector API. First, we name the ouputs `observation`, `reward`, \dots (singular) instead of `observations` `rewards`, \dots because it also covers the case `num_envs == 1`. Second, *xpag* assumes that `reward` and `done` have the shape `(num_envs, 1)`, not `(num_envs,)`. Whether they are due to `num_envs == 1` or to unidimensional elements, dimensions in *xpag* are not flattened. Finally, in *xpag* `info` is a single dictionary, not a tuple of dictionaries, but its entries may be tuples. 
+There are differences with the gym Vector API. First, we name the ouputs `observation`, `reward`, \dots (singular) instead of `observations` `rewards`, \dots (plural) because that also covers the case `num_envs == 1`. Second, *xpag* assumes that `reward` and `done` have the shape `(num_envs, 1)`, not `(num_envs,)`. More broadly, whether they are due to `num_envs == 1` or to unidimensional elements, single-dimensional entries are not squeezed in *xpag*. Third, in *xpag*, `info` is a single dictionary, not a tuple of dictionaries, but its entries may be tuples. 
 
-A significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which performs a reset for
+###`reset_done()`:  
+The most significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which performs a reset for
 the i-th rollout if and only if its previous step was terminal (`done[i] == True`).
 The [gym_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/gym_vec_env.py) and 
 [brax_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/brax_vec_env.py) functions (see [tutorials](https://github.com/perrin-isir/xpag-tutorials))
