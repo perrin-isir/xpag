@@ -106,7 +106,7 @@ an action (which is, again, a batch of actions) and returns:
 `observation`, `reward`, `done`, `info` (cf. [https://www.gymlibrary.ml/content/api/#stepping](https://www.gymlibrary.ml/content/api/#stepping)).
 There are differences with the gym Vector API. First, we name the ouputs `observation`, `reward`, \dots (singular) instead of `observations` `rewards`, \dots (plural) because that also covers the case `num_envs == 1`. Second, *xpag* assumes that `reward` and `done` have the shape `(num_envs, 1)`, not `(num_envs,)`. More broadly, whether they are due to `num_envs == 1` or to unidimensional elements, single-dimensional entries are not squeezed in *xpag*. Third, in *xpag*, `info` is a single dictionary, not a tuple of dictionaries, but its entries may be tuples. 
 
-###`reset_done()`:  
+`reset_done()`:  
 The most significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which performs a reset for
 the i-th rollout if and only if its previous step was terminal (`done[i] == True`).
 The [gym_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/gym_vec_env.py) and 
