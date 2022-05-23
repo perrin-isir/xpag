@@ -143,12 +143,12 @@ differentiates 3 types of environments: "Brax" environments, "Mujoco" environmen
 not.
   * `env_info["num_envs"]`: the number of parallel rollouts in `env`
   * `env_info["max_episode_steps"]`: the maximum number of steps in episodes (*xpag* 
-does not allow potentially infinite episodes). **Imporant:** *xpag* assumes that the `info` dictionary
+does not allow potentially infinite episodes). **Important:** *xpag* assumes that the `info` dictionary
 returned by the step function contains `info["truncation"]`, an array of Booleans (one 
 per rollout). `info["truncation"][i]` is True if and only if the i-th rollout has 
 been terminated because it reached maximum length. Remark: if maximum length is reached,
 but the transition would anyway be terminal for other reasons, then `info["truncation"][i]`
-should be False.
+should be False (or 0).
   * `env_info["action_space"]`: the action space (of type [gym.spaces.Space](https://github.com/openai/gym/blob/master/gym/spaces/space.py)) that takes into account parallel rollouts.
 This can be useful to sample random actions.
   * `env_info["single_action_space"]`: the action space for single rollouts.
