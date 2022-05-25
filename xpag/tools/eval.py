@@ -42,34 +42,35 @@ class SaveEpisode:
             pass
 
     def save(self, i: int, save_dir: str):
-        os.makedirs(os.path.join(save_dir, "episode"), exist_ok=True)
+        s_dir = os.path.expanduser(save_dir)
+        os.makedirs(os.path.join(s_dir, "episode"), exist_ok=True)
         if self.env_info["env_type"] == "Brax":
-            with open(os.path.join(save_dir, "episode", "env_name.txt"), "w") as f:
+            with open(os.path.join(s_dir, "episode", "env_name.txt"), "w") as f:
                 print(self.env_info["name"], file=f)
             np.save(
-                os.path.join(save_dir, "episode", "qp_pos"),
+                os.path.join(s_dir, "episode", "qp_pos"),
                 [pos[i] for pos in self.qpos],
             )
             np.save(
-                os.path.join(save_dir, "episode", "qp_rot"),
+                os.path.join(s_dir, "episode", "qp_rot"),
                 [rot[i] for rot in self.qrot],
             )
             np.save(
-                os.path.join(save_dir, "episode", "qp_vel"),
+                os.path.join(s_dir, "episode", "qp_vel"),
                 [vel[i] for vel in self.qvel],
             )
             np.save(
-                os.path.join(save_dir, "episode", "qp_ang"),
+                os.path.join(s_dir, "episode", "qp_ang"),
                 [ang[i] for ang in self.qang],
             )
         elif self.env_info["env_type"] == "Mujoco":
-            with open(os.path.join(save_dir, "episode", "env_name.txt"), "w") as f:
+            with open(os.path.join(s_dir, "episode", "env_name.txt"), "w") as f:
                 print(self.env_info["name"], file=f)
             np.save(
-                os.path.join(save_dir, "episode", "qpos"), [pos[i] for pos in self.qpos]
+                os.path.join(s_dir, "episode", "qpos"), [pos[i] for pos in self.qpos]
             )
             np.save(
-                os.path.join(save_dir, "episode", "qvel"), [vel[i] for vel in self.qvel]
+                os.path.join(s_dir, "episode", "qvel"), [vel[i] for vel in self.qvel]
             )
 
         self.qpos = []
@@ -126,9 +127,13 @@ def single_rollout_eval(
         save_dir,
     )
     if plot_projection is not None:
-        os.makedirs(os.path.join(save_dir, "plots"), exist_ok=True)
+        os.makedirs(os.path.join(os.path.expanduser(save_dir), "plots"), exist_ok=True)
         single_episode_plot(
-            os.path.join(save_dir, "plots", f"{steps:12}.png".replace(" ", "0")),
+            os.path.join(
+                os.path.expanduser(save_dir),
+                "plots",
+                f"{steps:12}.png".replace(" ", "0"),
+            ),
             step_list,
             projection_function=plot_projection,
             plot_env_function=None if not hasattr(eval_env, "plot") else eval_env.plot,
