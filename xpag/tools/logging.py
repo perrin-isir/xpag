@@ -43,10 +43,11 @@ def eval_log(
     if global_first_eval_log_done is None:
         global_first_eval_log_done = True
         if save_dir:
-            os.makedirs(save_dir, exist_ok=True)
-            print("Logging in " + os.path.expanduser(save_dir))
-            open(os.path.join(save_dir, "log.txt"), "w").close()
-            with open(os.path.join(save_dir, "config.txt"), "w") as f:
+            s_dir = os.path.expanduser(save_dir)
+            os.makedirs(s_dir, exist_ok=True)
+            print("Logging in " + s_dir)
+            open(os.path.join(s_dir, "log.txt"), "w").close()
+            with open(os.path.join(s_dir, "config.txt"), "w") as f:
                 print("env_info:", file=f)
                 for key, elt in env_info.items():
                     print(f"{key}: {elt}", file=f)
@@ -62,7 +63,9 @@ def eval_log(
         ch.setFormatter(chformatter)
         global_eval_logger.addHandler(ch)
         if save_dir:
-            fh = logging.FileHandler(os.path.join(save_dir, "log.txt"))
+            fh = logging.FileHandler(
+                os.path.join(os.path.expanduser(save_dir), "log.txt")
+            )
             fh.setLevel(logging.INFO)
             fhfilter = LevelFilter(logging.INFO)
             fh.addFilter(fhfilter)
