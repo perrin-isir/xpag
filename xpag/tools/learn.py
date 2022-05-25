@@ -52,8 +52,10 @@ def learn(
 
         if not i % max(save_every_x_steps // env_info["num_envs"], 1):
             if save_dir is not None:
-                agent.save(os.path.join(save_dir, "agent"))
-                goalsetter.save(os.path.join(save_dir, "goalsetter"))
+                agent.save(os.path.join(os.path.expanduser(save_dir), "agent"))
+                goalsetter.save(
+                    os.path.join(os.path.expanduser(save_dir), "goalsetter")
+                )
 
         if i * env_info["num_envs"] < start_training_after_x_steps:
             action = env_info["action_space"].sample()
