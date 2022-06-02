@@ -32,6 +32,8 @@ def learn(
     timing_reset()
     observation, _ = goalsetter.reset(env, *env.reset(return_info=True))
 
+    episodic_buffer = True if hasattr(buffer, "store_done") else False
+
     if rollout_eval_function is None:
         rollout_eval = single_rollout_eval
     else:
@@ -87,10 +89,11 @@ def learn(
         buffer.insert(step)
         observation = next_observation
 
+        # use store_done() if the buffer is an episodic buffer
+        if episodic_buffer:
+            buffer.store_done(done)
+
         if done.max():
-            # use store_done() if the buffer is an episodic buffer
-            if hasattr(buffer, "store_done"):
-                buffer.store_done()
             observation, _ = goalsetter.reset_done(
                 env, *env.reset_done(done, return_info=True)
             )

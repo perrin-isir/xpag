@@ -52,7 +52,7 @@ class EpisodicBuffer(Buffer):
         super().__init__(buffer_size, sampler)
 
     @abstractmethod
-    def store_done(self):
+    def store_done(self, done):
         """Stores the episodes that are done"""
         pass
 
@@ -147,17 +147,18 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
             self.current_idxs, self.zeros(self.num_envs), :
         ] = self.current_t.reshape((self.num_envs, 1))
 
-    def store_done(self):
-        where_done = self.where(
-            self.buffers["done"][self.current_idxs, self.current_t - 1].reshape(
-                self.num_envs
-            )
-            == 1
-        )[0]
-        k_envs = len(where_done)
-        new_idxs = self._get_storage_idx(inc=k_envs)
-        self.current_idxs[where_done] = [new_idxs]
-        self.current_t[where_done] = 0
+    def store_done(self, done):
+        if done.max():
+            where_done = self.where(
+                self.buffers["done"][self.current_idxs, self.current_t - 1].reshape(
+                    self.num_envs
+                )
+                == 1
+            )[0]
+            k_envs = len(where_done)
+            new_idxs = self._get_storage_idx(inc=k_envs)
+            self.current_idxs[where_done] = [new_idxs]
+            self.current_t[where_done] = 0
 
     def pre_sample(self):
         temp_buffers = {}
