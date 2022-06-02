@@ -2,6 +2,7 @@
 #
 # Licensed under the BSD 3-Clause License.
 
+import numpy as np
 from brax import jumpy as jp
 from brax.envs import env as brax_env
 import gym
@@ -27,8 +28,9 @@ class ResetDoneWrapper(gym.Wrapper):
         else:
             return obs
 
-    def reset_done(self, **kwargs):
-        if self._last_done:
+    def reset_done(self, index, done: np.ndarray, **kwargs):
+        # if self._last_done:
+        if done[index]:
             if "return_info" in kwargs and kwargs["return_info"]:
                 obs, info = self.env.reset(**kwargs)
             else:
@@ -54,7 +56,7 @@ class ResetDoneWrapper(gym.Wrapper):
 
 
 class ResetDoneBraxWrapper(brax_env.Wrapper):
-    """Adds a reset_done() function to Brax envs."""
+    """Adds reset_done() to Brax envs."""
 
     def reset(self, rng: jp.ndarray) -> brax_env.State:
         state = self.env.reset(rng)
@@ -65,24 +67,23 @@ class ResetDoneBraxWrapper(brax_env.Wrapper):
     def step(self, state: brax_env.State, action: jp.ndarray) -> brax_env.State:
         return self.env.step(state, action)
 
-    def reset_done(self, state: brax_env.State, rng: jp.ndarray):
+    def reset_done(self, done: jp.ndarray, state: brax_env.State, rng: jp.ndarray):
+        # done = state.done
+        def where_done(x, y):
+            done_ = done
+            if done_.shape:
+                done_ = jp.reshape(
+                    done_, [x.shape[0]] + [1] * (len(x.shape) - 1)
+                )  # type: ignore
+            return jp.where(done_, x, y)
+
         if "steps" in state.info:
             steps = state.info["steps"]
-            steps = jp.where(state.done, jp.zeros_like(steps), steps)
+            steps = where_done(jp.zeros_like(steps), steps)
             state.info.update(steps=steps)
-
-        def where_done(x, y):
-            done = state.done
-            if done.shape:
-                done = jp.reshape(
-                    done, [x.shape[0]] + [1] * (len(x.shape) - 1)
-                )  # type: ignore
-            return jp.where(done, x, y)
 
         reset_state = self.env.reset(rng)
         qp = jp.tree_map(where_done, reset_state.qp, state.qp)
         obs = where_done(reset_state.obs, state.obs)
-        # qp = jp.tree_map(where_done, state.info["first_qp"], state.qp)
-        # obs = where_done(state.info["first_obs"], state.obs)
         state = state.replace(qp=qp, obs=obs)
-        return state.replace(done=jp.zeros_like(state.done))
+        return state.replace(done=where_done(jp.zeros_like(state.done), state.done))

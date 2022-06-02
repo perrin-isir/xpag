@@ -107,12 +107,12 @@ an action (which is, again, a batch of actions) and returns:
 There are differences with the gym Vector API. First, we name the ouputs `observation`, `reward`, \dots (singular) instead of `observations` `rewards`, \dots (plural) because that also covers the case `num_envs == 1`. Second, *xpag* assumes that `reward` and `done` have the shape `(num_envs, 1)`, not `(num_envs,)`. More broadly, whether they are due to `num_envs == 1` or to unidimensional elements, single-dimensional entries are not squeezed in *xpag*. Third, in *xpag*, `info` is a single dictionary, not a tuple of dictionaries, but its entries may be tuples. 
 
 `reset_done()`:  
-The most significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which performs a reset for
-the i-th rollout if and only if its previous step was terminal (`done[i] == True`).
+The most significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which takes the `done` array in input and performs a reset for
+the i-th rollout if and only if `done[i]` is True. Besides `done`, the arguments of `reset_done()` are the same as the ones of `reset()`: `seed`, `return_info` and `options`, and its outputs are also the same: either `observation`, or `observation`, `info` if `return_info` is True.
 The [gym_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/gym_vec_env.py) and 
 [brax_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/brax_vec_env.py) functions (see [tutorials](https://github.com/perrin-isir/xpag-tutorials))
 call wrappers that automatically add the `reset_done()` function to Gym and Brax 
-environments, and makes the wrapped environments fit the *xpag* API. `reset_done()` has the same signature as `reset()`, and it must be the only way to perform resets after episode terminations, therefore auto-resets (automatic resets after terminal transitions) are not allowed. 
+environments, and make the wrapped environments fit the *xpag* API. `reset()` must be called once for the initial reset, and after that only `reset_done()` should be used. Auto-resets (automatic resets after terminal transitions) are not allowed in *xpag*. 
 The main reason to prefer `reset_done()` to auto-resets
 is that with auto-resets, terminal transitions must be special and contain additional
 information. With `reset_done()`, this is no longer necessary.
@@ -145,10 +145,8 @@ not.
   * `env_info["max_episode_steps"]`: the maximum number of steps in episodes (*xpag* 
 does not allow potentially infinite episodes). **Important:** *xpag* assumes that the `info` dictionary
 returned by the step function contains `info["truncation"]`, an array of Booleans (one 
-per rollout). `info["truncation"][i]` is True if and only if the i-th rollout has 
-been terminated because it reached maximum length. Remark: if maximum length is reached,
-but the transition would anyway be terminal for other reasons, then `info["truncation"][i]`
-should be False (or 0).
+per rollout). `info["truncation"][i]` is True if the i-th rollout has 
+been terminated without reaching a terminal state (for example because the episode reached maximum length).
   * `env_info["action_space"]`: the action space (of type [gym.spaces.Space](https://github.com/openai/gym/blob/master/gym/spaces/space.py)) that takes into account parallel rollouts.
 This can be useful to sample random actions.
   * `env_info["single_action_space"]`: the action space for single rollouts.

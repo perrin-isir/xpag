@@ -140,11 +140,11 @@ class ResetDoneVecWrapper(gym.Wrapper):
         else:
             return self.env.reset(**kwargs)
 
-    def reset_done(self, **kwargs):
+    def reset_done(self, *args, **kwargs):
         if "return_info" in kwargs and kwargs["return_info"]:
-            results, info_ = tuple(zip(*self.env.call("reset_done", **kwargs)))
+            results, info_ = tuple(zip(*self.env.call("reset_done", *args, **kwargs)))
         else:
-            results = self.env.call("reset_done", **kwargs)
+            results = self.env.call("reset_done", *args, **kwargs)
         observations = create_empty_array(
             self.env.single_observation_space, n=self.num_envs, fn=np.empty
         )
@@ -231,10 +231,13 @@ def _worker_shared_memory_no_auto_reset(
                         f"`_call`. Use `{name}` directly instead."
                     )
                 function = getattr(env, name)
-                if callable(function):
-                    pipe.send((function(*args, **kwargs), True))
+                if name == "reset_done":
+                    pipe.send((function(index, *args, **kwargs), True))
                 else:
-                    pipe.send((function, True))
+                    if callable(function):
+                        pipe.send((function(*args, **kwargs), True))
+                    else:
+                        pipe.send((function, True))
             elif command == "_setattr":
                 name, value = data
                 setattr(env, name, value)

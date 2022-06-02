@@ -68,7 +68,7 @@ def brax_vec_env(env_name, num_envs, force_cpu_backend=False):
 class ResetDoneBraxToGymWrapper(gym.Env):
     """
     A wrapper that converts Brax Env to one that follows Gym VectorEnv API,
-    with the additional reset_done() method.
+    with the additional reset_done() and reset_idxs() methods.
     """
 
     # Flag that prevents `gym.register` from misinterpreting the `_step` and
@@ -117,11 +117,11 @@ class ResetDoneBraxToGymWrapper(gym.Env):
 
         self._step = jax.jit(step, backend=self.backend)
 
-        def reset_done(state, key):
+        def reset_done(done, state, key):
             key1, key2 = jp.random_split(key)
             if state is None:
-                raise ValueError("Use reset() for the first reset, not reset_done().")
-            state = self._env.reset_done(state, key2)
+                raise ValueError("Use reset() for the first reset, not reset_idxs().")
+            state = self._env.reset_done(done, state, key2)
             return state, state.obs, key1
 
         self._reset_done = jax.jit(reset_done, backend=self.backend)
@@ -156,6 +156,7 @@ class ResetDoneBraxToGymWrapper(gym.Env):
 
     def reset_done(
         self,
+        done,
         *,
         seed: Optional[int] = None,
         return_info: bool = False,
@@ -166,7 +167,7 @@ class ResetDoneBraxToGymWrapper(gym.Env):
                 self._key = jax.random.PRNGKey(0)
         else:
             self._key = jax.random.PRNGKey(seed)
-        self._state, obs, self._key = self._reset_done(self._state, self._key)
+        self._state, obs, self._key = self._reset_done(done, self._state, self._key)
         if return_info:
             return obs, {}
         else:

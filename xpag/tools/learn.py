@@ -92,5 +92,5 @@ def learn(
             if hasattr(buffer, "store_done"):
                 buffer.store_done()
             observation, _ = goalsetter.reset_done(
-                env, *env.reset_done(return_info=True)
+                env, *env.reset_done(done, return_info=True)
             )
