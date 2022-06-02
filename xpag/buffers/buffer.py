@@ -149,12 +149,13 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
 
     def store_done(self, done):
         if done.max():
-            where_done = self.where(
-                self.buffers["done"][self.current_idxs, self.current_t - 1].reshape(
-                    self.num_envs
-                )
-                == 1
-            )[0]
+            # where_done = self.where(
+            #     self.buffers["done"][self.current_idxs, self.current_t - 1].reshape(
+            #         self.num_envs
+            #     )
+            #     == 1
+            # )[0]
+            where_done = self.where(datatype_convert(done, self.datatype) == 1)[0]
             k_envs = len(where_done)
             new_idxs = self._get_storage_idx(inc=k_envs)
             self.current_idxs[where_done] = [new_idxs]
