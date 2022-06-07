@@ -194,7 +194,7 @@ def update_temperature(
 ) -> Tuple[Model, InfoDict]:
     def temperature_loss_fn(temp_params):
         temperature = temp.apply_fn({"params": temp_params})
-        temp_loss = temperature * (entropy - target_entropy).mean()
+        temp_loss = (temperature * (entropy - target_entropy)).mean()
         return temp_loss, {"temperature": temperature, "temp_loss": temp_loss}
 
     new_temp, info = temp.apply_gradient(temperature_loss_fn)
@@ -276,7 +276,7 @@ class Dataset(object):
         self.next_observations = next_observations
         self.size = size
 
-    def sample(self, batch_size: int) -> Batch:
+    def sample(self, batch_size: int) -> Tuple[Batch, int]:
         indx = np.random.randint(self.size, size=batch_size)
         return (
             Batch(
@@ -553,7 +553,7 @@ class DoubleCritic(nn.Module):
 
     @nn.compact
     def __call__(self, states, actions):
-        VmapCritic = nn.vmap(
+        vmap_critic = nn.vmap(
             Critic,
             variable_axes={"params": 0},
             split_rngs={"params": True},
@@ -561,7 +561,9 @@ class DoubleCritic(nn.Module):
             out_axes=0,
             axis_size=self.num_qs,
         )
-        qs = VmapCritic(self.hidden_dims, activations=self.activations)(states, actions)
+        qs = vmap_critic(self.hidden_dims, activations=self.activations)(
+            states, actions
+        )
         return qs
 
 

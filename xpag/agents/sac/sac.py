@@ -43,7 +43,7 @@ class SAC(Agent, ABC):
         else:
             start_seed = 42
 
-        self.jaxrl_params = {
+        self.saclearner_params = {
             "actor_lr": 0.0003,
             "backup_entropy": True,
             "critic_lr": 0.0003,
@@ -56,15 +56,15 @@ class SAC(Agent, ABC):
             "temp_lr": 0.0003,
         }
 
-        for key in self.jaxrl_params:
+        for key in self.saclearner_params:
             if key in self.params:
-                self.jaxrl_params[key] = self.params[key]
+                self.saclearner_params[key] = self.params[key]
 
         self.sac = SACLearner(
             start_seed,
             np.zeros((1, 1, observation_dim)),
             np.zeros((1, 1, action_dim)),
-            **self.jaxrl_params
+            **self.saclearner_params
         )
 
     def value(self, observation, action):
@@ -81,7 +81,7 @@ class SAC(Agent, ABC):
         )
 
     def train_on_batch(self, batch):
-        jaxrl_batch = Batch(
+        saclearner_batch = Batch(
             observations=batch["observation"],
             actions=batch["action"],
             rewards=squeeze(batch["reward"]),
@@ -89,7 +89,7 @@ class SAC(Agent, ABC):
             next_observations=batch["next_observation"],
         )
 
-        return self.sac.update(jaxrl_batch)
+        return self.sac.update(saclearner_batch)
 
     def save(self, directory):
         os.makedirs(directory, exist_ok=True)
