@@ -53,8 +53,6 @@ import jax
 import optax
 import jax.numpy as jnp
 
-# from IPython import embed
-
 
 @functools.partial(jax.jit, static_argnames="critic_apply_fn")
 def _qvalue(
@@ -63,11 +61,9 @@ def _qvalue(
     observations: np.ndarray,
     actions: np.ndarray,
 ) -> Tuple[jnp.ndarray]:
-    return jnp.minimum(
-        *critic_apply_fn({"params": critic_params}, observations, actions)
+    return jnp.mean(
+        *critic_apply_fn({"params": critic_params}, observations, actions), axis=(0, 2)
     )
-    # c1, _ = critic_apply_fn({"params": critic_params}, observations, actions)
-    # return c1
 
 
 class QuantileCritic(nn.Module):
@@ -103,7 +99,7 @@ class MultiQuantileCritic(nn.Module):
         qs = vmap_critic(
             self.hidden_dims,
             activations=self.activations,
-            # num_quantiles=self.num_quantiles
+            num_quantiles=self.num_quantiles,
         )(states, actions)
         return qs
 
@@ -119,7 +115,6 @@ def huber(td: jnp.ndarray) -> jnp.ndarray:
 def quantile_loss(
     td: jnp.ndarray,
     cum_p: jnp.ndarray,
-    # weight: jnp.ndarray,
     loss_type: str,
 ) -> jnp.ndarray:
     """
@@ -133,54 +128,7 @@ def quantile_loss(
         NotImplementedError
     element_wise_loss *= jax.lax.stop_gradient(jnp.abs(cum_p[..., None] - (td < 0)))
     batch_loss = element_wise_loss.sum(axis=1).mean(axis=1, keepdims=True)
-    # return (batch_loss * weight).mean()
     return batch_loss.mean()
-
-    # @partial(jax.jit, static_argnums=0)
-    # def _calculate_value(
-    #     self,
-    #     params_critic: hk.Params,
-    #     state: np.ndarray,
-    #     action: np.ndarray,
-    # ) -> jnp.ndarray:
-    #     return jnp.concatenate(self._calculate_value_list(params_critic, state,
-    #                                                       action), axis=1)
-    #
-    # @partial(jax.jit, static_argnums=0)
-    # def _calculate_target(
-    #     self,
-    #     params_critic_target: hk.Params,
-    #     log_alpha: jnp.ndarray,
-    #     reward: np.ndarray,
-    #     done: np.ndarray,
-    #     next_state: np.ndarray,
-    #     next_action: jnp.ndarray,
-    #     next_log_pi: jnp.ndarray,
-    # ) -> jnp.ndarray:
-    #     next_quantile = self._calculate_value(params_critic_target, next_state,
-    #                                           next_action)
-    #     next_quantile = jnp.sort(next_quantile)[:, : self.num_quantiles_target]
-    #     next_quantile -= jnp.exp(log_alpha) * self._calculate_log_pi(next_action,
-    #                                                                  next_log_pi)
-    #     return jax.lax.stop_gradient(
-    #         reward + (1.0 - done) * self.discount * next_quantile)
-    #
-    # @partial(jax.jit, static_argnums=0)
-    # def _calculate_loss_critic_and_abs_td(
-    #     self,
-    #     quantile_list: List[jnp.ndarray],
-    #     target: jnp.ndarray,
-    #     weight: np.ndarray,
-    # ) -> jnp.ndarray:
-    #     loss_critic = 0.0
-    #     for quantile in quantile_list:
-    #         loss_critic += quantile_loss(target[:, None, :] - quantile[:, :, None],
-    #                                      self.cum_p_prime, weight, "huber")
-    #     loss_critic /= self.num_critics * self.num_quantiles
-    #     abs_td = jnp.abs(
-    #         target[:, None, :] - quantile_list[0][:, :, None]
-    #     ).mean(axis=1).mean(axis=1, keepdims=True)
-    #     return loss_critic, jax.lax.stop_gradient(abs_td)
 
 
 def update_actor(
@@ -190,10 +138,6 @@ def update_actor(
         dist = actor.apply_fn({"params": actor_params}, batch.observations)
         actions = dist.sample(seed=key)
         log_probs = dist.log_prob(actions)
-        # embed()
-        # q1, q2 = critic(batch.observations, actions)
-        # q = jnp.minimum(q1, q2)
-        # actor_loss = (log_probs * temp() - q).mean()
         qs = jnp.mean(critic(batch.observations, actions), axis=(0, 2))
         actor_loss = (log_probs * temp() - qs).mean()
         return actor_loss, {"actor_loss": actor_loss, "entropy": -log_probs.mean()}
@@ -219,10 +163,6 @@ def update_critic(
     next_actions = dist.sample(seed=key)
     next_log_probs = dist.log_prob(next_actions)
 
-    # next_q1, next_q2 = target_critic(batch.next_observations, next_actions)
-    # next_q = jnp.minimum(next_q1, next_q2)
-    # target_q = batch.rewards + discount * batch.masks * next_q
-
     next_quantile = jnp.concatenate(
         target_critic(batch.next_observations, next_actions), axis=1
     )
@@ -237,25 +177,7 @@ def update_critic(
             discount * batch.masks * temp() * next_log_probs, axis=-1
         )
 
-    #     self,
-    #     quantile_list: List[jnp.ndarray],
-    #     target: jnp.ndarray,
-    #     weight: np.ndarray,
-    # ) -> jnp.ndarray:
-    #     loss_critic = 0.0
-    #     for quantile in quantile_list:
-    #         loss_critic += quantile_loss(target[:, None, :] - quantile[:, :, None],
-    #                                      self.cum_p_prime, weight, "huber")
-    #     loss_critic /= self.num_critics * self.num_quantiles
-    #     abs_td = jnp.abs(
-    #         target[:, None, :] - quantile_list[0][:, :, None]
-    #     ).mean(axis=1).mean(axis=1, keepdims=True)
-    #     return loss_critic, jax.lax.stop_gradient(abs_td)
-
     def critic_loss_fn(critic_params: Params) -> Tuple[jnp.ndarray, InfoDict]:
-        # q1, q2 = critic.apply_fn(
-        #     {"params": critic_params}, batch.observations, batch.actions
-        # )
         qs = critic.apply_fn(
             {"params": critic_params}, batch.observations, batch.actions
         )
@@ -264,17 +186,9 @@ def update_critic(
             critic_loss += quantile_loss(
                 target_q[:, None, :] - q[:, :, None], cum_p_prime, "huber"
             )
-        # loss_critic /= self.num_critics * self.num_quantiles
         critic_loss /= qs.shape[0] * qs.shape[2]
-        # abs_td = jnp.abs(
-        #             target[:, None, :] - quantile_list[0][:, :, None]
-        #         ).mean(axis=1).mean(axis=1, keepdims=True)
-        # critic_loss = ((q1 - target_q) ** 2 + (q2 - target_q) ** 2).mean()
-
         return critic_loss, {
             "critic_loss": critic_loss,
-            # "q1": q1.mean(),
-            # "q2": q2.mean(),
         }
 
     new_critic, info = critic.apply_gradient(critic_loss_fn)
@@ -352,7 +266,6 @@ class TQCLearner(SACLearner):
         init_temperature: float = 1.0,
         init_mean: Optional[np.ndarray] = None,
         policy_final_fc_init_scale: float = 1.0,
-        # hidden_dims_critic: Sequence[int] = (512, 512, 512),
         hidden_dims_critic: Sequence[int] = (256, 256),
         num_critics=5,
         num_quantiles=25,
@@ -376,7 +289,6 @@ class TQCLearner(SACLearner):
             policy_final_fc_init_scale,
         )
         self.rng, critic_key = jax.random.split(self.rng)
-        # critic_def = DoubleCritic(hidden_dims_critic)
         critic_def = MultiQuantileCritic(
             hidden_dims_critic, nn.relu, num_critics, num_quantiles
         )
@@ -399,7 +311,6 @@ class TQCLearner(SACLearner):
         self.num_quantiles_target = (
             num_quantiles - num_quantiles_to_drop
         ) * num_critics
-        # embed()
 
     def update(self, batch: Batch) -> InfoDict:
         self.step += 1
@@ -454,6 +365,10 @@ class TQC(Agent, ABC):
             "target_update_period": 1,
             "tau": 0.005,
             "temp_lr": 0.0003,
+            "hidden_dims_critic": (256, 256),
+            "num_critics": 5,
+            "num_quantiles": 25,
+            "num_quantiles_to_drop": 2,
         }
 
         for key in self.tqclearner_params:
@@ -475,7 +390,6 @@ class TQC(Agent, ABC):
         )
 
     def select_action(self, observation, eval_mode=False):
-        # return self.sac.sample_actions(observation)
         return self.tqc.sample_actions(
             observation, distribution="det" if eval_mode else "log_prob"
         )
