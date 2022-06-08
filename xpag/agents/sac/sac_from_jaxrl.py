@@ -13,8 +13,8 @@ The only small modifications are:
 To understand the code, the best is to check it on https://github.com/ikostrikov/jaxrl,
 where there is a coherent structure and separated files.
 The purpose here is just to have access to the SAC agent from JAXRL without
-requiring all the dependencies of JAXRL.
-Please find the License of JAXRL below:
+requiring all the JAXRL dependencies.
+Here is the License of JAXRL:
 """
 # MIT License
 #

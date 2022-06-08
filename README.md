@@ -84,13 +84,11 @@ The *xpag-tutorials* repository contains a list of tutorials (colab notebooks) f
 goal-conditioned reinforcement learning (GCRL) in mind (check out the [train_gmazes.ipynb](https://colab.research.google.com/github/perrin-isir/xpag-tutorials/blob/main/train_gmazes.ipynb)
 tutorial for a simple example of GCRL). 
 
-In GCRL, agents have a goal, and the reward depends on 
-the degree of achievement of that goal. 
-In some cases, goals are defined by the environment, but in others, they are defined by
-the agent itself, and they can possibly be changed several times during an episode. 
-For this reason, *xpag* introduces a dedicated module called 
-"goal-setter", which can be considered either as a part of the environment, or as 
-a part of the agent.
+In GCRL, agents have a goal, and the reward mainly depends on 
+the degree of achievement of that goal. To manage goals, *xpag* introduces a dedicated
+module called "goal-setter". Although it works similarly to an environment wrapper, it 
+is separated from it because in some cases the "goal-setter" should be considered as 
+an independent entity (e.g. a teacher), or as a part of the agent itself.
 
 *xpag* relies on a single reinforcement learning loop (the `learn()`
 function in [xpag/tools/learn.py](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py))
