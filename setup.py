@@ -18,6 +18,7 @@ setup(
         "torch>=1.10.0",
         "Pillow>=9.0.1",
         "ipywidgets>=7.6.5",
+        "tensorflow-probability>=0.15.0",
     ],
     license="LICENSE",
 )

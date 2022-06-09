@@ -5,7 +5,7 @@
 This is an implementation of a TQC agent (see https://arxiv.org/abs/2005.04269).
 Some functions and classes are taken from the implementation of TQC in
 RLJAX (https://github.com/ku2482/rljax).
-Here is the License of RLJAX:
+Here is the RLJAX License:
 """
 # MIT License
 #

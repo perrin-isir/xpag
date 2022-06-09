@@ -14,7 +14,7 @@ To understand the code, the best is to check it on https://github.com/ikostrikov
 where there is a coherent structure and separated files.
 The purpose here is just to have access to the SAC agent from JAXRL without
 requiring all the JAXRL dependencies.
-Here is the License of JAXRL:
+Here is the JAXRL License:
 """
 # MIT License
 #
