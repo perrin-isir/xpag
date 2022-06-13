@@ -14,7 +14,7 @@ setup(
         "numpy>=1.21.5",
         "matplotlib>=3.1.3",
         "joblib>=1.1.0",
-        "gym>=0.22.0",
+        "gym>=0.24.1",
         "torch>=1.10.0",
         "Pillow>=9.0.1",
         "ipywidgets>=7.6.5",
