@@ -37,6 +37,7 @@ def mujoco_notebook_replay(load_dir: str):
         np.loadtxt(os.path.join(load_dir, "episode", "env_name.txt"), dtype="str")
     )
     env_replay = gym.make(env_name)
+    env_replay.reset()
     qpos = np.load(os.path.join(load_dir, "episode", "qpos.npy"))
     qvel = np.load(os.path.join(load_dir, "episode", "qvel.npy"))
 
