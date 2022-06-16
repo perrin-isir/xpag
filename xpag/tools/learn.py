@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import jax.numpy as jnp
 from xpag.tools.eval import single_rollout_eval
 from xpag.tools.utils import hstack
 from xpag.tools.logging import eval_log_reset
@@ -61,6 +62,7 @@ def learn(
 
         if i * env_info["num_envs"] < start_training_after_x_steps:
             action = env_info["action_space"].sample()
+            action = jnp.asarray(action)
         else:
             action = agent.select_action(
                 observation
@@ -70,7 +72,8 @@ def learn(
             )
             if i > 0:
                 for _ in range(max(round(gd_steps_per_step * env_info["num_envs"]), 1)):
-                    _ = agent.train_on_batch(buffer.sample(batch_size))
+                    batch = buffer.sample(batch_size)
+                    _ = agent.train_on_batch(batch)
 
         next_observation, reward, done, info = goalsetter.step(
             env, observation, action, *env.step(action)

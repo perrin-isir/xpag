@@ -5,7 +5,6 @@
 from abc import ABC
 from typing import Any, Tuple, Sequence, Callable
 import dataclasses
-import numpy as np
 import torch
 import flax
 from flax import linen
@@ -256,7 +255,7 @@ class TD3(Agent, ABC):
 
         def update_step(
             state: TrainingState, observations, actions, rewards, new_observations, mask
-        ) -> (TrainingState, dict):
+        ) -> Tuple[TrainingState, dict]:
 
             key, key_critic = jax.random.split(state.key, 2)
 
@@ -399,9 +398,9 @@ class TD3(Agent, ABC):
                 key_sample,
             )
         if len(action.shape) == 1:
-            return np.asarray(jnp.expand_dims(action, axis=0))
+            return jnp.asarray(jnp.expand_dims(action, axis=0))
         else:
-            return np.asarray(action)
+            return jnp.asarray(action)
 
     def save(self, directory):
         os.makedirs(directory, exist_ok=True)

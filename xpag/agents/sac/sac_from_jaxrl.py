@@ -48,8 +48,9 @@ import functools
 from typing import Union, Any, Callable, Dict, Optional, Sequence, Tuple
 import flax.linen as nn
 import jax
+
 import jax.numpy as jnp
-import numpy as np
+
 from tensorflow_probability.substrates import jax as tfp
 
 
@@ -230,238 +231,238 @@ def split_into_trajectories(
     return trajs
 
 
-def merge_trajectories(trajs):
-    observations = []
-    actions = []
-    rewards = []
-    masks = []
-    dones_float = []
-    next_observations = []
+# def merge_trajectories(trajs):
+#     observations = []
+#     actions = []
+#     rewards = []
+#     masks = []
+#     dones_float = []
+#     next_observations = []
 
-    for traj in trajs:
-        for (obs, act, rew, mask, done, next_obs) in traj:
-            observations.append(obs)
-            actions.append(act)
-            rewards.append(rew)
-            masks.append(mask)
-            dones_float.append(done)
-            next_observations.append(next_obs)
+#     for traj in trajs:
+#         for (obs, act, rew, mask, done, next_obs) in traj:
+#             observations.append(obs)
+#             actions.append(act)
+#             rewards.append(rew)
+#             masks.append(mask)
+#             dones_float.append(done)
+#             next_observations.append(next_obs)
 
-    return (
-        np.stack(observations),
-        np.stack(actions),
-        np.stack(rewards),
-        np.stack(masks),
-        np.stack(dones_float),
-        np.stack(next_observations),
-    )
+#     return (
+#         np.stack(observations),
+#         np.stack(actions),
+#         np.stack(rewards),
+#         np.stack(masks),
+#         np.stack(dones_float),
+#         np.stack(next_observations),
+#     )
 
 
-class Dataset(object):
-    def __init__(
-        self,
-        observations: np.ndarray,
-        actions: np.ndarray,
-        rewards: np.ndarray,
-        masks: np.ndarray,
-        dones_float: np.ndarray,
-        next_observations: np.ndarray,
-        size: int,
-    ):
-        self.observations = observations
-        self.actions = actions
-        self.rewards = rewards
-        self.masks = masks
-        self.dones_float = dones_float
-        self.next_observations = next_observations
-        self.size = size
+# class Dataset(object):
+#     def __init__(
+#         self,
+#         observations: np.ndarray,
+#         actions: np.ndarray,
+#         rewards: np.ndarray,
+#         masks: np.ndarray,
+#         dones_float: np.ndarray,
+#         next_observations: np.ndarray,
+#         size: int,
+#     ):
+#         self.observations = observations
+#         self.actions = actions
+#         self.rewards = rewards
+#         self.masks = masks
+#         self.dones_float = dones_float
+#         self.next_observations = next_observations
+#         self.size = size
 
-    def sample(self, batch_size: int) -> Tuple[Batch, int]:
-        indx = np.random.randint(self.size, size=batch_size)
-        return (
-            Batch(
-                observations=self.observations[indx],
-                actions=self.actions[indx],
-                rewards=self.rewards[indx],
-                masks=self.masks[indx],
-                next_observations=self.next_observations[indx],
-            ),
-            indx,
-        )
+#     def sample(self, batch_size: int) -> Tuple[Batch, int]:
+#         indx = np.random.randint(self.size, size=batch_size)
+#         return (
+#             Batch(
+#                 observations=self.observations[indx],
+#                 actions=self.actions[indx],
+#                 rewards=self.rewards[indx],
+#                 masks=self.masks[indx],
+#                 next_observations=self.next_observations[indx],
+#             ),
+#             indx,
+#         )
 
-    def get_initial_states(
-        self, and_action: bool = False
-    ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-        states = []
-        if and_action:
-            actions = []
-        trajs = split_into_trajectories(
-            self.observations,
-            self.actions,
-            self.rewards,
-            self.masks,
-            self.dones_float,
-            self.next_observations,
-        )
+#     def get_initial_states(
+#         self, and_action: bool = False
+#     ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+#         states = []
+#         if and_action:
+#             actions = []
+#         trajs = split_into_trajectories(
+#             self.observations,
+#             self.actions,
+#             self.rewards,
+#             self.masks,
+#             self.dones_float,
+#             self.next_observations,
+#         )
 
-        def compute_returns(traj):
-            episode_return = 0
-            for _, _, rew, _, _, _ in traj:
-                episode_return += rew
+#         def compute_returns(traj):
+#             episode_return = 0
+#             for _, _, rew, _, _, _ in traj:
+#                 episode_return += rew
 
-            return episode_return
+#             return episode_return
 
-        trajs.sort(key=compute_returns)
+#         trajs.sort(key=compute_returns)
 
-        for traj in trajs:
-            states.append(traj[0][0])
-            if and_action:
-                actions.append(traj[0][1])
+#         for traj in trajs:
+#             states.append(traj[0][0])
+#             if and_action:
+#                 actions.append(traj[0][1])
 
-        states = np.stack(states, 0)
-        if and_action:
-            actions = np.stack(actions, 0)
-            return states, actions
-        else:
-            return states
+#         states = np.stack(states, 0)
+#         if and_action:
+#             actions = np.stack(actions, 0)
+#             return states, actions
+#         else:
+#             return states
 
-    def get_monte_carlo_returns(self, discount) -> np.ndarray:
-        trajs = split_into_trajectories(
-            self.observations,
-            self.actions,
-            self.rewards,
-            self.masks,
-            self.dones_float,
-            self.next_observations,
-        )
-        mc_returns = []
-        for traj in trajs:
-            mc_return = 0.0
-            for i, (_, _, reward, _, _, _) in enumerate(traj):
-                mc_return += reward * (discount**i)
-            mc_returns.append(mc_return)
+#     def get_monte_carlo_returns(self, discount) -> np.ndarray:
+#         trajs = split_into_trajectories(
+#             self.observations,
+#             self.actions,
+#             self.rewards,
+#             self.masks,
+#             self.dones_float,
+#             self.next_observations,
+#         )
+#         mc_returns = []
+#         for traj in trajs:
+#             mc_return = 0.0
+#             for i, (_, _, reward, _, _, _) in enumerate(traj):
+#                 mc_return += reward * (discount**i)
+#             mc_returns.append(mc_return)
 
-        return np.asarray(mc_returns)
+#         return np.asarray(mc_returns)
 
-    def take_top(self, percentile: float = 100.0):
-        assert percentile > 0.0 and percentile <= 100.0
+#     def take_top(self, percentile: float = 100.0):
+#         assert percentile > 0.0 and percentile <= 100.0
 
-        trajs = split_into_trajectories(
-            self.observations,
-            self.actions,
-            self.rewards,
-            self.masks,
-            self.dones_float,
-            self.next_observations,
-        )
+#         trajs = split_into_trajectories(
+#             self.observations,
+#             self.actions,
+#             self.rewards,
+#             self.masks,
+#             self.dones_float,
+#             self.next_observations,
+#         )
 
-        def compute_returns(traj):
-            episode_return = 0
-            for _, _, rew, _, _, _ in traj:
-                episode_return += rew
+#         def compute_returns(traj):
+#             episode_return = 0
+#             for _, _, rew, _, _, _ in traj:
+#                 episode_return += rew
 
-            return episode_return
+#             return episode_return
 
-        trajs.sort(key=compute_returns)
+#         trajs.sort(key=compute_returns)
 
-        N = int(len(trajs) * percentile / 100)
-        N = max(1, N)
+#         N = int(len(trajs) * percentile / 100)
+#         N = max(1, N)
 
-        trajs = trajs[-N:]
+#         trajs = trajs[-N:]
 
-        (
-            self.observations,
-            self.actions,
-            self.rewards,
-            self.masks,
-            self.dones_float,
-            self.next_observations,
-        ) = merge_trajectories(trajs)
+#         (
+#             self.observations,
+#             self.actions,
+#             self.rewards,
+#             self.masks,
+#             self.dones_float,
+#             self.next_observations,
+#         ) = merge_trajectories(trajs)
 
-        self.size = len(self.observations)
+#         self.size = len(self.observations)
 
-    def take_random(self, percentage: float = 100.0):
-        assert percentage > 0.0 and percentage <= 100.0
+#     def take_random(self, percentage: float = 100.0):
+#         assert percentage > 0.0 and percentage <= 100.0
 
-        trajs = split_into_trajectories(
-            self.observations,
-            self.actions,
-            self.rewards,
-            self.masks,
-            self.dones_float,
-            self.next_observations,
-        )
-        np.random.shuffle(trajs)
+#         trajs = split_into_trajectories(
+#             self.observations,
+#             self.actions,
+#             self.rewards,
+#             self.masks,
+#             self.dones_float,
+#             self.next_observations,
+#         )
+#         np.random.shuffle(trajs)
 
-        N = int(len(trajs) * percentage / 100)
-        N = max(1, N)
+#         N = int(len(trajs) * percentage / 100)
+#         N = max(1, N)
 
-        trajs = trajs[-N:]
+#         trajs = trajs[-N:]
 
-        (
-            self.observations,
-            self.actions,
-            self.rewards,
-            self.masks,
-            self.dones_float,
-            self.next_observations,
-        ) = merge_trajectories(trajs)
+#         (
+#             self.observations,
+#             self.actions,
+#             self.rewards,
+#             self.masks,
+#             self.dones_float,
+#             self.next_observations,
+#         ) = merge_trajectories(trajs)
 
-        self.size = len(self.observations)
+#         self.size = len(self.observations)
 
-    def train_validation_split(
-        self, train_fraction: float = 0.8
-    ) -> Tuple["Dataset", "Dataset"]:
-        trajs = split_into_trajectories(
-            self.observations,
-            self.actions,
-            self.rewards,
-            self.masks,
-            self.dones_float,
-            self.next_observations,
-        )
-        train_size = int(train_fraction * len(trajs))
+#     def train_validation_split(
+#         self, train_fraction: float = 0.8
+#     ) -> Tuple["Dataset", "Dataset"]:
+#         trajs = split_into_trajectories(
+#             self.observations,
+#             self.actions,
+#             self.rewards,
+#             self.masks,
+#             self.dones_float,
+#             self.next_observations,
+#         )
+#         train_size = int(train_fraction * len(trajs))
 
-        np.random.shuffle(trajs)
+#         np.random.shuffle(trajs)
 
-        (
-            train_observations,
-            train_actions,
-            train_rewards,
-            train_masks,
-            train_dones_float,
-            train_next_observations,
-        ) = merge_trajectories(trajs[:train_size])
+#         (
+#             train_observations,
+#             train_actions,
+#             train_rewards,
+#             train_masks,
+#             train_dones_float,
+#             train_next_observations,
+#         ) = merge_trajectories(trajs[:train_size])
 
-        (
-            valid_observations,
-            valid_actions,
-            valid_rewards,
-            valid_masks,
-            valid_dones_float,
-            valid_next_observations,
-        ) = merge_trajectories(trajs[train_size:])
+#         (
+#             valid_observations,
+#             valid_actions,
+#             valid_rewards,
+#             valid_masks,
+#             valid_dones_float,
+#             valid_next_observations,
+#         ) = merge_trajectories(trajs[train_size:])
 
-        train_dataset = Dataset(
-            train_observations,
-            train_actions,
-            train_rewards,
-            train_masks,
-            train_dones_float,
-            train_next_observations,
-            size=len(train_observations),
-        )
-        valid_dataset = Dataset(
-            valid_observations,
-            valid_actions,
-            valid_rewards,
-            valid_masks,
-            valid_dones_float,
-            valid_next_observations,
-            size=len(valid_observations),
-        )
+#         train_dataset = Dataset(
+#             train_observations,
+#             train_actions,
+#             train_rewards,
+#             train_masks,
+#             train_dones_float,
+#             train_next_observations,
+#             size=len(train_observations),
+#         )
+#         valid_dataset = Dataset(
+#             valid_observations,
+#             valid_actions,
+#             valid_rewards,
+#             valid_masks,
+#             valid_dones_float,
+#             valid_next_observations,
+#             size=len(valid_observations),
+#         )
 
-        return train_dataset, valid_dataset
+#         return train_dataset, valid_dataset
 
 
 def update_actor(
@@ -702,7 +703,7 @@ def _sample_actions_deterministic(
     rng: PRNGKey,
     actor_apply_fn: Callable[..., Any],
     actor_params: Params,
-    observations: np.ndarray,
+    observations: jnp.ndarray,
     temperature: float = 1.0,
 ) -> Tuple[PRNGKey, jnp.ndarray]:
     dist = actor_apply_fn({"params": actor_params}, observations, temperature)
@@ -714,7 +715,7 @@ def _sample_actions_probabilistic(
     rng: PRNGKey,
     actor_apply_fn: Callable[..., Any],
     actor_params: Params,
-    observations: np.ndarray,
+    observations: jnp.ndarray,
     temperature: float = 1.0,
 ) -> Tuple[PRNGKey, jnp.ndarray]:
     dist = actor_apply_fn({"params": actor_params}, observations, temperature)
@@ -726,7 +727,7 @@ def sample_actions(
     rng: PRNGKey,
     actor_apply_fn: Callable[..., Any],
     actor_params: Params,
-    observations: np.ndarray,
+    observations: jnp.ndarray,
     temperature: float = 1.0,
     distribution: str = "log_prob",
 ) -> Tuple[PRNGKey, jnp.ndarray]:
@@ -802,7 +803,7 @@ class SACLearner(object):
         target_entropy: Optional[float] = None,
         backup_entropy: bool = True,
         init_temperature: float = 1.0,
-        init_mean: Optional[np.ndarray] = None,
+        init_mean: Optional[jnp.ndarray] = None,
         policy_final_fc_init_scale: float = 1.0,
     ):
         """
@@ -863,7 +864,7 @@ class SACLearner(object):
 
     def sample_actions(
         self,
-        observations: np.ndarray,
+        observations: jnp.ndarray,
         temperature: float = 1.0,
         distribution: str = "log_prob",
     ) -> jnp.ndarray:
@@ -876,8 +877,8 @@ class SACLearner(object):
             distribution,
         )
         self.rng = rng
-        actions = np.asarray(actions)
-        return np.clip(actions, -1, 1)
+        actions = jnp.asarray(actions)
+        return jnp.clip(actions, -1, 1)
 
     def update(self, batch: Batch) -> InfoDict:
         self.step += 1
