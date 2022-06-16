@@ -43,7 +43,8 @@ def gym_vec_env_(env_name, num_envs):
     ):
         # no need to create a VecEnv and wrap it if the env accepts 'num_envs' as an
         # argument at __init__ and has a reset_done() method.
-        env = gym.make(env_name, num_envs=num_envs)
+        env = gym.make(env_name, num_envs=num_envs).unwrapped  # removing gym wrappers
+
         # We force the environment to have a time limit, but
         # env.spec.max_episode_steps cannot exist as it would automatically trigger
         # the TimeLimit wrapper of gym, which does not handle batch envs. We require
@@ -149,7 +150,7 @@ class ResetDoneVecWrapper(gym.Wrapper):
             self.env.single_observation_space, n=self.num_envs, fn=np.empty
         )
         if "return_info" in kwargs and kwargs["return_info"]:
-            info = {"info_tuple": info_}
+            info = {"info_tuple": tuple(info_)}
             return (
                 concatenate(self.env.single_observation_space, results, observations),
                 info,
@@ -159,19 +160,22 @@ class ResetDoneVecWrapper(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info_ = self.env.step(action)
-        info = {
-            "info_tuple": info_,
-            "truncation": np.array( info_["TimeLimit.truncated"] if 'TimeLimit.truncated' in info_ else np.zeros_like(reward)
-            ).reshape((self.env.num_envs, -1)),
-            "is_success": np.array( info_['is_success'] if 'is_success' in info_ else np.zeros_like(reward)
-            ).reshape((self.env.num_envs, -1)),
-        }
+        info_["truncation"] = (
+            info_["TimeLimit.truncated"]
+            if "TimeLimit.truncated" in info_
+            else np.array([False] * self.num_envs).reshape((self.num_envs, 1))
+        )
+        info_["is_success"] = (
+            info_["is_success"]
+            if "is_success" in info_
+            else np.array([False] * self.num_envs).reshape((self.num_envs, 1))
+        )
 
         return (
             obs,
             reward.reshape((self.env.num_envs, -1)),
             done.reshape((self.env.num_envs, -1)),
-            info,
+            info_,
         )
 
 
