@@ -32,13 +32,11 @@ class BraxUniformSamplingQueueToXpag(Buffer):
 
     def insert(self, step_batch: Dict[str, Any]):
         """Inserts a transition in the buffer"""
-        assert self.buffer_state is not None, "the replya buffer must be started"
+        assert self.buffer_state is not None, "you must call init_rp_buffer before the first insert"
         self.replay_buffer.insert_jit(self.buffer_state, step_batch)
 
     def pre_sample(self) -> Dict[str, Union[torch.Tensor, jnp.ndarray, DeviceArray]]:
         """Returns a part of the buffer from which the sampler will extract samples"""
-        # need to filter, depends how the tensor data is indiced
-        # return self.buffer_state.data
         raise Exception("Not implemented")
 
     def sample(

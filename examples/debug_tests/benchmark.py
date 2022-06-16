@@ -143,32 +143,39 @@ def benchmark_only_update(use_sac=True, use_gpu=True):
     )
 
 
-def device_transfert_benchmark():
+def device_transfert_benchmark(n_repetition = 5000):
     env_info = {"observation_dim": 20, "action_dim": 6}
     batch_size = 256
-    n_repetition = 500
 
-    def to_benchmark():
-        step_batch = {
+    step_batch = {
             "observation": np.zeros((batch_size, env_info["observation_dim"])),
             "action": np.zeros((batch_size, env_info["action_dim"])),
             "reward": np.zeros((batch_size, 1)),
             "truncation": np.zeros((batch_size, 1)),
-            "done": np.zeros((batch_size, 1)),
+            # "done": np.zeros((batch_size, 1)),
             "next_observation": np.zeros((batch_size, env_info["observation_dim"])),
         }
+    
+    def to_benchmark():
+        
         # step_batch = jax.tree_util.tree_map(
         #     lambda x: device_put(x, jax.devices("cpu")[0]), step_batch
         # )
-        step_batch = jax.tree_util.tree_map(
-            lambda x: device_put(x, jax.devices("gpu")[0]), step_batch
+        # jax.tree_util.tree_map(
+        #     lambda x: device_put(x, jax.devices("gpu")[0]), step_batch
+        # )
+        jax.tree_util.tree_map(
+            lambda x:jnp.array(x), step_batch
         )
-
+    # # warm up : 
+    # timeit.timeit(to_benchmark, number=n_repetition)
+    # exp : 
     elapsed = timeit.timeit(to_benchmark, number=n_repetition)
     print(
         f"data device transfert time : ",
         n_repetition / elapsed,
         "step/sec",
+        f'\n total : {elapsed} for {n_repetition} steps'
     )
 
 
@@ -188,11 +195,11 @@ def profile_func(function, profile_name, **kwargs):
 
 
 if __name__ == "__main__":
-    device_transfert_benchmark()
-    profile_func(benchmark_fullupdate, "sac_brax_rp", use_sac=True, use_brax_rp=True)
-    profile_func(benchmark_fullupdate, "sac_xpag_rp", use_sac=True, use_brax_rp=False)
-    profile_func(benchmark_fullupdate, "td3_brax_rp", use_sac=False, use_brax_rp=True)
-    profile_func(benchmark_fullupdate, "td3_xpag_rp", use_sac=False, use_brax_rp=False)
+    # device_transfert_benchmark(5000)
+    # profile_func(benchmark_fullupdate, "sac_brax_rp", use_sac=True, use_brax_rp=True)
+    # profile_func(benchmark_fullupdate, "sac_xpag_rp", use_sac=True, use_brax_rp=False)
+    # profile_func(benchmark_fullupdate, "td3_brax_rp", use_sac=False, use_brax_rp=True)
+    # profile_func(benchmark_fullupdate, "td3_xpag_rp", use_sac=False, use_brax_rp=False)
 
     benchmark_only_update(use_sac=True, use_gpu=True)
     benchmark_only_update(use_sac=True, use_gpu=False)

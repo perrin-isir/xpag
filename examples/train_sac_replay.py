@@ -69,11 +69,6 @@ def main():
     save_dir = os.path.join(os.path.expanduser("~"), "results", "xpag", "train_brax")
     save_episode = True
     plot_projection = None
-    import cProfile
-    from pstats import Stats
-
-    # pr = cProfile.Profile()
-    # pr.enable()
 
     learn(
         env,
@@ -92,14 +87,6 @@ def main():
         save_episode,
         plot_projection,
     )
-    # pr.disable()
-    # stats = Stats(pr)
-    # stats = stats.sort_stats("tottime")
-    # algo_name = "sac" if use_sac else "td3"
-    # buffer_name = "brax_rp" if use_brax_rp else "xpag_rp"
-    # stats.dump_stats(
-    #     f"{os.getcwd()}/cProfile/full_train_{algo_name}_{buffer_name}.data"
-    # )
 
 
 if __name__ == "__main__":

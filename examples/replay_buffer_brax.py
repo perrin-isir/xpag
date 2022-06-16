@@ -1,5 +1,7 @@
 # file copied from :
 # https://github.com/google/brax/blob/main/brax/training/replay_buffers.py
+# only one modification : removed the buffer_size constraint
+
 
 # Copyright 2022 The Brax Authors.
 #
