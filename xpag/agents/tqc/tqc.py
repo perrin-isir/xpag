@@ -62,7 +62,7 @@ def _qvalue(
     actions: np.ndarray,
 ) -> Tuple[jnp.ndarray]:
     return jnp.mean(
-        *critic_apply_fn({"params": critic_params}, observations, actions), axis=(0, 2)
+        critic_apply_fn({"params": critic_params}, observations, actions), axis=(0, 2)
     )
 
 

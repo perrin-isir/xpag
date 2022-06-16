@@ -43,14 +43,14 @@ Finally, to install the *xpag* library in the activated virtual environment:
 </details>
 
 
-<details><summary>JAX and Brax installation</summary>
+<details><summary>JAX, Flax and Brax installation</summary>
 <p>
 
-The *xpag* agents are written in JAX,
+The *xpag* agents are written in JAX and Flax,
 and some functionalities specific to Brax environments require it to be 
 installed.
 
-*The modules JAX and Brax are not automatically installed as dependencies of xpag.*
+**The modules JAX, Flax and Brax are not automatically installed as dependencies of xpag.**
 
 - To install JAX, follow these guidelines:  
 
@@ -62,9 +62,9 @@ installed.
     ```
     It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
 
-- Once JAX is installed, `pip install brax` should install Brax. Otherwise, follow these guidelines:
+- Once JAX is installed, `pip install flax` and `pip install brax` should install Flax and Brax. Otherwise, follow these guidelines:
 
-  [https://github.com/google/brax#readme](https://github.com/google/brax#readme) 
+  [https://github.com/google/flax#quick-install](https://github.com/google/flax#quick-install) and [https://github.com/google/brax#using-brax-locally](https://github.com/google/brax#using-brax-locally) 
 
 </p>
 </details>
