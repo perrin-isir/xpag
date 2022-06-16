@@ -50,7 +50,7 @@ The *xpag* agents are written in JAX and Flax,
 and some functionalities specific to Brax environments require it to be 
 installed.
 
-**The modules JAX, Flax and Brax are not automatically installed as dependencies of xpag.**
+**The modules JAX, Flax and Brax are not automatically installed as dependencies of *xpag*.**
 
 - To install JAX, follow these guidelines:  
 
