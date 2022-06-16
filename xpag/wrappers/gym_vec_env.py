@@ -161,14 +161,9 @@ class ResetDoneVecWrapper(gym.Wrapper):
         obs, reward, done, info_ = self.env.step(action)
         info = {
             "info_tuple": info_,
-            "truncation": np.array(
-                [
-                    [elt["TimeLimit.truncated"] if "TimeLimit.truncated" in elt else 0]
-                    for elt in info_
-                ]
+            "truncation": np.array( info_["TimeLimit.truncated"] if 'TimeLimit.truncated' in info_ else np.zeros_like(reward)
             ).reshape((self.env.num_envs, -1)),
-            "is_success": np.array(
-                [[elt["is_success"] if "is_success" in elt else 0] for elt in info_]
+            "is_success": np.array( info_['is_success'] if 'is_success' in info_ else np.zeros_like(reward)
             ).reshape((self.env.num_envs, -1)),
         }
 
