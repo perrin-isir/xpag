@@ -30,15 +30,11 @@ class Buffer(ABC):
         pass
 
     @abstractmethod
-    def pre_sample(self) -> Dict[str, Union[torch.Tensor, np.ndarray, DeviceArray]]:
-        """Returns a part of the buffer from which the sampler will extract samples"""
-        pass
-
     def sample(
         self, batch_size
     ) -> Dict[str, Union[torch.Tensor, np.ndarray, DeviceArray]]:
-        """Returns a batch of transitions"""
-        return self.sampler.sample(self.pre_sample(), batch_size)
+        """Uses the sampler to returns a batch of transitions"""
+        pass
 
 
 class EpisodicBuffer(Buffer):
@@ -109,14 +105,16 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
             ):
                 device = "cpu" if self.datatype == DataType.TORCH_CPU else "cuda"
                 self.buffers[key] = torch.empty(
-                    [self.size, self.T, self.dict_sizes[key]], device=device
+                    [self.size, self.T, self.dict_sizes[key]],
+                    dtype=torch.long if key == "episode_length" else torch.float,
+                    device=device,
                 )
             else:
                 self.buffers[key] = np.empty([self.size, self.T, self.dict_sizes[key]])
         if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
             device = "cpu" if self.datatype == DataType.TORCH_CPU else "cuda"
-            self.current_t = torch.zeros(self.num_envs, dtype=torch.int, device=device)
-            self.zeros = lambda i: torch.zeros(i, device=device, dtype=torch.int)
+            self.current_t = torch.zeros(self.num_envs, dtype=torch.long, device=device)
+            self.zeros = lambda i: torch.zeros(i, device=device, dtype=torch.long)
             self.where = torch.where
         else:
             self.current_t = np.zeros(self.num_envs).astype("int")
@@ -149,16 +147,10 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
 
     def store_done(self, done):
         if done.max():
-            # where_done = self.where(
-            #     self.buffers["done"][self.current_idxs, self.current_t - 1].reshape(
-            #         self.num_envs
-            #     )
-            #     == 1
-            # )[0]
             where_done = self.where(datatype_convert(done, self.datatype) == 1)[0]
             k_envs = len(where_done)
             new_idxs = self._get_storage_idx(inc=k_envs)
-            self.current_idxs[where_done] = [new_idxs]
+            self.current_idxs[where_done] = new_idxs.reshape((1, len(new_idxs)))
             self.current_t[where_done] = 0
 
     def pre_sample(self):
@@ -166,6 +158,9 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
         for key in self.buffers.keys():
             temp_buffers[key] = self.buffers[key][: self.current_size]
         return temp_buffers
+
+    def sample(self, batch_size):
+        return self.sampler.sample(self.pre_sample(), batch_size)
 
     def _get_storage_idx(self, inc=None):
         inc = inc or 1
@@ -178,11 +173,12 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
             idx = np.concatenate([idx_a, idx_b])
         else:
             idx = np.random.randint(0, self.size, inc)
-        self.current_size = min(self.size, self.current_size + inc)
-
+        if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
+            idx = datatype_convert(idx, self.datatype).long()
         self.buffers["episode_length"][idx, self.zeros(inc), :] = self.zeros(
             inc
         ).reshape((inc, 1))
+        self.current_size = min(self.size, self.current_size + inc)
         return idx
 
     def save(self, directory: str):
@@ -222,7 +218,7 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
         )
         if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
             device = "cpu" if self.datatype == DataType.TORCH_CPU else "cuda"
-            self.zeros = lambda i: torch.zeros(i, device=device, dtype=torch.int)
+            self.zeros = lambda i: torch.zeros(i, device=device, dtype=torch.long)
             self.where = torch.where
         else:
             self.zeros = lambda i: np.zeros(i).astype("int")

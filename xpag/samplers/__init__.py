@@ -3,3 +3,4 @@ from xpag.samplers.sampler import (
     DefaultEpisodicSampler,
 )
 from xpag.samplers.HER import HER
+from xpag.samplers.jax_sampler import JaxSampler

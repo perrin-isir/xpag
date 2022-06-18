@@ -11,13 +11,14 @@ from xpag.tools.utils import DataType
 
 
 class Sampler(ABC):
-    def __init__(self):
+    def __init__(self, *, seed: Union[int, None] = None):
+        self.seed = seed
         pass
 
     @abstractmethod
     def sample(
         self,
-        buffers: Dict[str, Union[torch.Tensor, np.ndarray, DeviceArray]],
+        buffer,
         batch_size: int,
     ) -> Dict[str, Union[torch.Tensor, np.ndarray, DeviceArray]]:
         """Return a batch of transitions"""
@@ -43,23 +44,36 @@ class DefaultEpisodicSampler(Sampler):
 
     def sample(
         self,
-        buffers: Dict[str, Union[torch.Tensor, np.ndarray]],
+        buffer: Dict[str, Union[torch.Tensor, np.ndarray]],
         batch_size: int,
     ) -> Dict[str, Union[torch.Tensor, np.ndarray]]:
-        rollout_batch_size = buffers["episode_length"].shape[0]
-        episode_idxs = np.random.choice(
-            np.arange(rollout_batch_size),
-            size=batch_size,
-            replace=True,
-            p=buffers["episode_length"][:, 0, 0]
-            / buffers["episode_length"][:, 0, 0].sum(),
-        )
-        t_max_episodes = buffers["episode_length"][episode_idxs, 0].flatten()
+        rollout_batch_size = buffer["episode_length"].shape[0]
         if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
-            t_samples = (torch.rand_like(t_max_episodes) * t_max_episodes).long()
+            episode_idxs = (
+                torch.multinomial(
+                    buffer["episode_length"][:, 0, 0].float(),
+                    batch_size,
+                    replacement=True,
+                )
+                .to(device="cpu" if self.datatype == DataType.TORCH_CPU else "cuda")
+                .long()
+            )
+        else:
+            episode_idxs = np.random.choice(
+                np.arange(rollout_batch_size),
+                size=batch_size,
+                replace=True,
+                p=buffer["episode_length"][:, 0, 0]
+                / buffer["episode_length"][:, 0, 0].sum(),
+            )
+        t_max_episodes = buffer["episode_length"][episode_idxs, 0].flatten()
+        if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
+            t_samples = (
+                torch.rand_like(t_max_episodes.float()) * t_max_episodes
+            ).long()
         else:
             t_samples = np.random.randint(t_max_episodes)
         transitions = {
-            key: buffers[key][episode_idxs, t_samples] for key in buffers.keys()
+            key: buffer[key][episode_idxs, t_samples] for key in buffer.keys()
         }
         return transitions

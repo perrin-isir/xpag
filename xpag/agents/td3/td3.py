@@ -5,7 +5,6 @@
 from abc import ABC
 from typing import Any, Tuple, Sequence, Callable
 import dataclasses
-import numpy as np
 import torch
 import flax
 from flax import linen
@@ -256,7 +255,7 @@ class TD3(Agent, ABC):
 
         def update_step(
             state: TrainingState, observations, actions, rewards, new_observations, mask
-        ) -> (TrainingState, dict):
+        ) -> Tuple[TrainingState, dict]:
 
             key, key_critic = jax.random.split(state.key, 2)
 
@@ -362,19 +361,17 @@ class TD3(Agent, ABC):
         if torch.is_tensor(observation):
             version = "torch"
         else:
-            version = "numpy"
-        if version == "numpy":
+            version = "numpy or jax"
+        if version == "numpy or jax":
             return self.q_value(
                 observation,
                 action,
-                # self.training_state.target_q_params
                 self.training_state.q_params,
             )
         else:
             return self.q_value(
                 observation.detach().cpu().numpy(),
                 action.detach().cpu().numpy(),
-                # self.training_state.target_q_params
                 self.training_state.q_params,
             )
 
@@ -387,8 +384,8 @@ class TD3(Agent, ABC):
         if torch.is_tensor(observation):
             version = "torch"
         else:
-            version = "numpy"
-        if version == "numpy":
+            version = "numpy or jax"
+        if version == "numpy or jax":
             action = apply_func(
                 observation, self.training_state.policy_params, key_sample
             )
@@ -399,9 +396,9 @@ class TD3(Agent, ABC):
                 key_sample,
             )
         if len(action.shape) == 1:
-            return np.asarray(jnp.expand_dims(action, axis=0))
+            return jnp.expand_dims(action, axis=0)
         else:
-            return np.asarray(action)
+            return action
 
     def save(self, directory):
         os.makedirs(directory, exist_ok=True)

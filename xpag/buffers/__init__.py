@@ -3,3 +3,4 @@ from xpag.buffers.buffer import (
     EpisodicBuffer,
     DefaultEpisodicBuffer,
 )
+from xpag.buffers.jax_buffer import JaxBuffer

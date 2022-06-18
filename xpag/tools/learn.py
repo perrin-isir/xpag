@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from xpag.tools.eval import single_rollout_eval
-from xpag.tools.utils import hstack
+from xpag.tools.utils import get_datatype, datatype_convert, hstack
 from xpag.tools.logging import eval_log_reset
 from xpag.tools.timing import timing_reset
 from xpag.buffers import Buffer
@@ -30,7 +30,9 @@ def learn(
 ):
     eval_log_reset()
     timing_reset()
-    observation, _ = goalsetter.reset(env, *env.reset(return_info=True))
+    reset_obs, reset_info = env.reset(return_info=True)
+    env_datatype = get_datatype(reset_obs)
+    observation, _ = goalsetter.reset(env, reset_obs, reset_info)
 
     episodic_buffer = True if hasattr(buffer, "store_done") else False
 
@@ -71,6 +73,8 @@ def learn(
             if i > 0:
                 for _ in range(max(round(gd_steps_per_step * env_info["num_envs"]), 1)):
                     _ = agent.train_on_batch(buffer.sample(batch_size))
+
+        action = datatype_convert(action, env_datatype)
 
         next_observation, reward, done, info = goalsetter.step(
             env, observation, action, *env.step(action)
