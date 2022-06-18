@@ -81,7 +81,7 @@ class JaxSampler(Sampler):
         self,
         buffer_state,
         batch_size: int,
-    ):
+    ) -> jnp.ndarray:
         if self.rbus is None:
             raise RuntimeError("init() must be called before sample().")
         else:

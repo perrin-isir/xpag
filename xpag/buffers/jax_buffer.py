@@ -20,12 +20,9 @@ import jax
 from jax import flatten_util
 import jax.numpy as jnp
 from xpag.buffers.buffer import Buffer
-from xpag.samplers.sampler import Sampler
-from xpag.samplers.jax_sampler import Sample, ReplayBufferState
+from xpag.samplers.jax_sampler import JaxSampler, PRNGKey, Sample, ReplayBufferState
 from xpag.tools.utils import DeviceArray
 from typing import Dict, Any
-
-PRNGKey = jnp.ndarray
 
 
 class RBQueue(Generic[Sample]):
@@ -104,7 +101,7 @@ class JaxBuffer(Buffer):
     def __init__(
         self,
         buffer_size: int,
-        sampler: Sampler,
+        sampler: JaxSampler,
     ):
         super().__init__(buffer_size, sampler)
         self.replay_buffer = None
