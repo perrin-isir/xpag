@@ -21,7 +21,6 @@ from jax import flatten_util
 import jax.numpy as jnp
 from xpag.buffers.buffer import Buffer
 from xpag.samplers.jax_sampler import JaxSampler, PRNGKey, Sample, ReplayBufferState
-from xpag.tools.utils import DeviceArray
 from typing import Dict, Any
 
 
@@ -130,7 +129,7 @@ class JaxBuffer(Buffer):
             self.initialized = True
         self.buffer_state = self.replay_buffer.insert_jit(self.buffer_state, step_batch)
 
-    def sample(self, batch_size) -> Dict[str, DeviceArray]:
+    def sample(self, batch_size) -> Dict[str, jnp.ndarray]:
         """Returns a batch of transitions"""
         self.buffer_state, batch = self.sampler.sample_jit(
             self.buffer_state, batch_size

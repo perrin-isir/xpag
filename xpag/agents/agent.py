@@ -4,9 +4,8 @@
 
 from abc import ABC, abstractmethod
 from typing import Union, Dict
-import torch
-from jaxlib.xla_extension import DeviceArray
 import numpy as np
+import jax.numpy as jnp
 
 
 class Agent(ABC):
@@ -25,16 +24,16 @@ class Agent(ABC):
     @abstractmethod
     def train_on_batch(
         self,
-        batch: Dict[str, Union[torch.Tensor, np.ndarray, DeviceArray]],
+        batch: Dict[str, Union[np.ndarray, jnp.ndarray]],
     ) -> dict:
         pass
 
     @abstractmethod
     def select_action(
         self,
-        observation: Union[torch.Tensor, np.ndarray, DeviceArray],
+        observation: Union[np.ndarray, jnp.ndarray],
         eval_mode=False,
-    ) -> Union[torch.Tensor, np.ndarray, DeviceArray]:
+    ) -> Union[np.ndarray, jnp.ndarray]:
         pass
 
     @abstractmethod

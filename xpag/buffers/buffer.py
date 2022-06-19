@@ -4,8 +4,7 @@
 
 from abc import ABC, abstractmethod
 import numpy as np
-import torch
-from jaxlib.xla_extension import DeviceArray
+import jax.numpy as jnp
 from typing import Union, Dict, Any
 from xpag.tools.utils import DataType, datatype_convert
 from xpag.samplers.sampler import Sampler
@@ -30,9 +29,7 @@ class Buffer(ABC):
         pass
 
     @abstractmethod
-    def sample(
-        self, batch_size
-    ) -> Dict[str, Union[torch.Tensor, np.ndarray, DeviceArray]]:
+    def sample(self, batch_size) -> Dict[str, Union[np.ndarray, jnp.ndarray]]:
         """Uses the sampler to returns a batch of transitions"""
         pass
 
@@ -59,20 +56,10 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
         max_episode_steps: int,
         buffer_size: int,
         sampler: Sampler,
-        datatype: DataType = DataType.NUMPY,
     ):
-        assert (
-            datatype == DataType.TORCH_CPU
-            or datatype == DataType.TORCH_CUDA
-            or datatype == DataType.NUMPY
-        ), (
-            "datatype must be DataType.TORCH_CPU, "
-            "DataType.TORCH_CUDA or DataType.NUMPY."
-        )
         super().__init__(buffer_size, sampler)
         self.current_size = 0
         self.buffers = {}
-        self.datatype = datatype
         self.T = max_episode_steps
         self.size = int(buffer_size // self.T)
         self.dict_sizes = None
@@ -99,27 +86,10 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
         self.num_envs = step["done"].shape[0]
         self.dict_sizes["episode_length"] = 1
         for key in self.dict_sizes:
-            if (
-                self.datatype == DataType.TORCH_CPU
-                or self.datatype == DataType.TORCH_CUDA
-            ):
-                device = "cpu" if self.datatype == DataType.TORCH_CPU else "cuda"
-                self.buffers[key] = torch.empty(
-                    [self.size, self.T, self.dict_sizes[key]],
-                    dtype=torch.long if key == "episode_length" else torch.float,
-                    device=device,
-                )
-            else:
-                self.buffers[key] = np.empty([self.size, self.T, self.dict_sizes[key]])
-        if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
-            device = "cpu" if self.datatype == DataType.TORCH_CPU else "cuda"
-            self.current_t = torch.zeros(self.num_envs, dtype=torch.long, device=device)
-            self.zeros = lambda i: torch.zeros(i, device=device, dtype=torch.long)
-            self.where = torch.where
-        else:
-            self.current_t = np.zeros(self.num_envs).astype("int")
-            self.zeros = lambda i: np.zeros(i).astype("int")
-            self.where = np.where
+            self.buffers[key] = np.empty([self.size, self.T, self.dict_sizes[key]])
+        self.current_t = np.zeros(self.num_envs).astype("int")
+        self.zeros = lambda i: np.zeros(i).astype("int")
+        self.where = np.where
         self.current_idxs = self._get_storage_idx(inc=self.num_envs)
         self.first_insert_done = True
 
@@ -131,13 +101,13 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
                 for k in step[key]:
                     self.buffers[key + "." + k][
                         self.current_idxs, self.current_t, :
-                    ] = datatype_convert(step[key][k], self.datatype).reshape(
+                    ] = datatype_convert(step[key][k], DataType.NUMPY).reshape(
                         (self.num_envs, self.dict_sizes[key + "." + k])
                     )
             else:
                 self.buffers[key][
                     self.current_idxs, self.current_t, :
-                ] = datatype_convert(step[key], self.datatype).reshape(
+                ] = datatype_convert(step[key], DataType.NUMPY).reshape(
                     (self.num_envs, self.dict_sizes[key])
                 )
         self.current_t += 1
@@ -147,7 +117,7 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
 
     def store_done(self, done):
         if done.max():
-            where_done = self.where(datatype_convert(done, self.datatype) == 1)[0]
+            where_done = self.where(datatype_convert(done, DataType.NUMPY) == 1)[0]
             k_envs = len(where_done)
             new_idxs = self._get_storage_idx(inc=k_envs)
             self.current_idxs[where_done] = new_idxs.reshape((1, len(new_idxs)))
@@ -173,8 +143,6 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
             idx = np.concatenate([idx_a, idx_b])
         else:
             idx = np.random.randint(0, self.size, inc)
-        if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
-            idx = datatype_convert(idx, self.datatype).long()
         self.buffers["episode_length"][idx, self.zeros(inc), :] = self.zeros(
             inc
         ).reshape((inc, 1))
@@ -187,7 +155,6 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
             ("buffer_size", self.buffer_size),
             ("current_size", self.current_size),
             ("buffers", self.buffers),
-            ("datatype", self.datatype),
             ("T", self.T),
             ("size", self.size),
             ("dict_sizes", self.dict_sizes),
@@ -205,7 +172,6 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
         self.buffer_size = joblib.load(os.path.join(directory, "buffer_size.joblib"))
         self.current_size = joblib.load(os.path.join(directory, "current_size.joblib"))
         self.buffers = joblib.load(os.path.join(directory, "buffers.joblib"))
-        self.datatype = joblib.load(os.path.join(directory, "datatype.joblib"))
         self.T = joblib.load(os.path.join(directory, "T.joblib"))
         self.size = joblib.load(os.path.join(directory, "size.joblib"))
         self.dict_sizes = joblib.load(os.path.join(directory, "dict_sizes.joblib"))
@@ -216,10 +182,5 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
         self.first_insert_done = joblib.load(
             os.path.join(directory, "first_insert_done.joblib")
         )
-        if self.datatype == DataType.TORCH_CPU or self.datatype == DataType.TORCH_CUDA:
-            device = "cpu" if self.datatype == DataType.TORCH_CPU else "cuda"
-            self.zeros = lambda i: torch.zeros(i, device=device, dtype=torch.long)
-            self.where = torch.where
-        else:
-            self.zeros = lambda i: np.zeros(i).astype("int")
-            self.where = np.where
+        self.zeros = lambda i: np.zeros(i).astype("int")
+        self.where = np.where
