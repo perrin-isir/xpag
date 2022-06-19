@@ -166,6 +166,16 @@ The figure below summarizes the RL loop and the interactions between the compone
 </details>
 
 -----
+## Acknowledgements
+
+Maintainer and main contributor:
+- Nicolas Perrin-Gilbert (CNRS, ISIR)
+
+Other people who contributed to *xpag*:
+- Olivier Serris (ISIR)
+- Alexandre Chenu (ISIR)
+
+-----
 ## Citing the project
 To cite this repository in publications:
 

@@ -3,7 +3,6 @@
 # Licensed under the BSD 3-Clause License.
 
 from abc import ABC
-import numpy as np
 import os
 from xpag.agents.agent import Agent
 from xpag.agents.sac.sac_from_jaxrl import Batch, SACLearner
@@ -19,14 +18,12 @@ import jax.numpy as jnp
 def _qvalue(
     critic_apply_fn: Callable[..., Any],
     critic_params: flax.core.FrozenDict[str, Any],
-    observations: np.ndarray,
-    actions: np.ndarray,
+    observations: jnp.ndarray,
+    actions: jnp.ndarray,
 ) -> Tuple[jnp.ndarray]:
     return jnp.minimum(
         *critic_apply_fn({"params": critic_params}, observations, actions)
     )
-    # c1, _ = critic_apply_fn({"params": critic_params}, observations, actions)
-    # return c1
 
 
 class SAC(Agent, ABC):
@@ -62,20 +59,19 @@ class SAC(Agent, ABC):
 
         self.sac = SACLearner(
             start_seed,
-            np.zeros((1, 1, observation_dim)),
-            np.zeros((1, 1, action_dim)),
+            jnp.zeros((1, 1, observation_dim)),
+            jnp.zeros((1, 1, action_dim)),
             **self.saclearner_params
         )
 
     def value(self, observation, action):
-        return np.asarray(
+        return jnp.asarray(
             _qvalue(
                 self.sac.critic.apply_fn, self.sac.critic.params, observation, action
             )
         )
 
     def select_action(self, observation, eval_mode=False):
-        # return self.sac.sample_actions(observation)
         return self.sac.sample_actions(
             observation, distribution="det" if eval_mode else "log_prob"
         )
@@ -93,14 +89,14 @@ class SAC(Agent, ABC):
 
     def save(self, directory):
         os.makedirs(directory, exist_ok=True)
-        np.save(os.path.join(directory, "step.npy"), self.sac.step)
+        jnp.save(os.path.join(directory, "step.npy"), self.sac.step)
         self.sac.actor.save(os.path.join(directory, "actor"))
         self.sac.critic.save(os.path.join(directory, "critic"))
         self.sac.target_critic.save(os.path.join(directory, "target_critic"))
         self.sac.temp.save(os.path.join(directory, "temp"))
 
     def load(self, directory):
-        self.sac.step = np.load(os.path.join(directory, "step.npy")).item()
+        self.sac.step = jnp.load(os.path.join(directory, "step.npy")).item()
         self.sac.actor = self.sac.actor.load(os.path.join(directory, "actor"))
         self.sac.critic = self.sac.critic.load(os.path.join(directory, "critic"))
         self.sac.target_critic = self.sac.target_critic.load(

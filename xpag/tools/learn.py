@@ -31,7 +31,9 @@ def learn(
     eval_log_reset()
     timing_reset()
     reset_obs, reset_info = env.reset(return_info=True)
-    env_datatype = get_datatype(reset_obs)
+    env_datatype = get_datatype(
+        reset_obs if not env_info["is_goalenv"] else reset_obs["observation"]
+    )
     observation, _ = goalsetter.reset(env, reset_obs, reset_info)
 
     episodic_buffer = True if hasattr(buffer, "store_done") else False

@@ -30,7 +30,6 @@ Here is the RLJAX License:
 # SOFTWARE.
 
 from abc import ABC
-import numpy as np
 import os
 from xpag.agents.agent import Agent
 from xpag.agents.sac.sac_from_jaxrl import (
@@ -58,8 +57,8 @@ import jax.numpy as jnp
 def _qvalue(
     critic_apply_fn: Callable[..., Any],
     critic_params: flax.core.FrozenDict[str, Any],
-    observations: np.ndarray,
-    actions: np.ndarray,
+    observations: jnp.ndarray,
+    actions: jnp.ndarray,
 ) -> Tuple[jnp.ndarray]:
     return jnp.mean(
         critic_apply_fn({"params": critic_params}, observations, actions), axis=(0, 2)
@@ -264,7 +263,7 @@ class TQCLearner(SACLearner):
         target_entropy: Optional[float] = None,
         backup_entropy: bool = True,
         init_temperature: float = 1.0,
-        init_mean: Optional[np.ndarray] = None,
+        init_mean: Optional[jnp.ndarray] = None,
         policy_final_fc_init_scale: float = 1.0,
         hidden_dims_critic: Sequence[int] = (256, 256),
         num_critics=5,
@@ -377,13 +376,13 @@ class TQC(Agent, ABC):
 
         self.tqc = TQCLearner(
             start_seed,
-            np.zeros((1, 1, observation_dim)),
-            np.zeros((1, 1, action_dim)),
+            jnp.zeros((1, 1, observation_dim)),
+            jnp.zeros((1, 1, action_dim)),
             **self.tqclearner_params
         )
 
     def value(self, observation, action):
-        return np.asarray(
+        return jnp.asarray(
             _qvalue(
                 self.tqc.critic.apply_fn, self.tqc.critic.params, observation, action
             )
@@ -407,14 +406,14 @@ class TQC(Agent, ABC):
 
     def save(self, directory):
         os.makedirs(directory, exist_ok=True)
-        np.save(os.path.join(directory, "step.npy"), self.tqc.step)
+        jnp.save(os.path.join(directory, "step.npy"), self.tqc.step)
         self.tqc.actor.save(os.path.join(directory, "actor"))
         self.tqc.critic.save(os.path.join(directory, "critic"))
         self.tqc.target_critic.save(os.path.join(directory, "target_critic"))
         self.tqc.temp.save(os.path.join(directory, "temp"))
 
     def load(self, directory):
-        self.tqc.step = np.load(os.path.join(directory, "step.npy")).item()
+        self.tqc.step = jnp.load(os.path.join(directory, "step.npy")).item()
         self.tqc.actor = self.tqc.actor.load(os.path.join(directory, "actor"))
         self.tqc.critic = self.tqc.critic.load(os.path.join(directory, "critic"))
         self.tqc.target_critic = self.tqc.target_critic.load(
