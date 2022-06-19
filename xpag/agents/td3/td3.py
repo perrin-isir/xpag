@@ -5,7 +5,6 @@
 from abc import ABC
 from typing import Any, Tuple, Sequence, Callable
 import dataclasses
-import torch
 import flax
 from flax import linen
 import jax
@@ -358,22 +357,11 @@ class TD3(Agent, ABC):
         )
 
     def value(self, observation, action):
-        if torch.is_tensor(observation):
-            version = "torch"
-        else:
-            version = "numpy or jax"
-        if version == "numpy or jax":
-            return self.q_value(
-                observation,
-                action,
-                self.training_state.q_params,
-            )
-        else:
-            return self.q_value(
-                observation.detach().cpu().numpy(),
-                action.detach().cpu().numpy(),
-                self.training_state.q_params,
-            )
+        return self.q_value(
+            observation,
+            action,
+            self.training_state.q_params,
+        )
 
     def select_action(self, observation, eval_mode=False):
         self.key, key_sample = jax.random.split(self.key)
@@ -381,20 +369,7 @@ class TD3(Agent, ABC):
             apply_func = self.select_action_deterministic
         else:
             apply_func = self.select_action_probabilistic
-        if torch.is_tensor(observation):
-            version = "torch"
-        else:
-            version = "numpy or jax"
-        if version == "numpy or jax":
-            action = apply_func(
-                observation, self.training_state.policy_params, key_sample
-            )
-        else:
-            action = apply_func(
-                observation.detach().cpu().numpy(),
-                self.training_state.policy_params,
-                key_sample,
-            )
+        action = apply_func(observation, self.training_state.policy_params, key_sample)
         if len(action.shape) == 1:
             return jnp.expand_dims(action, axis=0)
         else:
@@ -427,24 +402,11 @@ class TD3(Agent, ABC):
         print(self._config_string, file=output_file)
 
     def train_on_batch(self, batch):
-        if torch.is_tensor(batch["reward"]):
-            version = "torch"
-        else:
-            version = "numpy or jax"
-        if version == "numpy or jax":
-            observations = batch["observation"]
-            actions = batch["action"]
-            rewards = batch["reward"]
-            new_observations = batch["next_observation"]
-            mask = 1 - batch["done"] * (1 - batch["truncation"])
-        else:
-            observations = batch["observation"].detach().cpu().numpy()
-            actions = batch["action"].detach().cpu().numpy()
-            rewards = batch["reward"].detach().cpu().numpy()
-            new_observations = batch["next_observation"].detach().cpu().numpy()
-            mask = 1 - batch["done"].detach().cpu().numpy() * (
-                1 - batch["truncation"].detach().cpu().numpy()
-            )
+        observations = batch["observation"]
+        actions = batch["action"]
+        rewards = batch["reward"]
+        new_observations = batch["next_observation"]
+        mask = 1 - batch["done"] * (1 - batch["truncation"])
 
         self.training_state, metrics = self.update_step(
             self.training_state, observations, actions, rewards, new_observations, mask
