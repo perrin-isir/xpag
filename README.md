@@ -85,9 +85,10 @@ goal-conditioned reinforcement learning (GCRL) in mind (check out the [train_gma
 tutorial for a simple example of GCRL). 
 
 In GCRL, agents have a goal, and the reward mainly depends on 
-the degree of achievement of that goal. To manage goals, *xpag* introduces a dedicated
-module called "goal-setter". Although it works like an environment wrapper, it 
-is separated from the environment because in some cases the "goal-setter" should be considered as 
+the degree of achievement of that goal. *xpag* introduces a 
+module called "setter" which, among other things, can help to set and manage
+goals. Although the setter is largely similar to an environment wrapper, it 
+is separated from the environment because in some cases it should be considered as 
 an independent entity (e.g. a teacher), or as a part of the agent itself.
 
 *xpag* relies on a single reinforcement learning loop (the `learn()`
@@ -196,7 +197,7 @@ is the functions that runs the training loop in *xpag*. Its three first argument
 
 <details><summary><B>the buffer</B></summary></details>
 <details><summary><B>the sampler</B></summary></details>
-<details><summary><B>the goal-setter</B></summary></details>
+<details><summary><B>the setter</B></summary></details>
 
 The figure below summarizes the RL loop and the interactions between the components:
 (TODO)

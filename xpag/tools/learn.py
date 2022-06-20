@@ -7,7 +7,7 @@ from xpag.tools.timing import timing_reset
 from xpag.buffers import Buffer
 from xpag.agents.agent import Agent
 from xpag.goalsetters.goalsetter import GoalSetter
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, List
 
 
 def learn(
@@ -26,7 +26,8 @@ def learn(
     save_dir: Union[None, str] = None,
     save_episode: bool = False,
     plot_projection=None,
-    rollout_eval_function=None,
+    custom_eval_function=None,
+    additional_step_keys: Union[List[str], None] = None,
 ):
     eval_log_reset()
     timing_reset()
@@ -38,10 +39,10 @@ def learn(
 
     episodic_buffer = True if hasattr(buffer, "store_done") else False
 
-    if rollout_eval_function is None:
+    if custom_eval_function is None:
         rollout_eval = single_rollout_eval
     else:
-        rollout_eval = rollout_eval_function
+        rollout_eval = custom_eval_function
 
     for i in range(max_steps // env_info["num_envs"]):
         if not i % max(evaluate_every_x_steps // env_info["num_envs"], 1):
@@ -63,6 +64,7 @@ def learn(
                     os.path.join(os.path.expanduser(save_dir), "goalsetter")
                 )
 
+        action_info = {}
         if i * env_info["num_envs"] < start_training_after_x_steps:
             action = env_info["action_space"].sample()
         else:
@@ -72,6 +74,9 @@ def learn(
                 else hstack(observation["observation"], observation["desired_goal"]),
                 eval_mode=False,
             )
+            if isinstance(action, tuple):
+                action_info = action[1]
+                action = action[0]
             if i > 0:
                 for _ in range(max(round(gd_steps_per_step * env_info["num_envs"]), 1)):
                     _ = agent.train_on_batch(buffer.sample(batch_size))
@@ -79,7 +84,7 @@ def learn(
         action = datatype_convert(action, env_datatype)
 
         next_observation, reward, done, info = goalsetter.step(
-            env, observation, action, *env.step(action)
+            env, observation, action, action_info, *env.step(action)
         )
 
         step = {
@@ -92,6 +97,10 @@ def learn(
         }
         if env_info["is_goalenv"]:
             step["is_success"] = info["is_success"]
+        if additional_step_keys is not None:
+            for a_s_key in additional_step_keys:
+                if a_s_key in info:
+                    step[a_s_key] = info[a_s_key]
         buffer.insert(step)
         observation = next_observation
 

@@ -3,7 +3,7 @@
 # Licensed under the BSD 3-Clause License.
 
 from abc import ABC, abstractmethod
-from typing import Union, Dict
+from typing import Union, Dict, Tuple
 import numpy as np
 import jax.numpy as jnp
 
@@ -33,7 +33,7 @@ class Agent(ABC):
         self,
         observation: Union[np.ndarray, jnp.ndarray],
         eval_mode=False,
-    ) -> Union[np.ndarray, jnp.ndarray]:
+    ) -> Union[np.ndarray, jnp.ndarray, Tuple[Union[np.ndarray, jnp.ndarray], Dict]]:
         pass
 
     @abstractmethod

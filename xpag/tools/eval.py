@@ -106,11 +106,19 @@ def single_rollout_eval(
             if not env_info["is_goalenv"]
             else hstack(observation["observation"], observation["desired_goal"])
         )
-        action = datatype_convert(
-            agent.select_action(obs, eval_mode=True), env_datatype
-        )
+        action = agent.select_action(obs, eval_mode=True)
+        action_info = {}
+        if isinstance(action, tuple):
+            action_info = action[1]
+            action = action[0]
+        action = datatype_convert(action, env_datatype)
         next_observation, reward, done, info = goalsetter.step(
-            eval_env, observation, action, *eval_env.step(action), eval_mode=True
+            eval_env,
+            observation,
+            action,
+            action_info,
+            *eval_env.step(action),
+            eval_mode=True,
         )
         if save_episode and save_dir is not None:
             save_ep.update()
