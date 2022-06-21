@@ -29,7 +29,7 @@ The following command creates the `xpagenv` environment with the requirements li
 
 If you prefer to update an existing environment (`existing_env`):
 
-    conda env update --name existing_env --file environment.yml
+    conda env update --name existing_env --file environment.yaml
 
 To activate the `xpagenv` environment:
 
