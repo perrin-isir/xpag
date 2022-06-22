@@ -103,28 +103,23 @@ class MultiQuantileCritic(nn.Module):
         return qs
 
 
-@jax.jit
 def huber(td: jnp.ndarray) -> jnp.ndarray:
     """Huber function."""
     abs_td = jnp.abs(td)
     return jnp.where(abs_td <= 1.0, jnp.square(td), abs_td)
 
 
-@functools.partial(jax.jit, static_argnums=2)
 def quantile_loss(
     td: jnp.ndarray,
     cum_p: jnp.ndarray,
-    loss_type: str,
 ) -> jnp.ndarray:
     """
     Calculate quantile loss.
     """
-    if loss_type == "l2":
-        element_wise_loss = jnp.square(td)
-    elif loss_type == "huber":
-        element_wise_loss = huber(td)
-    else:
-        NotImplementedError
+    # loss_type: "l2":
+    # element_wise_loss = jnp.square(td)
+    # loss_type: "huber":
+    element_wise_loss = huber(td)
     element_wise_loss *= jax.lax.stop_gradient(jnp.abs(cum_p[..., None] - (td < 0)))
     batch_loss = element_wise_loss.sum(axis=1).mean(axis=1, keepdims=True)
     return batch_loss.mean()
@@ -183,7 +178,7 @@ def update_critic(
         critic_loss = jnp.array(0.0)
         for q in qs:
             critic_loss += quantile_loss(
-                target_q[:, None, :] - q[:, :, None], cum_p_prime, "huber"
+                target_q[:, None, :] - q[:, :, None], cum_p_prime
             )
         critic_loss /= qs.shape[0] * qs.shape[2]
         return critic_loss, {
