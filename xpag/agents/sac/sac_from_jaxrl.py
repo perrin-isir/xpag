@@ -387,56 +387,6 @@ class NormalTanhPolicy(nn.Module):
             return base_dist
 
 
-class NormalTanhMixturePolicy(nn.Module):
-    hidden_dims: Sequence[int]
-    action_dim: int
-    num_components: int = 5
-    dropout_rate: Optional[float] = None
-
-    @nn.compact
-    def __call__(
-        self,
-        observations: jnp.ndarray,
-        temperature: float = 1.0,
-        training: bool = False,
-    ) -> tfd.Distribution:
-        outputs = MLP(
-            self.hidden_dims, activate_final=True, dropout_rate=self.dropout_rate
-        )(observations, training=training)
-
-        logits = nn.Dense(
-            self.action_dim * self.num_components, kernel_init=default_init()
-        )(outputs)
-        means = nn.Dense(
-            self.action_dim * self.num_components,
-            kernel_init=default_init(),
-            bias_init=nn.initializers.normal(stddev=1.0),
-        )(outputs)
-        log_stds = nn.Dense(
-            self.action_dim * self.num_components, kernel_init=default_init()
-        )(outputs)
-
-        shape = list(observations.shape[:-1]) + [-1, self.num_components]
-        logits = jnp.reshape(logits, shape)
-        mu = jnp.reshape(means, shape)
-        log_stds = jnp.reshape(log_stds, shape)
-
-        log_stds = jnp.clip(log_stds, LOG_STD_MIN, LOG_STD_MAX)
-
-        components_distribution = tfd.Normal(
-            loc=mu, scale=jnp.exp(log_stds) * temperature
-        )
-
-        base_dist = tfd.MixtureSameFamily(
-            mixture_distribution=tfd.Categorical(logits=logits),
-            components_distribution=components_distribution,
-        )
-
-        dist = tfd.TransformedDistribution(distribution=base_dist, bijector=tfb.Tanh())
-
-        return tfd.Independent(dist, 1)
-
-
 @functools.partial(jax.jit, static_argnames="actor_apply_fn")
 def _sample_actions_deterministic(
     rng: PRNGKey,
