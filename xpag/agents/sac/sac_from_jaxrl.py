@@ -58,7 +58,6 @@ def default_init(scale: Optional[float] = jnp.sqrt(2)):
 PRNGKey = Any
 Params = flax.core.FrozenDict[str, Any]
 Shape = Sequence[int]
-Dtype = Any  # this could be a real type?
 InfoDict = Dict[str, float]
 
 
