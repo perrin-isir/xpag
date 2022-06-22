@@ -266,15 +266,6 @@ def update_critic(
     return new_critic, info
 
 
-class ValueCritic(nn.Module):
-    hidden_dims: Sequence[int]
-
-    @nn.compact
-    def __call__(self, observations: jnp.ndarray) -> jnp.ndarray:
-        critic = MLP((*self.hidden_dims, 1))(observations)
-        return jnp.squeeze(critic, -1)
-
-
 class Critic(nn.Module):
     hidden_dims: Sequence[int]
     activations: Callable[[jnp.ndarray], jnp.ndarray] = nn.relu
