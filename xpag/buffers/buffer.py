@@ -86,7 +86,7 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
         self.num_envs = step["done"].shape[0]
         self.dict_sizes["episode_length"] = 1
         for key in self.dict_sizes:
-            self.buffers[key] = np.empty([self.size, self.T, self.dict_sizes[key]])
+            self.buffers[key] = np.zeros([self.size, self.T, self.dict_sizes[key]])
         self.current_t = np.zeros(self.num_envs).astype("int")
         self.zeros = lambda i: np.zeros(i).astype("int")
         self.where = np.where
