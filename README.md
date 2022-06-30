@@ -3,7 +3,7 @@
 ![version](https://img.shields.io/badge/version-0.1.0-blue)
 [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-*xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning platform with JAX agents, currently in beta version.
+*xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning library with JAX agents, currently in beta version.
 
 -----
 ## Install
@@ -222,10 +222,8 @@ To cite this repository in publications:
 ```bibtex
 @misc{xpag,
   author = {Perrin-Gilbert, Nicolas},
-  title = {xpag},
+  title = {xpag: a modular reinforcement learning library with JAX agents},
   year = {2022},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/perrin-isir/xpag}},
+  url = {https://github.com/perrin-isir/xpag}
 }
 ```
