@@ -67,7 +67,7 @@ def _qvalue(
 
 class QuantileCritic(nn.Module):
     hidden_dims: Sequence[int]
-    activations: Callable[[jnp.ndarray], jnp.ndarray] = nn.relu
+    activations: Callable[[jnp.ndarray], jnp.ndarray]
     num_quantiles: int
 
     @nn.compact
@@ -81,7 +81,7 @@ class QuantileCritic(nn.Module):
 
 class MultiQuantileCritic(nn.Module):
     hidden_dims: Sequence[int]
-    activations: Callable[[jnp.ndarray], jnp.ndarray] = nn.relu
+    activations: Callable[[jnp.ndarray], jnp.ndarray]
     num_qs: int
     num_quantiles: int
 
