@@ -112,8 +112,7 @@ Again, following the gym Vector API, environments have a `step()` function that 
 in input an action (which is actually a batch of actions, one per rollout) and returns:
 `observation`, `reward`, `done`, `info` (cf. [https://www.gymlibrary.ml/content/api/#stepping](https://www.gymlibrary.ml/content/api/#stepping)).
 There are differences with the gym Vector API. First, this a detail but we name the
-ouputs `observation`, `reward`, \dots (singular) instead of `observations` `rewards`,
-\dots (plural) because in *xpag* this also covers the case `num_envs == 1`.
+ouputs `observation`, `reward`, ... (singular) instead of `observations`, `rewards`, ... (plural) because in *xpag* this also covers the case `num_envs == 1`.
 Second, *xpag* assumes that `reward` and `done` have the shape `(num_envs, 1)`, not
 `(num_envs,)`. More broadly, whether they are due to `num_envs == 1` or to
 unidimensional elements, single-dimensional entries are not squeezed in *xpag*.
