@@ -58,6 +58,9 @@ class TD3(Agent, ABC):
         soft_target_tau = (
             0.005 if "soft_target_tau" not in params else params["soft_target_tau"]
         )
+        hidden_dims = (
+            (256, 256) if "hidden_dims" not in params else params["hidden_dims"]
+        )
         self.backend = None if "backend" not in params else params["backend"]
 
         class CustomMLP(linen.Module):
@@ -117,7 +120,7 @@ class TD3(Agent, ABC):
             param_size: int,
             obs_size: int,
             action_size: int,
-            hidden_layer_sizes: Tuple[int, ...] = (256, 256),
+            hidden_layer_sizes: Tuple[int, ...],
         ) -> Tuple[FeedForwardModel, FeedForwardModel]:
             """Creates a policy and value networks for TD3."""
             policy_module = CustomMLP(
@@ -174,14 +177,14 @@ class TD3(Agent, ABC):
         if "seed" in self.params:
             start_seed = self.params["seed"]
         else:
-            start_seed = 42
+            start_seed = 0
 
         self.key, local_key, key_models = jax.random.split(
             jax.random.PRNGKey(start_seed), 3
         )
 
         self.policy_model, self.value_model = make_td3_networks(
-            action_dim, observation_dim, action_dim
+            action_dim, observation_dim, action_dim, hidden_layer_sizes=hidden_dims
         )
 
         self.policy_optimizer = optax.adam(learning_rate=1.0 * policy_lr)

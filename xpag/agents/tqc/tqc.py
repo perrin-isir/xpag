@@ -68,7 +68,7 @@ def _qvalue(
 class QuantileCritic(nn.Module):
     hidden_dims: Sequence[int]
     activations: Callable[[jnp.ndarray], jnp.ndarray] = nn.relu
-    num_quantiles: int = 25
+    num_quantiles: int
 
     @nn.compact
     def __call__(self, observations: jnp.ndarray, actions: jnp.ndarray) -> jnp.ndarray:
@@ -82,8 +82,8 @@ class QuantileCritic(nn.Module):
 class MultiQuantileCritic(nn.Module):
     hidden_dims: Sequence[int]
     activations: Callable[[jnp.ndarray], jnp.ndarray] = nn.relu
-    num_qs: int = 5
-    num_quantiles: int = 25
+    num_qs: int
+    num_quantiles: int
 
     @nn.compact
     def __call__(self, states, actions):
@@ -248,22 +248,22 @@ class TQCLearner(SACLearner):
         seed: int,
         observations: jnp.ndarray,
         actions: jnp.ndarray,
-        actor_lr: float = 3e-4,
-        critic_lr: float = 3e-4,
-        temp_lr: float = 3e-4,
-        hidden_dims_actor: Sequence[int] = (256, 256),
-        discount: float = 0.99,
-        tau: float = 0.005,
-        target_update_period: int = 1,
-        target_entropy: Optional[float] = None,
-        backup_entropy: bool = True,
-        init_temperature: float = 1.0,
-        init_mean: Optional[jnp.ndarray] = None,
-        policy_final_fc_init_scale: float = 1.0,
-        hidden_dims_critic: Sequence[int] = (256, 256),
-        num_critics=5,
-        num_quantiles=25,
-        num_quantiles_to_drop=2,
+        actor_lr: float,
+        critic_lr: float,
+        temp_lr: float,
+        hidden_dims_actor: Sequence[int],
+        discount: float,
+        tau: float,
+        target_update_period: int,
+        target_entropy: Optional[float],
+        backup_entropy: bool,
+        init_temperature: float,
+        init_mean: Optional[jnp.ndarray],
+        policy_final_fc_init_scale: float,
+        hidden_dims_critic: Sequence[int],
+        num_critics,
+        num_quantiles,
+        num_quantiles_to_drop,
     ):
         super().__init__(
             seed,
@@ -349,20 +349,22 @@ class TQC(Agent, ABC):
             start_seed = 42
 
         self.tqclearner_params = {
-            "actor_lr": 0.0003,
+            "actor_lr": 3e-4,
+            "critic_lr": 3e-4,
+            "temp_lr": 3e-4,
             "backup_entropy": True,
-            "critic_lr": 0.0003,
             "discount": 0.99,
             "hidden_dims_actor": (256, 256),
+            "hidden_dims_critic": (256, 256),
             "init_temperature": 1.0,
+            "init_mean": None,
             "target_entropy": None,
             "target_update_period": 1,
-            "tau": 0.005,
-            "temp_lr": 0.0003,
-            "hidden_dims_critic": (256, 256),
+            "tau": 5e-3,
             "num_critics": 5,
             "num_quantiles": 25,
             "num_quantiles_to_drop": 2,
+            "policy_final_fc_init_scale": 1.0,
         }
 
         for key in self.tqclearner_params:

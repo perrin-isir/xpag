@@ -41,16 +41,18 @@ class SAC(Agent, ABC):
             start_seed = 42
 
         self.saclearner_params = {
-            "actor_lr": 0.0003,
+            "actor_lr": 3e-4,
+            "critic_lr": 3e-4,
+            "temp_lr": 3e-4,
             "backup_entropy": True,
-            "critic_lr": 0.0003,
             "discount": 0.99,
             "hidden_dims": (256, 256),
             "init_temperature": 1.0,
+            "init_mean": None,
             "target_entropy": None,
             "target_update_period": 1,
             "tau": 0.005,
-            "temp_lr": 0.0003,
+            "policy_final_fc_init_scale": 1.0,
         }
 
         for key in self.saclearner_params:
