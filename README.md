@@ -206,12 +206,14 @@ The figure below summarizes the RL loop and the interactions between the compone
 -----
 ## Acknowledgements
 
-Maintainer and main contributor:
-- Nicolas Perrin-Gilbert (CNRS, ISIR)
+* Maintainer and main contributor:
+  - Nicolas Perrin-Gilbert (CNRS, ISIR)
 
-Other people who contributed to *xpag*:
-- Olivier Serris (ISIR)
-- Alexandre Chenu (ISIR)
+  Other people who contributed to *xpag*:
+  - Olivier Serris (ISIR)
+  - Alexandre Chenu (ISIR)
+
+* The [SAC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/sac) is based on the implementation in [jaxrl](https://github.com/ikostrikov/jaxrl), and some elements of the [TQC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/tqc) come from the implementation in [rljax](https://github.com/ku2482/rljax).
 
 -----
 ## Citing the project
