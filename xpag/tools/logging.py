@@ -75,12 +75,12 @@ def eval_log(
         if is_success is not None:
             init_list = [
                 "steps",
-                "delta_training_time",
+                "delta_training_time_ms",
                 "episode_reward",
                 "success_at_the_end",
             ]
         else:
-            init_list = ["steps", "delta_training_time", "episode_reward"]
+            init_list = ["steps", "delta_training_time_ms", "episode_reward"]
         global_eval_logger.info(",".join(map(str, init_list)))
     message_string = (
         f"[{steps:12} steps] [training time (ms) +="
