@@ -349,9 +349,9 @@ class TQC(Agent, ABC):
             start_seed = 42
 
         self.tqclearner_params = {
-            "actor_lr": 3e-4,
-            "critic_lr": 3e-4,
-            "temp_lr": 3e-4,
+            "actor_lr": 3e-3,
+            "critic_lr": 3e-3,
+            "temp_lr": 3e-3,
             "backup_entropy": True,
             "discount": 0.99,
             "hidden_dims_actor": (256, 256),
@@ -360,7 +360,7 @@ class TQC(Agent, ABC):
             "init_mean": None,
             "target_entropy": None,
             "target_update_period": 1,
-            "tau": 5e-3,
+            "tau": 5e-2,
             "num_critics": 5,
             "num_quantiles": 25,
             "num_quantiles_to_drop": 2,

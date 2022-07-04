@@ -53,10 +53,10 @@ class TD3(Agent, ABC):
 
         discount = 0.99 if "discount" not in params else params["discount"]
         reward_scale = 1.0 if "reward_scale" not in params else params["reward_scale"]
-        policy_lr = 3e-4 if "policy_lr" not in params else params["policy_lr"]
-        critic_lr = 3e-4 if "critic_lr" not in params else params["critic_lr"]
+        policy_lr = 3e-3 if "policy_lr" not in params else params["policy_lr"]
+        critic_lr = 3e-3 if "critic_lr" not in params else params["critic_lr"]
         soft_target_tau = (
-            0.005 if "soft_target_tau" not in params else params["soft_target_tau"]
+            5e-2 if "soft_target_tau" not in params else params["soft_target_tau"]
         )
         hidden_dims = (
             (256, 256) if "hidden_dims" not in params else params["hidden_dims"]
