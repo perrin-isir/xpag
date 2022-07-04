@@ -194,9 +194,9 @@ is the functions that runs the training loop in *xpag*. Its three first argument
 
 </details>
 
-<details><summary><B>the buffer</B></summary></details>
-<details><summary><B>the sampler</B></summary></details>
-<details><summary><B>the setter</B></summary></details>
+<details><summary><B>the buffer</B></summary> TODO </details>
+<details><summary><B>the sampler</B></summary> TODO </details>
+<details><summary><B>the setter</B></summary> TODO </details>
 
 The figure below summarizes the RL loop and the interactions between the components:
 (TODO)
