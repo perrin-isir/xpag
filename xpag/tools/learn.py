@@ -6,7 +6,7 @@ from xpag.tools.logging import eval_log_reset
 from xpag.tools.timing import timing_reset
 from xpag.buffers import Buffer
 from xpag.agents.agent import Agent
-from xpag.goalsetters.goalsetter import GoalSetter
+from xpag.setters.setter import Setter
 from typing import Dict, Any, Union, List
 
 
@@ -16,7 +16,7 @@ def learn(
     env_info: Dict[str, Any],
     agent: Agent,
     buffer: Buffer,
-    goalsetter: GoalSetter,
+    setter: Setter,
     batch_size: int = 256,
     gd_steps_per_step: int = 1,
     start_training_after_x_steps: int = 0,
@@ -35,7 +35,7 @@ def learn(
     env_datatype = get_datatype(
         reset_obs if not env_info["is_goalenv"] else reset_obs["observation"]
     )
-    observation, _ = goalsetter.reset(env, reset_obs, reset_info)
+    observation, _ = setter.reset(env, reset_obs, reset_info)
 
     episodic_buffer = True if hasattr(buffer, "store_done") else False
 
@@ -51,7 +51,7 @@ def learn(
                 eval_env,
                 env_info,
                 agent,
-                goalsetter,
+                setter,
                 save_dir=save_dir,
                 plot_projection=plot_projection,
                 save_episode=save_episode,
@@ -60,9 +60,7 @@ def learn(
         if not i % max(save_every_x_steps // env_info["num_envs"], 1):
             if save_dir is not None:
                 agent.save(os.path.join(os.path.expanduser(save_dir), "agent"))
-                goalsetter.save(
-                    os.path.join(os.path.expanduser(save_dir), "goalsetter")
-                )
+                setter.save(os.path.join(os.path.expanduser(save_dir), "setter"))
 
         action_info = {}
         if i * env_info["num_envs"] < start_training_after_x_steps:
@@ -83,7 +81,7 @@ def learn(
 
         action = datatype_convert(action, env_datatype)
 
-        next_observation, reward, done, info = goalsetter.step(
+        next_observation, reward, done, info = setter.step(
             env, observation, action, action_info, *env.step(action)
         )
 
@@ -109,6 +107,6 @@ def learn(
             buffer.store_done(done)
 
         if done.max():
-            observation, _ = goalsetter.reset_done(
+            observation, _ = setter.reset_done(
                 env, *env.reset_done(done, return_info=True)
             )

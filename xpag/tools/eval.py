@@ -6,7 +6,7 @@ import os
 from typing import Union, Dict, Any
 import numpy as np
 from xpag.agents.agent import Agent
-from xpag.goalsetters.goalsetter import GoalSetter
+from xpag.setters.setter import Setter
 from xpag.tools.utils import DataType, datatype_convert, hstack
 from xpag.tools.timing import timing
 from xpag.tools.logging import eval_log
@@ -83,7 +83,7 @@ def single_rollout_eval(
     eval_env: Any,
     env_info: Dict[str, Any],
     agent: Agent,
-    goalsetter: GoalSetter,
+    setter: Setter,
     save_dir: Union[str, None] = None,
     plot_projection=None,
     save_episode: bool = False,
@@ -91,7 +91,7 @@ def single_rollout_eval(
 ):
     # Evaluation performed on a single run
     interval_time, _ = timing()
-    observation, _ = goalsetter.reset(
+    observation, _ = setter.reset(
         eval_env, *eval_env.reset(return_info=True), eval_mode=True
     )
     if save_episode and save_dir is not None:
@@ -112,7 +112,7 @@ def single_rollout_eval(
             action_info = action[1]
             action = action[0]
         action = datatype_convert(action, env_datatype)
-        next_observation, reward, done, info = goalsetter.step(
+        next_observation, reward, done, info = setter.step(
             eval_env,
             observation,
             action,

@@ -7,7 +7,7 @@ from typing import Tuple, Any
 import os
 
 
-class GoalSetter(ABC):
+class Setter(ABC):
     def __init__(self, name: str):
         self.name = name
 
@@ -49,9 +49,9 @@ class GoalSetter(ABC):
         pass
 
 
-class DefaultGoalSetter(GoalSetter, ABC):
+class DefaultSetter(Setter, ABC):
     def __init__(self):
-        super().__init__("DefaultGoalSetter")
+        super().__init__("DefaultSetter")
 
     def reset(self, env, observation, info=None, eval_mode=False):
         if info is None:
@@ -89,8 +89,8 @@ class DefaultGoalSetter(GoalSetter, ABC):
         pass
 
 
-class CompositeSetter(GoalSetter, ABC):
-    def __init__(self, setter1: GoalSetter, setter2: GoalSetter):
+class CompositeSetter(Setter, ABC):
+    def __init__(self, setter1: Setter, setter2: Setter):
         super().__init__("CompositeSetter")
         self.setter1 = setter1
         self.setter2 = setter2

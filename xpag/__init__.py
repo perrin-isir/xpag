@@ -4,6 +4,6 @@ from xpag import wrappers
 from xpag import buffers
 from xpag import samplers
 from xpag import agents
-from xpag import goalsetters
+from xpag import setters
 
 __version__ = "0.1.0"
