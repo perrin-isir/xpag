@@ -117,14 +117,13 @@ class TD3(Agent, ABC):
             return jax.random.uniform(key_, shape, dtype, -mval, mval)
 
         def make_td3_networks(
-            param_size: int,
             obs_size: int,
             action_size: int,
             hidden_layer_sizes: Tuple[int, ...],
         ) -> Tuple[FeedForwardModel, FeedForwardModel]:
             """Creates a policy and value networks for TD3."""
             policy_module = CustomMLP(
-                layer_sizes=hidden_layer_sizes + (param_size,),
+                layer_sizes=hidden_layer_sizes + (action_size,),
                 activation=linen.relu,
                 kernel_init_hidden_layer=kernel_init_hidden_layer,
                 kernel_init_last_layer=init_last_layer,
@@ -184,7 +183,7 @@ class TD3(Agent, ABC):
         )
 
         self.policy_model, self.value_model = make_td3_networks(
-            action_dim, observation_dim, action_dim, hidden_layer_sizes=hidden_dims
+            observation_dim, action_dim, hidden_layer_sizes=hidden_dims
         )
 
         self.policy_optimizer = optax.adam(learning_rate=1.0 * policy_lr)
