@@ -23,13 +23,28 @@ class Sampler(ABC):
         pass
 
 
-class DefaultEpisodicSampler(Sampler):
+class DefaultSampler(Sampler):
     def __init__(self):
         super().__init__()
 
-    @staticmethod
-    def sum(transitions) -> float:
-        return sum([transitions[key].sum() for key in transitions.keys()])
+    def sample(
+        self,
+        buffer: Dict[str, Union[np.ndarray]],
+        batch_size: int,
+    ) -> Dict[str, Union[np.ndarray]]:
+        buffer_size = next(iter(buffer.values())).shape[0]
+        idxs = np.random.choice(
+            buffer_size,
+            size=batch_size,
+            replace=True,
+        )
+        transitions = {key: buffer[key][idxs] for key in buffer.keys()}
+        return transitions
+
+
+class DefaultEpisodicSampler(Sampler):
+    def __init__(self):
+        super().__init__()
 
     def sample(
         self,

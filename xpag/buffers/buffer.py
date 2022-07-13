@@ -50,6 +50,109 @@ class EpisodicBuffer(Buffer):
         pass
 
 
+class DefaultBuffer(Buffer):
+    def __init__(
+        self,
+        buffer_size: int,
+        sampler: Sampler,
+    ):
+        super().__init__(buffer_size, sampler)
+        self.current_size = 0
+        self.buffers = {}
+        self.size = buffer_size
+        self.dict_sizes = None
+        self.num_envs = None
+        self.keys = None
+        self.zeros = None
+        self.where = None
+        self.first_insert_done = False
+
+    def init_buffer(self, step: Dict[str, Any]):
+        self.dict_sizes = {}
+        self.keys = list(step.keys())
+        assert "done" in self.keys
+        for key in self.keys:
+            if isinstance(step[key], dict):
+                for k in step[key]:
+                    assert len(step[key][k].shape) == 2
+                    self.dict_sizes[key + "." + k] = step[key][k].shape[1]
+            else:
+                assert len(step[key].shape) == 2
+                self.dict_sizes[key] = step[key].shape[1]
+        self.num_envs = step["done"].shape[0]
+        for key in self.dict_sizes:
+            self.buffers[key] = np.zeros([self.size, self.dict_sizes[key]])
+        self.zeros = lambda i: np.zeros(i).astype("int")
+        self.where = np.where
+        self.first_insert_done = True
+
+    def insert(self, step: Dict[str, Any]):
+        if not self.first_insert_done:
+            self.init_buffer(step)
+        idxs = self._get_storage_idx(inc=self.num_envs)
+        for key in self.keys:
+            if isinstance(step[key], dict):
+                for k in step[key]:
+                    self.buffers[key + "." + k][idxs, :] = datatype_convert(
+                        step[key][k], DataType.NUMPY
+                    ).reshape((self.num_envs, self.dict_sizes[key + "." + k]))
+            else:
+                self.buffers[key][idxs, :] = datatype_convert(
+                    step[key], DataType.NUMPY
+                ).reshape((self.num_envs, self.dict_sizes[key]))
+
+    def pre_sample(self):
+        temp_buffers = {}
+        for key in self.buffers.keys():
+            temp_buffers[key] = self.buffers[key][: self.current_size]
+        return temp_buffers
+
+    def sample(self, batch_size):
+        return self.sampler.sample(self.pre_sample(), batch_size)
+
+    def _get_storage_idx(self, inc=None):
+        inc = inc or 1
+        if self.current_size + inc <= self.size:
+            idx = np.arange(self.current_size, self.current_size + inc)
+        elif self.current_size < self.size:
+            overflow = inc - (self.size - self.current_size)
+            idx_a = np.arange(self.current_size, self.size)
+            idx_b = np.random.randint(0, self.current_size, overflow)
+            idx = np.concatenate([idx_a, idx_b])
+        else:
+            idx = np.random.randint(0, self.size, inc)
+        self.current_size = min(self.size, self.current_size + inc)
+        return idx
+
+    def save(self, directory: str):
+        os.makedirs(directory, exist_ok=True)
+        list_vars = [
+            ("current_size", self.current_size),
+            ("buffers", self.buffers),
+            ("size", self.size),
+            ("dict_sizes", self.dict_sizes),
+            ("num_envs", self.num_envs),
+            ("keys", self.keys),
+            ("first_insert_done", self.first_insert_done),
+        ]
+        for cpl in list_vars:
+            with open(os.path.join(directory, cpl[0] + ".joblib"), "wb") as f_:
+                joblib.dump(cpl[1], f_)
+
+    def load(self, directory: str):
+        self.current_size = joblib.load(os.path.join(directory, "current_size.joblib"))
+        self.buffers = joblib.load(os.path.join(directory, "buffers.joblib"))
+        self.size = joblib.load(os.path.join(directory, "size.joblib"))
+        self.dict_sizes = joblib.load(os.path.join(directory, "dict_sizes.joblib"))
+        self.num_envs = joblib.load(os.path.join(directory, "num_envs.joblib"))
+        self.keys = joblib.load(os.path.join(directory, "keys.joblib"))
+        self.first_insert_done = joblib.load(
+            os.path.join(directory, "first_insert_done.joblib")
+        )
+        self.zeros = lambda i: np.zeros(i).astype("int")
+        self.where = np.where
+
+
 class DefaultEpisodicBuffer(EpisodicBuffer):
     def __init__(
         self,
