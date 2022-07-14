@@ -43,7 +43,7 @@ Finally, to install the *xpag* library in the activated virtual environment:
 </details>
 
 
-<details><summary>JAX, Flax, Brax and MuJoCo</summary>
+<details><summary>JAX, Flax, Brax, etc.</summary>
 <p>
 
 The *xpag* agents are written in JAX and Flax,
@@ -66,7 +66,9 @@ installed.
 
   [https://github.com/google/flax#quick-install](https://github.com/google/flax#quick-install) and [https://github.com/google/brax#using-brax-locally](https://github.com/google/brax#using-brax-locally) 
 
-- *xpag* works without MuJoCo, but  
+- *xpag* works without the following libraries, but they are required for the [tutorials](https://github.com/perrin-isir/xpag-tutorials):
+  - MuJoCo (`pip install mujoco`): see [https://github.com/deepmind/mujoco](https://github.com/deepmind/mujoco)
+  - imageio (`pip install imageio`): see [https://github.com/imageio/imageio](https://github.com/imageio/imageio)
 </p>
 </details>
 
