@@ -55,6 +55,7 @@ def learn(
                 save_dir=save_dir,
                 plot_projection=plot_projection,
                 save_episode=save_episode,
+                env_datatype=env_datatype,
             )
 
         if not i % max(save_every_x_steps // env_info["num_envs"], 1):

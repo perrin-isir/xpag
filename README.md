@@ -43,18 +43,18 @@ Finally, to install the *xpag* library in the activated virtual environment:
 </details>
 
 
-<details><summary>JAX, Flax and Brax installation</summary>
+<details><summary>JAX, Flax, Brax and MuJoCo</summary>
 <p>
 
 The *xpag* agents are written in JAX and Flax,
 and some functionalities specific to Brax environments require it to be 
 installed.
 
-**The modules JAX, Flax and Brax are not automatically installed as dependencies of *xpag*.**
+**The modules JAX, Flax and Brax are required but are NOT automatically installed as dependencies of *xpag*.**
 
 - To install JAX, follow these guidelines:  
 
-    [https://github.com/google/jax#Installation](https://github.com/google/jax#Installation)  
+    [https://github.com/google/jax#installation](https://github.com/google/jax#installation)  
 
     *Remark:* to verify that the installation went well, check the backend used by JAX with the following command (in a python console and with `jax` imported and configured):
     ```
@@ -62,10 +62,11 @@ installed.
     ```
     It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
 
-- Once JAX is installed, `pip install flax` and `pip install brax` should install Flax and Brax. Otherwise, follow these guidelines:
+- Once JAX is installed, `pip install flax` and `pip install brax` should install recent versions of Flax and Brax. If there are issues, follow these guidelines:
 
   [https://github.com/google/flax#quick-install](https://github.com/google/flax#quick-install) and [https://github.com/google/brax#using-brax-locally](https://github.com/google/brax#using-brax-locally) 
 
+- *xpag* works without MuJoCo, but  
 </p>
 </details>
 
