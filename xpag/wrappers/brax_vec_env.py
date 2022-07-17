@@ -65,7 +65,7 @@ def brax_vec_env(env_name, num_envs, force_cpu_backend=False):
     return env, eval_env, env_info
 
 
-class ResetDoneBraxToGymWrapper(gym.Env):
+class ResetDoneBraxToGymWrapper(gym.vector.VectorEnv):
     """
     A wrapper that converts Brax Env to one that follows Gym VectorEnv API,
     with the additional reset_done() and reset_idxs() methods.
