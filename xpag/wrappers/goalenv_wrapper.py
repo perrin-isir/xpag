@@ -3,7 +3,7 @@ from gym.vector import VectorEnv
 from gym import spaces
 from xpag.tools.utils import get_datatype, datatype_convert, where
 import numpy as np
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 
 
 class GoalEnvWrapper(gym.Wrapper):
@@ -11,8 +11,8 @@ class GoalEnvWrapper(gym.Wrapper):
         self,
         env: VectorEnv,
         goal_space: spaces.Space,
-        compute_achieved_goal: Callable[[Any], Any],
-        compute_reward: Callable[[Any, Any, Any, Any, Any, Any], Any],
+        compute_achieved_goal: Callable[[Any, Optional[Any]], Any],
+        compute_reward: Callable[[Any, Any, Any, Any, Any, Any, Any], Any],
         compute_success: Callable[[Any, Any], Any],
         done_on_succes: bool = False,
     ):
@@ -82,13 +82,14 @@ class GoalEnvWrapper(gym.Wrapper):
         )
         goalenv_obs = {
             "observation": observation,
-            "achieved_goal": self.compute_achieved_goal(observation),
+            "achieved_goal": self.compute_achieved_goal(observation, reward),
             "desired_goal": self.last_desired_goal,
         }
         goalenv_reward = datatype_convert(
             self.compute_reward(
                 goalenv_obs["achieved_goal"],
                 goalenv_obs["desired_goal"],
+                action,
                 observation,
                 reward,
                 done,
@@ -107,3 +108,9 @@ class GoalEnvWrapper(gym.Wrapper):
             goalenv_success, datatype_convert(np.ones_like(done), self.datatype), done
         )
         return goalenv_obs, goalenv_reward, goalenv_done, info
+
+    def set_goal(self, goal):
+        assert self.datatype is not None, (
+            "reset() or reset_done() must be" "called before set_goal()"
+        )
+        self.last_desired_goal = datatype_convert(goal, self.datatype)

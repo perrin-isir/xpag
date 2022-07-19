@@ -55,7 +55,8 @@ class HER(Sampler):
             self.reward_func(
                 transitions["next_observation.achieved_goal"],
                 transitions["observation.desired_goal"],
-                {},
+                transitions["action"],
+                transitions["next_observation.observation"],
             ),
             1,
         )

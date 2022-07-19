@@ -139,20 +139,23 @@ reaching a terminal transition (but this must be done with caution).
 
 
 * *Goal-based environments:*  
-Goal-based environments (for GCRL) must follow a similar interface to the one defined in 
+Goal-based environments (for GCRL) must have a similar interface to the one defined in 
 the [Gym-Robotics](https://github.com/Farama-Foundation/gym-robotics) library
-(see [core.py](https://github.com/Farama-Foundation/Gym-Robotics/blob/main/gym_robotics/core.py)):
-their observation spaces are of type [gym.spaces.Dict](https://github.com/openai/gym/blob/master/gym/spaces/dict.py), with the following keys 
+(see `GoalEnv` in [core.py](https://github.com/Farama-Foundation/Gym-Robotics/blob/main/gym_robotics/core.py)).
+Their observation spaces are of type [gym.spaces.Dict](https://github.com/openai/gym/blob/master/gym/spaces/dict.py), with the following keys 
 in the `observation` dictionaries: "observation", "achieved_goal", and "desired_goal".
-They must also have in attribute a `compute_reward()` function that computes rewards. In the
+Goal-based environments must also have in attribute a `compute_reward()` function that computes rewards.
+The inputs to the `compute_reward()` functions considered in *xpag* differ slightly from
+the original `GoalEnv` class. In the
 [GoalEnvWrapper](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/goalenv_wrapper.py) class,
 which can be used to turn standard environments into goal-based environments, the
-arguments of `compute_reward()` are `achieved_goal`, `desired_goal`, `observation`,
-`reward` (the reward of the base environment), `done` and `info` (outputs of the
-`step()` function). In the [HER](https://github.com/perrin-isir/xpag/blob/main/xpag/samplers/HER.py) 
-algorithm, it is assumed that `compute_reward()` depends only on  `achieved_goal`
-and `desired_goal`.  
-In goal-based environments, multiple observations are concatenated as in the gym function `concatenate()`
+arguments of `compute_reward()` are `achieved_goal` (the goal achieved *after* `step()`),
+`desired_goal` (the desired goal *before* `step()`), `action`, `observation` (the observation after `step()`),
+`reward` (the reward of the base environment), `done` and `info` (the outputs of the
+`step()` function). In the version of [HER](https://github.com/perrin-isir/xpag/blob/main/xpag/samplers/HER.py)
+  (cf. [https://arxiv.org/pdf/1707.01495.pdf](https://arxiv.org/pdf/1707.01495.pdf)) in *xpag*,
+it is assumed that `compute_reward()` depends only on  `achieved_goal`, `desired_goal`, `action` and `observation`.  
+In goal-based environments, the multiple observations from parallel rollouts are concatenated as in the gym function `concatenate()`
 (cf. [https://github.com/openai/gym/blob/master/gym/vector/utils/numpy_utils.py](https://github.com/openai/gym/blob/master/gym/vector/utils/numpy_utils.py)), 
 which means that the batched observations are always single dictionaries in which the 
 entries "observation", "achieved_goal" and "desired_goal" are arrays of observations,
