@@ -3,7 +3,7 @@ from gym.vector import VectorEnv
 from gym import spaces
 from xpag.tools.utils import get_datatype, datatype_convert, where
 import numpy as np
-from typing import Callable, Any, Optional
+from typing import Callable, Any
 
 
 class GoalEnvWrapper(gym.Wrapper):
@@ -11,7 +11,7 @@ class GoalEnvWrapper(gym.Wrapper):
         self,
         env: VectorEnv,
         goal_space: spaces.Space,
-        compute_achieved_goal: Callable[[Any, Optional[Any]], Any],
+        compute_achieved_goal: Callable[[Any], Any],
         compute_reward: Callable[[Any, Any, Any, Any, Any, Any, Any], Any],
         compute_success: Callable[[Any, Any], Any],
         done_on_succes: bool = False,
@@ -82,7 +82,7 @@ class GoalEnvWrapper(gym.Wrapper):
         )
         goalenv_obs = {
             "observation": observation,
-            "achieved_goal": self.compute_achieved_goal(observation, reward),
+            "achieved_goal": self.compute_achieved_goal(observation),
             "desired_goal": self.last_desired_goal,
         }
         goalenv_reward = datatype_convert(

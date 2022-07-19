@@ -125,7 +125,9 @@ Third, in *xpag*, `info` is a single dictionary, not a tuple of dictionaries
 
 * `reset_done()`:  
 The most significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which takes the `done` array in input and performs a reset for
-the i-th rollout if and only if `done[i]` is evaluated to True. Besides `done`, the arguments of `reset_done()` are the same as the ones of `reset()`: `seed`, `return_info` and `options`, and its outputs are also the same: either `observation`, or `observation`, `info` if `return_info` is True.
+the i-th rollout if and only if `done[i]` is evaluated to True. Besides `done`, the arguments of `reset_done()` are the same as the ones of `reset()`: `seed`, `return_info` and `options`, and its outputs are also the same: either just `observation`, or `observation`, `info` if `return_info` is True.
+For rollouts that are not reset, the returned observation is the same as the observation returned by the last
+`step()`.  
 The [gym_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/gym_vec_env.py) and 
 [brax_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/brax_vec_env.py) functions (see [tutorials](https://github.com/perrin-isir/xpag-tutorials))
 call wrappers that automatically add the `reset_done()` function to Gym and Brax 
