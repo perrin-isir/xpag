@@ -1,57 +1,121 @@
 import gym
 from gym.vector import VectorEnv
 from gym import spaces
+from xpag.tools.utils import get_datatype, datatype_convert, where
 import numpy as np
+from typing import Callable, Any
 
 
 class GoalEnvWrapper(gym.Wrapper):
-    def __init__(self, env: VectorEnv):
+    def __init__(
+        self,
+        env: VectorEnv,
+        goal_space: spaces.Space,
+        compute_achieved_goal: Callable[[Any], Any],
+        compute_reward: Callable[[Any, Any, Any, Any, Any, Any], Any],
+        compute_success: Callable[[Any, Any], Any],
+        done_on_succes: bool = False,
+    ):
         super().__init__(env)
-        self._achieved_goal_dim = 2
-        self._desired_goal_dim = 2
-        high_achieved_goal = np.ones(self._achieved_goal_dim)
-        low_achieved_goal = -high_achieved_goal
-        high_desired_goal = np.ones(self._desired_goal_dim)
-        low_desired_goal = -high_desired_goal
+        self.datatype = None
+        self.compute_achieved_goal = compute_achieved_goal
+        self.compute_reward = compute_reward
+        self.compute_success = compute_success
+        self.done_on_success = done_on_succes
 
         self.single_observation_space = spaces.Dict(
             dict(
                 observation=self.env.single_observation_space,
-                achieved_goal=spaces.Box(
-                    low_achieved_goal, high_achieved_goal, dtype=np.float64
-                ),
-                desired_goal=spaces.Box(
-                    low_desired_goal, high_desired_goal, dtype=np.float64
-                ),
+                achieved_goal=goal_space,
+                desired_goal=goal_space,
             )
         )
         self.observation_space = gym.vector.utils.batch_space(
             self.single_observation_space, self.num_envs
         )
 
-    # def step(self, action: np.ndarray):
-    #     _, truncation = self.common_step(action)
-    #
-    #     reward = self.compute_reward(achieved_g(self.state), self.goal, {}).reshape(
-    #         (self.num_envs, 1)
-    #     )
-    #     is_success = self._is_success(achieved_g(self.state), self.goal).reshape(
-    #         (self.num_envs, 1)
-    #     )
-    #     truncation = truncation * (1 - is_success)
-    #     info = {
-    #         "is_success": is_success,
-    #         "truncation": truncation,
-    #     }
-    #     self.done = np.maximum(truncation, is_success)
-    #
-    #     return (
-    #         {
-    #             "observation": self.state,
-    #             "achieved_goal": achieved_g(self.state),
-    #             "desired_goal": self.goal,
-    #         },
-    #         reward,
-    #         self.done,
-    #         info,
-    #     )
+    def reset(self, **kwargs):
+        if "return_info" in kwargs and kwargs["return_info"]:
+            obs, info = self.env.reset(**kwargs)
+            if self.datatype is None:
+                self.datatype = get_datatype(obs)
+            goalenv_obs = {
+                "observation": obs,
+                "achieved_goal": self.compute_achieved_goal(obs),
+                "desired_goal": datatype_convert(
+                    self.observation_space["desired_goal"].sample(), self.datatype
+                ),
+            }
+            return goalenv_obs, info
+        else:
+            obs = self.env.reset(**kwargs)
+            if self.datatype is None:
+                self.datatype = get_datatype(obs)
+            goalenv_obs = {
+                "observation": obs,
+                "achieved_goal": self.compute_achieved_goal(obs),
+                "desired_goal": datatype_convert(
+                    self.observation_space["desired_goal"].sample(), self.datatype
+                ),
+            }
+            return goalenv_obs
+
+    def reset_done(self, *args, **kwargs):
+        if "return_info" in kwargs and kwargs["return_info"]:
+            obs, info = self.env.reset_done(*args, **kwargs)
+            if self.datatype is None:
+                self.datatype = get_datatype(obs)
+            goalenv_obs = {
+                "observation": obs,
+                "achieved_goal": self.compute_achieved_goal(obs),
+                "desired_goal": datatype_convert(
+                    self.observation_space["desired_goal"].sample(), self.datatype
+                ),
+            }
+            return goalenv_obs, info
+        else:
+            obs = self.env.reset_done(*args, **kwargs)
+            if self.datatype is None:
+                self.datatype = get_datatype(obs)
+            goalenv_obs = {
+                "observation": obs,
+                "achieved_goal": self.compute_achieved_goal(obs),
+                "desired_goal": datatype_convert(
+                    self.observation_space["desired_goal"].sample(), self.datatype
+                ),
+            }
+            return goalenv_obs
+
+    def step(self, action):
+        observation, reward, done, info = self.env.step(action)
+        if self.datatype is None:
+            self.datatype = get_datatype(observation)
+        goalenv_obs = {
+            "observation": observation,
+            "achieved_goal": self.compute_achieved_goal(observation),
+            "desired_goal": datatype_convert(
+                self.observation_space["desired_goal"].sample(), self.datatype
+            ),
+        }
+        goalenv_reward = datatype_convert(
+            self.compute_reward(
+                goalenv_obs["achieved_goal"],
+                goalenv_obs["desired_goal"],
+                observation,
+                reward,
+                done,
+                info,
+            ),
+            self.datatype,
+        )
+        goalenv_success = datatype_convert(
+            self.compute_success(
+                goalenv_obs["achieved_goal"], goalenv_obs["desired_goal"]
+            ),
+            self.datatype,
+        )
+        info["is_success"] = goalenv_success
+        goalenv_done = where(
+            goalenv_success, datatype_convert(np.ones_like(done), self.datatype), done
+        )
+        return goalenv_obs, goalenv_reward, goalenv_done, info

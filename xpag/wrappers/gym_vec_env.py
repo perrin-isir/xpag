@@ -34,11 +34,9 @@ def check_goalenv(env) -> bool:
 
 def gym_vec_env_(env_name, num_envs):
     if "num_envs" in inspect.signature(
-        gym.envs.registration.load(
-            gym.envs.registry.spec(env_name).entry_point
-        ).__init__
+        gym.envs.registration.load(gym.spec(env_name).entry_point).__init__
     ).parameters and hasattr(
-        gym.envs.registration.load(gym.envs.registry.spec(env_name).entry_point),
+        gym.envs.registration.load(gym.spec(env_name).entry_point),
         "reset_done",
     ):
         # no need to create a VecEnv and wrap it if the env accepts 'num_envs' as an
