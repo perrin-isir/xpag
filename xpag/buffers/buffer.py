@@ -178,15 +178,19 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
         self.dict_sizes = {}
         self.keys = list(step.keys())
         assert "done" in self.keys
+        self.num_envs = step["done"].shape[0]
         for key in self.keys:
             if isinstance(step[key], dict):
                 for k in step[key]:
                     assert len(step[key][k].shape) == 2
                     self.dict_sizes[key + "." + k] = step[key][k].shape[1]
             else:
-                assert len(step[key].shape) == 2
+                assert len(step[key].shape) == 2, (
+                    f"step[{key}] must be 2-dimensional (e.g. shape "
+                    f"({self.num_envs}, 1) instead of ({self.num_envs},) for scalar "
+                    f"entries)"
+                )
                 self.dict_sizes[key] = step[key].shape[1]
-        self.num_envs = step["done"].shape[0]
         self.dict_sizes["episode_length"] = 1
         for key in self.dict_sizes:
             self.buffers[key] = np.zeros([self.size, self.T, self.dict_sizes[key]])

@@ -129,7 +129,7 @@ the i-th rollout if and only if `done[i]` is evaluated to True. Besides `done`, 
 The [gym_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/gym_vec_env.py) and 
 [brax_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/brax_vec_env.py) functions (see [tutorials](https://github.com/perrin-isir/xpag-tutorials))
 call wrappers that automatically add the `reset_done()` function to Gym and Brax 
-environments, and make the wrapped environments fit the *xpag* API. `reset()` must be called once for the initial reset, and after that only `reset_done()` should be used. Auto-resets (automatic resets after terminal transitions) are not allowed in *xpag*. 
+environments, and make the wrapped environments fit the *xpag* API. `reset()` must be called once for the initial reset, and afterwards only `reset_done()` should be used. Auto-resets (automatic resets after terminal transitions) are not allowed in *xpag*. 
 The main reason to prefer `reset_done()` to auto-resets
 is that with auto-resets, terminal transitions must be special and contain additional
 information. With `reset_done()`, this is no longer necessary. Furthermore,
@@ -143,9 +143,16 @@ Goal-based environments (for GCRL) must follow a similar interface to the one de
 the [Gym-Robotics](https://github.com/Farama-Foundation/gym-robotics) library
 (see [core.py](https://github.com/Farama-Foundation/Gym-Robotics/blob/main/gym_robotics/core.py)):
 their observation spaces are of type [gym.spaces.Dict](https://github.com/openai/gym/blob/master/gym/spaces/dict.py), with the following keys 
-in the `observation` dictionaries: "observation", "achieved_goal", "desired_goal".
-They must also have a `compute_reward()` function that computes rewards from transitions.
-Multiple rollouts are concatenated in the same way as the gym function `concatenate()`
+in the `observation` dictionaries: "observation", "achieved_goal", and "desired_goal".
+They must also have in attribute a `compute_reward()` function that computes rewards. In the
+[GoalEnvWrapper](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/goalenv_wrapper.py) class,
+which can be used to turn standard environments into goal-based environments, the
+arguments of `compute_reward()` are `achieved_goal`, `desired_goal`, `observation`,
+`reward` (the reward of the base environment), `done` and `info` (outputs of the
+`step()` function). In the [HER](https://github.com/perrin-isir/xpag/blob/main/xpag/samplers/HER.py) 
+algorithm, it is assumed that `compute_reward()` depends only on  `achieved_goal`
+and `desired_goal`.  
+In goal-based environments, multiple observations are concatenated as in the gym function `concatenate()`
 (cf. [https://github.com/openai/gym/blob/master/gym/vector/utils/numpy_utils.py](https://github.com/openai/gym/blob/master/gym/vector/utils/numpy_utils.py)), 
 which means that the batched observations are always single dictionaries in which the 
 entries "observation", "achieved_goal" and "desired_goal" are arrays of observations,

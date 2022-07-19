@@ -18,6 +18,7 @@ class GoalEnvWrapper(gym.Wrapper):
     ):
         super().__init__(env)
         self.datatype = None
+        self.last_desired_goal = None
         self.compute_achieved_goal = compute_achieved_goal
         self.compute_reward = compute_reward
         self.compute_success = compute_success
@@ -37,65 +38,52 @@ class GoalEnvWrapper(gym.Wrapper):
     def reset(self, **kwargs):
         if "return_info" in kwargs and kwargs["return_info"]:
             obs, info = self.env.reset(**kwargs)
-            if self.datatype is None:
-                self.datatype = get_datatype(obs)
-            goalenv_obs = {
-                "observation": obs,
-                "achieved_goal": self.compute_achieved_goal(obs),
-                "desired_goal": datatype_convert(
-                    self.observation_space["desired_goal"].sample(), self.datatype
-                ),
-            }
-            return goalenv_obs, info
         else:
             obs = self.env.reset(**kwargs)
-            if self.datatype is None:
-                self.datatype = get_datatype(obs)
-            goalenv_obs = {
-                "observation": obs,
-                "achieved_goal": self.compute_achieved_goal(obs),
-                "desired_goal": datatype_convert(
-                    self.observation_space["desired_goal"].sample(), self.datatype
-                ),
-            }
+        if self.datatype is None:
+            self.datatype = get_datatype(obs)
+        self.last_desired_goal = datatype_convert(
+            self.observation_space["desired_goal"].sample(), self.datatype
+        )
+        goalenv_obs = {
+            "observation": obs,
+            "achieved_goal": self.compute_achieved_goal(obs),
+            "desired_goal": self.last_desired_goal,
+        }
+        if "return_info" in kwargs and kwargs["return_info"]:
+            return goalenv_obs, info
+        else:
             return goalenv_obs
 
     def reset_done(self, *args, **kwargs):
         if "return_info" in kwargs and kwargs["return_info"]:
             obs, info = self.env.reset_done(*args, **kwargs)
-            if self.datatype is None:
-                self.datatype = get_datatype(obs)
-            goalenv_obs = {
-                "observation": obs,
-                "achieved_goal": self.compute_achieved_goal(obs),
-                "desired_goal": datatype_convert(
-                    self.observation_space["desired_goal"].sample(), self.datatype
-                ),
-            }
-            return goalenv_obs, info
         else:
             obs = self.env.reset_done(*args, **kwargs)
-            if self.datatype is None:
-                self.datatype = get_datatype(obs)
-            goalenv_obs = {
-                "observation": obs,
-                "achieved_goal": self.compute_achieved_goal(obs),
-                "desired_goal": datatype_convert(
-                    self.observation_space["desired_goal"].sample(), self.datatype
-                ),
-            }
+        if self.datatype is None:
+            self.datatype = get_datatype(obs)
+        self.last_desired_goal = datatype_convert(
+            self.observation_space["desired_goal"].sample(), self.datatype
+        )
+        goalenv_obs = {
+            "observation": obs,
+            "achieved_goal": self.compute_achieved_goal(obs),
+            "desired_goal": self.last_desired_goal,
+        }
+        if "return_info" in kwargs and kwargs["return_info"]:
+            return goalenv_obs, info
+        else:
             return goalenv_obs
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
-        if self.datatype is None:
-            self.datatype = get_datatype(observation)
+        assert self.last_desired_goal is not None, (
+            "reset() or reset_done() must be" "called before step()"
+        )
         goalenv_obs = {
             "observation": observation,
             "achieved_goal": self.compute_achieved_goal(observation),
-            "desired_goal": datatype_convert(
-                self.observation_space["desired_goal"].sample(), self.datatype
-            ),
+            "desired_goal": self.last_desired_goal,
         }
         goalenv_reward = datatype_convert(
             self.compute_reward(
