@@ -4,6 +4,7 @@
 
 from typing import ClassVar, Optional
 from xpag.wrappers.reset_done import ResetDoneBraxWrapper
+from xpag.wrappers.gym_vec_env import check_goalenv
 from brax import jumpy as jp
 import jax
 import gym
@@ -32,26 +33,33 @@ _envs_episode_length = {
 }
 
 
-def brax_vec_env_(env_name, num_envs, force_cpu_backend=False):
+def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=False):
+    if wrap_function is None:
+
+        def wrap_function(x):
+            return x
+
     assert env_name in _envs_episode_length, f"{env_name}: unknown environment."
-    env = ResetDoneBraxToGymWrapper(
-        ResetDoneBraxWrapper(
-            envs.create(
-                env_name=env_name,
-                episode_length=_envs_episode_length[env_name],
-                batch_size=num_envs,
-                auto_reset=False,
-            )
-        ),
-        backend="cpu" if force_cpu_backend else None,
+    env = wrap_function(
+        ResetDoneBraxToGymWrapper(
+            ResetDoneBraxWrapper(
+                envs.create(
+                    env_name=env_name,
+                    episode_length=_envs_episode_length[env_name],
+                    batch_size=num_envs,
+                    auto_reset=False,
+                )
+            ),
+            backend="cpu" if force_cpu_backend else None,
+        )
     )
-    is_goalenv = False  # No Brax GoalEnv support so far
+    is_goalenv = check_goalenv(env)
     env_info = {
         "env_type": "Brax",
         "name": env_name,
         "is_goalenv": is_goalenv,
         "num_envs": num_envs,
-        "max_episode_steps": _envs_episode_length[env_name],
+        "max_episode_steps": env.unwrapped._env.env.episode_length,
         "action_space": env.action_space,
         "single_action_space": env.single_action_space,
     }
@@ -59,9 +67,9 @@ def brax_vec_env_(env_name, num_envs, force_cpu_backend=False):
     return env, env_info
 
 
-def brax_vec_env(env_name, num_envs, force_cpu_backend=False):
-    env, env_info = brax_vec_env_(env_name, num_envs, force_cpu_backend)
-    eval_env, _ = brax_vec_env_(env_name, 1, force_cpu_backend)
+def brax_vec_env(env_name, num_envs, wrap_function=None, force_cpu_backend=False):
+    env, env_info = brax_vec_env_(env_name, num_envs, wrap_function, force_cpu_backend)
+    eval_env, _ = brax_vec_env_(env_name, 1, wrap_function, force_cpu_backend)
     return env, eval_env, env_info
 
 

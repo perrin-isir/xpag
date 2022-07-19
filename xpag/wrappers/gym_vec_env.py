@@ -32,7 +32,12 @@ def check_goalenv(env) -> bool:
     return True
 
 
-def gym_vec_env_(env_name, num_envs):
+def gym_vec_env_(env_name, num_envs, wrap_function=None):
+    if wrap_function is None:
+
+        def wrap_function(x):
+            return x
+
     if "num_envs" in inspect.signature(
         gym.envs.registration.load(gym.spec(env_name).entry_point).__init__
     ).parameters and hasattr(
@@ -41,7 +46,9 @@ def gym_vec_env_(env_name, num_envs):
     ):
         # no need to create a VecEnv and wrap it if the env accepts 'num_envs' as an
         # argument at __init__ and has a reset_done() method.
-        env = gym.make(env_name, num_envs=num_envs).unwrapped  # removing gym wrappers
+        env = wrap_function(
+            gym.make(env_name, num_envs=num_envs).unwrapped  # removing gym wrappers
+        )
 
         # We force the environment to have a time limit, but
         # env.spec.max_episode_steps cannot exist as it would automatically trigger
@@ -61,7 +68,7 @@ def gym_vec_env_(env_name, num_envs):
         max_episode_steps = env.max_episode_steps
         env_type = "Gym"
     else:
-        dummy_env = gym.make(env_name)
+        dummy_env = wrap_function(gym.make(env_name))
         # We force the env to have either a standard gym time limit (with the max number
         # of steps defined in .spec.max_episode_steps), or the max number of steps
         # defined in .max_episode_steps (and in this case we trust the environment
@@ -76,18 +83,19 @@ def gym_vec_env_(env_name, num_envs):
             "Only allowing gym envs with time limit (defined in "
             ".spec.max_episode_steps or .max_episode_steps)."
         )
-        env = ResetDoneVecWrapper(
-            AsyncVectorEnv(
-                [
-                    (lambda: gym.make(env_name))
-                    if hasattr(dummy_env, "reset_done")
-                    else (lambda: ResetDoneWrapper(gym.make(env_name)))
-                ]
-                * num_envs,
-                worker=_worker_shared_memory_no_auto_reset,
+        env = wrap_function(
+            ResetDoneVecWrapper(
+                AsyncVectorEnv(
+                    [
+                        (lambda: gym.make(env_name))
+                        if hasattr(dummy_env, "reset_done")
+                        else (lambda: ResetDoneWrapper(gym.make(env_name)))
+                    ]
+                    * num_envs,
+                    worker=_worker_shared_memory_no_auto_reset,
+                )
             )
         )
-        env._spec = dummy_env.spec
         if (
             hasattr(dummy_env.spec, "max_episode_steps")
             and dummy_env.spec.max_episode_steps is not None
@@ -122,9 +130,9 @@ def gym_vec_env_(env_name, num_envs):
     return env, env_info
 
 
-def gym_vec_env(env_name, num_envs):
-    env, env_info = gym_vec_env_(env_name, num_envs)
-    eval_env, _ = gym_vec_env_(env_name, 1)
+def gym_vec_env(env_name, num_envs, wrap_function=None):
+    env, env_info = gym_vec_env_(env_name, num_envs, wrap_function)
+    eval_env, _ = gym_vec_env_(env_name, 1, wrap_function)
     return env, eval_env, env_info
 
 
