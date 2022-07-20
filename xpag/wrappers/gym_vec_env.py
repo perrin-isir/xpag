@@ -68,7 +68,7 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
         max_episode_steps = env.max_episode_steps
         env_type = "Gym"
     else:
-        dummy_env = wrap_function(gym.make(env_name))
+        dummy_env = gym.make(env_name)
         # We force the env to have either a standard gym time limit (with the max number
         # of steps defined in .spec.max_episode_steps), or the max number of steps
         # defined in .max_episode_steps (and in this case we trust the environment
@@ -82,19 +82,6 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
         ), (
             "Only allowing gym envs with time limit (defined in "
             ".spec.max_episode_steps or .max_episode_steps)."
-        )
-        env = wrap_function(
-            ResetDoneVecWrapper(
-                AsyncVectorEnv(
-                    [
-                        (lambda: gym.make(env_name))
-                        if hasattr(dummy_env, "reset_done")
-                        else (lambda: ResetDoneWrapper(gym.make(env_name)))
-                    ]
-                    * num_envs,
-                    worker=_worker_shared_memory_no_auto_reset,
-                )
-            )
         )
         if (
             hasattr(dummy_env.spec, "max_episode_steps")
@@ -116,13 +103,28 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
         )
         # The 'init_qpos' and 'state_vector' attributes are the one required to
         # save mujoco episodes (cf. class SaveEpisode in xpag/tools/eval.py).
+        env = wrap_function(
+            ResetDoneVecWrapper(
+                AsyncVectorEnv(
+                    [
+                        (lambda: gym.make(env_name))
+                        if hasattr(dummy_env, "reset_done")
+                        else (lambda: ResetDoneWrapper(gym.make(env_name)))
+                    ]
+                    * num_envs,
+                    worker=_worker_shared_memory_no_auto_reset,
+                ),
+                max_episode_steps,
+            )
+        )
+
     is_goalenv = check_goalenv(env)
     env_info = {
         "env_type": env_type,
         "name": env_name,
         "is_goalenv": is_goalenv,
         "num_envs": num_envs,
-        "max_episode_steps": max_episode_steps,
+        "max_episode_steps": env.max_episode_steps,
         "action_space": env.action_space,
         "single_action_space": env.single_action_space,
     }
@@ -137,8 +139,9 @@ def gym_vec_env(env_name, num_envs, wrap_function=None):
 
 
 class ResetDoneVecWrapper(gym.Wrapper):
-    def __init__(self, env: VectorEnv):
+    def __init__(self, env: VectorEnv, max_episode_steps: int):
         super().__init__(env)
+        self.max_episode_steps = max_episode_steps
 
     def reset(self, **kwargs):
         if "return_info" in kwargs and kwargs["return_info"]:

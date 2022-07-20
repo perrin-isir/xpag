@@ -1,7 +1,7 @@
 import gym
 from gym.vector import VectorEnv
 from gym import spaces
-from xpag.tools.utils import get_datatype, datatype_convert, where
+from xpag.tools.utils import get_datatype, datatype_convert, where, hstack
 import numpy as np
 from typing import Callable, Any
 
@@ -77,9 +77,9 @@ class GoalEnvWrapper(gym.Wrapper):
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
-        assert self.last_desired_goal is not None, (
-            "reset() or reset_done() must be" "called before step()"
-        )
+        assert (
+            self.last_desired_goal is not None
+        ), "reset() or reset_done() must be called before step()"
         goalenv_obs = {
             "observation": observation,
             "achieved_goal": self.compute_achieved_goal(observation),
@@ -110,7 +110,78 @@ class GoalEnvWrapper(gym.Wrapper):
         return goalenv_obs, goalenv_reward, goalenv_done, info
 
     def set_goal(self, goal):
-        assert self.datatype is not None, (
-            "reset() or reset_done() must be" "called before set_goal()"
-        )
+        assert (
+            self.datatype is not None
+        ), "reset() or reset_done() must be called before set_goal()"
         self.last_desired_goal = datatype_convert(goal, self.datatype)
+
+
+class CumulRewardWrapper(gym.Wrapper):
+    """An environment wrapper that adds the cumulative reward to observations.
+    It assumes that the environment is not a goal-based environment, and that
+    observations are 1D arrays (with .single_observation_space of type gym.spaces.Box).
+    """
+
+    def __init__(
+        self,
+        env: VectorEnv,
+        normalization_factor: float = 1.0,
+    ):
+        super().__init__(env)
+        self.datatype = None
+        self.cumulative_reward = None
+        self.normalization_factor = normalization_factor
+        self.single_observation_space = spaces.Box(
+            np.hstack((env.single_observation_space.low, -np.inf)),
+            np.hstack((env.single_observation_space.high, np.inf)),
+        )
+        self.observation_space = gym.vector.utils.batch_space(
+            self.single_observation_space, self.num_envs
+        )
+
+    def reset(self, **kwargs):
+        if "return_info" in kwargs and kwargs["return_info"]:
+            obs, info = self.env.reset(**kwargs)
+            if self.datatype is None:
+                self.datatype = get_datatype(obs)
+            self.cumulative_reward = datatype_convert(
+                np.zeros((self.num_envs, 1)), self.datatype
+            )
+            obs = hstack(obs, self.cumulative_reward)
+            return obs, info
+        else:
+            obs = self.env.reset(**kwargs)
+            if self.datatype is None:
+                self.datatype = get_datatype(obs)
+            self.cumulative_reward = datatype_convert(
+                np.zeros((self.num_envs, 1)), self.datatype
+            )
+            obs = hstack(obs, self.cumulative_reward)
+            return obs
+
+    def reset_done(self, done, **kwargs):
+        assert (
+            self.cumulative_reward is not None
+        ), "reset() must be called before reset_done()"
+        self.cumulative_reward = where(
+            done,
+            datatype_convert(np.zeros_like(self.cumulative_reward), self.datatype),
+            self.cumulative_reward,
+        )
+        if "return_info" in kwargs and kwargs["return_info"]:
+            obs, info = self.env.reset_done(done, **kwargs)
+            obs = hstack(obs, self.cumulative_reward)
+            return obs, info
+        else:
+            obs = self.env.reset_done(done, **kwargs)
+            obs = hstack(obs, self.cumulative_reward)
+            return obs
+
+    def step(self, action):
+        observation, reward, done, info = self.env.step(action)
+        assert (
+            self.cumulative_reward is not None
+        ), "reset() must be called before step()"
+        self.cumulative_reward += reward * self.normalization_factor
+        observation = hstack(observation, self.cumulative_reward)
+        return observation, reward, done, info

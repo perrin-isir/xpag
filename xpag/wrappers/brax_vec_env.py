@@ -40,16 +40,16 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
             return x
 
     assert env_name in _envs_episode_length, f"{env_name}: unknown environment."
+    base_env = envs.create(
+        env_name=env_name,
+        episode_length=_envs_episode_length[env_name],
+        batch_size=num_envs,
+        auto_reset=False,
+    )
     env = wrap_function(
         ResetDoneBraxToGymWrapper(
-            ResetDoneBraxWrapper(
-                envs.create(
-                    env_name=env_name,
-                    episode_length=_envs_episode_length[env_name],
-                    batch_size=num_envs,
-                    auto_reset=False,
-                )
-            ),
+            ResetDoneBraxWrapper(base_env),
+            base_env.env.episode_length,
             backend="cpu" if force_cpu_backend else None,
         )
     )
@@ -59,7 +59,7 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
         "name": env_name,
         "is_goalenv": is_goalenv,
         "num_envs": num_envs,
-        "max_episode_steps": env.unwrapped._env.env.episode_length,
+        "max_episode_steps": env.max_episode_steps,
         "action_space": env.action_space,
         "single_action_space": env.single_action_space,
     }
@@ -83,7 +83,13 @@ class ResetDoneBraxToGymWrapper(gym.vector.VectorEnv):
     # `_reset` as signs of a deprecated gym Env API.
     _gym_disable_underscore_compat: ClassVar[bool] = True
 
-    def __init__(self, env: ResetDoneBraxWrapper, backend: Optional[str] = None):
+    def __init__(
+        self,
+        env: ResetDoneBraxWrapper,
+        max_episode_steps: int,
+        backend: Optional[str] = None,
+    ):
+        self.max_episode_steps = max_episode_steps
         self._env = env
         self.metadata = {
             "render.modes": ["human", "rgb_array"],
