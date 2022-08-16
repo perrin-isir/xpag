@@ -2,7 +2,6 @@
 #
 # Licensed under the BSD 3-Clause License.
 
-from abc import ABC
 import os
 from xpag.agents.agent import Agent
 from xpag.agents.sac.sac_from_jaxrl import Batch, SACLearner
@@ -26,7 +25,7 @@ def _qvalue(
     )
 
 
-class SAC(Agent, ABC):
+class SAC(Agent):
     def __init__(self, observation_dim, action_dim, params=None):
         """
         Interface to the SAC agent from JAXRL (https://github.com/ikostrikov/jaxrl)

@@ -2,7 +2,6 @@
 #
 # Licensed under the BSD 3-Clause License.
 
-from abc import ABC
 from typing import Any, Tuple, Sequence, Callable
 import dataclasses
 import flax
@@ -38,7 +37,7 @@ class TrainingState:
     steps: jnp.ndarray
 
 
-class TD3(Agent, ABC):
+class TD3(Agent):
     def __init__(
         self,
         observation_dim,
@@ -53,7 +52,7 @@ class TD3(Agent, ABC):
 
         discount = 0.99 if "discount" not in params else params["discount"]
         reward_scale = 1.0 if "reward_scale" not in params else params["reward_scale"]
-        policy_lr = 3e-3 if "policy_lr" not in params else params["policy_lr"]
+        actor_lr = 3e-3 if "actor_lr" not in params else params["actor_lr"]
         critic_lr = 3e-3 if "critic_lr" not in params else params["critic_lr"]
         soft_target_tau = 5e-2 if "tau" not in params else params["tau"]
         hidden_dims = (
@@ -184,7 +183,7 @@ class TD3(Agent, ABC):
             observation_dim, action_dim, hidden_layer_sizes=hidden_dims
         )
 
-        self.policy_optimizer = optax.adam(learning_rate=1.0 * policy_lr)
+        self.policy_optimizer = optax.adam(learning_rate=1.0 * actor_lr)
         self.q_optimizer = optax.adam(learning_rate=1.0 * critic_lr)
 
         key_policy, key_q = jax.random.split(key_models)

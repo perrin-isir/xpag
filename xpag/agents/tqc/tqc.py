@@ -29,7 +29,6 @@ Here is the RLJAX License:
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from abc import ABC
 import os
 from xpag.agents.agent import Agent
 from xpag.agents.sac.sac_from_jaxrl import (
@@ -334,7 +333,7 @@ class TQCLearner(SACLearner):
         return info
 
 
-class TQC(Agent, ABC):
+class TQC(Agent):
     def __init__(self, observation_dim, action_dim, params=None):
         """
         Interface to TQC agent
