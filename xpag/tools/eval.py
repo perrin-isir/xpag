@@ -3,7 +3,7 @@
 # Licensed under the BSD 3-Clause License.
 
 import os
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, Optional
 import numpy as np
 from xpag.agents.agent import Agent
 from xpag.setters.setter import Setter
@@ -87,12 +87,18 @@ def single_rollout_eval(
     save_dir: Union[str, None] = None,
     plot_projection=None,
     save_episode: bool = False,
-    env_datatype: Union[DataType, None] = None,
+    env_datatype: Optional[DataType] = None,
+    seed: Optional[int] = None,
 ):
-    # Evaluation performed on a single run
+    """Evaluation performed on a single run"""
+    master_rng = np.random.RandomState(
+        seed if seed is not None else np.random.randint(1e9)
+    )
     interval_time, _ = timing()
     observation, _ = setter.reset(
-        eval_env, *eval_env.reset(return_info=True), eval_mode=True
+        eval_env,
+        *eval_env.reset(seed=master_rng.randint(1e9), return_info=True),
+        eval_mode=True,
     )
     if save_episode and save_dir is not None:
         save_ep = SaveEpisode(eval_env, env_info)

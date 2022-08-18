@@ -58,6 +58,8 @@ class TD3(Agent):
         hidden_dims = (
             (256, 256) if "hidden_dims" not in params else params["hidden_dims"]
         )
+        start_seed = 0 if "seed" not in params else params["seed"]
+        # cpu, gpu or tpu backend
         self.backend = None if "backend" not in params else params["backend"]
 
         class CustomMLP(linen.Module):
@@ -169,11 +171,6 @@ class TD3(Agent):
         self.discount = discount
         self.reward_scale = reward_scale
         self.soft_target_tau = soft_target_tau
-
-        if "seed" in self.params:
-            start_seed = self.params["seed"]
-        else:
-            start_seed = 0
 
         self.key, local_key, key_models = jax.random.split(
             jax.random.PRNGKey(start_seed), 3
@@ -410,5 +407,4 @@ class TD3(Agent):
         self.training_state, metrics = self.update_step(
             self.training_state, observations, actions, rewards, new_observations, mask
         )
-
         return metrics

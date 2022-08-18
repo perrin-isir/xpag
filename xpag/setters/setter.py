@@ -32,7 +32,7 @@ class Setter(ABC):
         reward,
         done,
         info,
-        eval_mode=False,
+        eval_mode: bool = False,
     ) -> Tuple[Any, Any, Any, Any]:
         pass
 

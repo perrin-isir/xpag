@@ -7,7 +7,7 @@ from xpag.tools.timing import timing_reset
 from xpag.buffers import Buffer
 from xpag.agents.agent import Agent
 from xpag.setters.setter import Setter
-from typing import Dict, Any, Union, List
+from typing import Dict, Any, Union, List, Optional
 
 
 def learn(
@@ -27,11 +27,18 @@ def learn(
     save_episode: bool = False,
     plot_projection=None,
     custom_eval_function=None,
-    additional_step_keys: Union[List[str], None] = None,
+    additional_step_keys: Optional[List[str]] = None,
+    seed: Optional[int] = None,
 ):
+    master_rng = np.random.RandomState(
+        seed if seed is not None else np.random.randint(1e9)
+    )
+    # seed action_space sample
+    env_info["action_space"].seed(master_rng.randint(1e9))
+
     eval_log_reset()
     timing_reset()
-    reset_obs, reset_info = env.reset(return_info=True)
+    reset_obs, reset_info = env.reset(seed=master_rng.randint(1e9), return_info=True)
     env_datatype = get_datatype(
         reset_obs if not env_info["is_goalenv"] else reset_obs["observation"]
     )
@@ -56,6 +63,7 @@ def learn(
                 plot_projection=plot_projection,
                 save_episode=save_episode,
                 env_datatype=env_datatype,
+                seed=master_rng.randint(1e9),
             )
 
         if not i % max(save_every_x_steps // env_info["num_envs"], 1):
@@ -109,5 +117,6 @@ def learn(
 
         if done.max():
             observation, _ = setter.reset_done(
-                env, *env.reset_done(done, return_info=True)
+                env,
+                *env.reset_done(done, seed=master_rng.randint(1e9), return_info=True),
             )
