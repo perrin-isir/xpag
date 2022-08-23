@@ -17,12 +17,13 @@ def learn(
     agent: Agent,
     buffer: Buffer,
     setter: Setter,
+    *,
     batch_size: int = 256,
     gd_steps_per_step: int = 1,
     start_training_after_x_steps: int = 0,
     max_steps: int = 1_000_000_000,
     evaluate_every_x_steps: int = np.inf,
-    save_every_x_steps: int = np.inf,
+    save_agent_every_x_steps: int = np.inf,
     save_dir: Union[None, str] = None,
     save_episode: bool = False,
     plot_projection=None,
@@ -66,7 +67,7 @@ def learn(
                 seed=master_rng.randint(1e9),
             )
 
-        if not i % max(save_every_x_steps // env_info["num_envs"], 1):
+        if not i % max(save_agent_every_x_steps // env_info["num_envs"], 1):
             if save_dir is not None:
                 agent.save(os.path.join(os.path.expanduser(save_dir), "agent"))
                 setter.save(os.path.join(os.path.expanduser(save_dir), "setter"))
