@@ -34,10 +34,7 @@ class SAC(Agent):
         self._config_string = str(list(locals().items())[1:])
         super().__init__("SAC", observation_dim, action_dim, params)
 
-        if "seed" in self.params:
-            start_seed = self.params["seed"]
-        else:
-            start_seed = 42
+        start_seed = 0 if "seed" not in params else params["seed"]
 
         self.saclearner_params = {
             "actor_lr": 3e-3,
