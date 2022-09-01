@@ -3,14 +3,11 @@
 # Licensed under the BSD 3-Clause License.
 
 from typing import ClassVar, Optional
-from xpag.wrappers.reset_done import ResetDoneBraxWrapper
 from xpag.wrappers.gym_vec_env import check_goalenv
-from brax import jumpy as jp
 import jax
 import gym
 from gym import spaces
 from gym.vector import utils
-from brax import envs
 from xpag.tools.utils import get_env_dimensions
 
 _envs_episode_length = {
@@ -34,6 +31,174 @@ _envs_episode_length = {
 
 
 def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=False):
+    from brax import envs  # lazy import
+    from brax import jumpy as jp  # lazy import
+    from brax.envs import env as brax_env  # lazy import
+
+    class ResetDoneBraxWrapper(brax_env.Wrapper):
+        """Adds reset_done() to Brax envs."""
+
+        def reset(self, rng: jp.ndarray) -> brax_env.State:
+            state = self.env.reset(rng)
+            state.info["first_qp"] = state.qp
+            state.info["first_obs"] = state.obs
+            return state
+
+        def step(self, state: brax_env.State, action: jp.ndarray) -> brax_env.State:
+            return self.env.step(state, action)
+
+        def reset_done(self, done: jp.ndarray, state: brax_env.State, rng: jp.ndarray):
+            # done = state.done
+            def where_done(x, y):
+                done_ = done
+                if done_.shape:
+                    done_ = jp.reshape(
+                        done_, [x.shape[0]] + [1] * (len(x.shape) - 1)
+                    )  # type: ignore
+                return jp.where(done_, x, y)
+
+            if "steps" in state.info:
+                steps = state.info["steps"]
+                steps = where_done(jp.zeros_like(steps), steps)
+                state.info.update(steps=steps)
+
+            reset_state = self.env.reset(rng)
+            qp = jp.tree_map(where_done, reset_state.qp, state.qp)
+            obs = where_done(reset_state.obs, state.obs)
+            state = state.replace(qp=qp, obs=obs)
+            return state.replace(done=where_done(jp.zeros_like(state.done), state.done))
+
+    class ResetDoneBraxToGymWrapper(gym.vector.VectorEnv):
+        """
+        A wrapper that converts Brax Env to one that follows Gym VectorEnv API,
+        with the additional reset_done() and reset_idxs() methods.
+        """
+
+        # Flag that prevents `gym.register` from misinterpreting the `_step` and
+        # `_reset` as signs of a deprecated gym Env API.
+        _gym_disable_underscore_compat: ClassVar[bool] = True
+
+        def __init__(
+            self,
+            env: ResetDoneBraxWrapper,
+            max_episode_steps: int,
+            backend: Optional[str] = None,
+        ):
+            self.max_episode_steps = max_episode_steps
+            self._env = env
+            self.metadata = {
+                "render.modes": ["human", "rgb_array"],
+                "video.frames_per_second": 1 / self._env.sys.config.dt,
+            }
+            if not hasattr(self._env, "batch_size"):
+                raise ValueError("underlying env must be batched")
+
+            self.num_envs = self._env.batch_size
+            self.backend = backend
+            self._state = None
+            self._key = None
+
+            obs_high = jp.inf * jp.ones(self._env.observation_size, dtype="float32")
+            self.single_observation_space = spaces.Box(
+                -obs_high, obs_high, dtype="float32"
+            )
+            self.observation_space = utils.batch_space(
+                self.single_observation_space, self.num_envs
+            )
+
+            action_high = jp.ones(self._env.action_size, dtype="float32")
+            self.single_action_space = spaces.Box(
+                -action_high, action_high, dtype="float32"
+            )
+            self.action_space = utils.batch_space(
+                self.single_action_space, self.num_envs
+            )
+
+            def reset(key):
+                key1, key2 = jp.random_split(key)
+                state = self._env.reset(key2)
+                return state, state.obs, key1
+
+            self._reset = jax.jit(reset, backend=self.backend)
+
+            def step(state, action):
+                state = self._env.step(state, action)
+                info = state.metrics
+                info["steps"] = state.info["steps"]
+                info["truncation"] = state.info["truncation"]
+                return state, state.obs, state.reward, state.done, info
+
+            self._step = jax.jit(step, backend=self.backend)
+
+            def reset_done(done, state, key):
+                key1, key2 = jp.random_split(key)
+                if state is None:
+                    raise ValueError(
+                        "Use reset() for the first reset, not reset_idxs()."
+                    )
+                state = self._env.reset_done(done, state, key2)
+                return state, state.obs, key1
+
+            self._reset_done = jax.jit(reset_done, backend=self.backend)
+
+        def reset(
+            self,
+            *,
+            seed: Optional[int] = None,
+            return_info: bool = False,
+            options: Optional[dict] = None,
+        ):
+            if seed is None:
+                if self._key is None:
+                    self._key = jax.random.PRNGKey(0)
+            else:
+                self._key = jax.random.PRNGKey(seed)
+            self._state, obs, self._key = self._reset(self._key)
+            if return_info:
+                return obs, {}
+            else:
+                return obs
+
+        def step(self, action):
+            self._state, obs, reward, done, info = self._step(self._state, action)
+            info["truncation"] = info["truncation"].reshape((self.num_envs, -1))
+            return (
+                obs.reshape((self.num_envs, -1)),
+                reward.reshape((self.num_envs, -1)),
+                done.reshape((self.num_envs, -1)),
+                info,
+            )
+
+        def reset_done(
+            self,
+            done,
+            *,
+            seed: Optional[int] = None,
+            return_info: bool = False,
+            options: Optional[dict] = None,
+        ):
+            if seed is None:
+                if self._key is None:
+                    self._key = jax.random.PRNGKey(0)
+            else:
+                self._key = jax.random.PRNGKey(seed)
+            self._state, obs, self._key = self._reset_done(done, self._state, self._key)
+            if return_info:
+                return obs, {}
+            else:
+                return obs
+
+        def render(self, mode="human"):
+            # pylint:disable=g-import-not-at-top
+            from brax.io import image  # lazy import
+
+            if mode == "rgb_array":
+                sys = self._env.sys
+                qp = jp.take(self._state.qp, 0)
+                return image.render_array(sys, qp, 256, 256)
+            else:
+                return super().render(mode=mode)  # just raise an exception
+
     if wrap_function is None:
 
         def wrap_function(x):
@@ -71,129 +236,3 @@ def brax_vec_env(env_name, num_envs, wrap_function=None, force_cpu_backend=False
     env, env_info = brax_vec_env_(env_name, num_envs, wrap_function, force_cpu_backend)
     eval_env, _ = brax_vec_env_(env_name, 1, wrap_function, force_cpu_backend)
     return env, eval_env, env_info
-
-
-class ResetDoneBraxToGymWrapper(gym.vector.VectorEnv):
-    """
-    A wrapper that converts Brax Env to one that follows Gym VectorEnv API,
-    with the additional reset_done() and reset_idxs() methods.
-    """
-
-    # Flag that prevents `gym.register` from misinterpreting the `_step` and
-    # `_reset` as signs of a deprecated gym Env API.
-    _gym_disable_underscore_compat: ClassVar[bool] = True
-
-    def __init__(
-        self,
-        env: ResetDoneBraxWrapper,
-        max_episode_steps: int,
-        backend: Optional[str] = None,
-    ):
-        self.max_episode_steps = max_episode_steps
-        self._env = env
-        self.metadata = {
-            "render.modes": ["human", "rgb_array"],
-            "video.frames_per_second": 1 / self._env.sys.config.dt,
-        }
-        if not hasattr(self._env, "batch_size"):
-            raise ValueError("underlying env must be batched")
-
-        self.num_envs = self._env.batch_size
-        self.backend = backend
-        self._state = None
-        self._key = None
-
-        obs_high = jp.inf * jp.ones(self._env.observation_size, dtype="float32")
-        self.single_observation_space = spaces.Box(-obs_high, obs_high, dtype="float32")
-        self.observation_space = utils.batch_space(
-            self.single_observation_space, self.num_envs
-        )
-
-        action_high = jp.ones(self._env.action_size, dtype="float32")
-        self.single_action_space = spaces.Box(
-            -action_high, action_high, dtype="float32"
-        )
-        self.action_space = utils.batch_space(self.single_action_space, self.num_envs)
-
-        def reset(key):
-            key1, key2 = jp.random_split(key)
-            state = self._env.reset(key2)
-            return state, state.obs, key1
-
-        self._reset = jax.jit(reset, backend=self.backend)
-
-        def step(state, action):
-            state = self._env.step(state, action)
-            info = state.metrics
-            info["steps"] = state.info["steps"]
-            info["truncation"] = state.info["truncation"]
-            return state, state.obs, state.reward, state.done, info
-
-        self._step = jax.jit(step, backend=self.backend)
-
-        def reset_done(done, state, key):
-            key1, key2 = jp.random_split(key)
-            if state is None:
-                raise ValueError("Use reset() for the first reset, not reset_idxs().")
-            state = self._env.reset_done(done, state, key2)
-            return state, state.obs, key1
-
-        self._reset_done = jax.jit(reset_done, backend=self.backend)
-
-    def reset(
-        self,
-        *,
-        seed: Optional[int] = None,
-        return_info: bool = False,
-        options: Optional[dict] = None,
-    ):
-        if seed is None:
-            if self._key is None:
-                self._key = jax.random.PRNGKey(0)
-        else:
-            self._key = jax.random.PRNGKey(seed)
-        self._state, obs, self._key = self._reset(self._key)
-        if return_info:
-            return obs, {}
-        else:
-            return obs
-
-    def step(self, action):
-        self._state, obs, reward, done, info = self._step(self._state, action)
-        info["truncation"] = info["truncation"].reshape((self.num_envs, -1))
-        return (
-            obs.reshape((self.num_envs, -1)),
-            reward.reshape((self.num_envs, -1)),
-            done.reshape((self.num_envs, -1)),
-            info,
-        )
-
-    def reset_done(
-        self,
-        done,
-        *,
-        seed: Optional[int] = None,
-        return_info: bool = False,
-        options: Optional[dict] = None,
-    ):
-        if seed is None:
-            if self._key is None:
-                self._key = jax.random.PRNGKey(0)
-        else:
-            self._key = jax.random.PRNGKey(seed)
-        self._state, obs, self._key = self._reset_done(done, self._state, self._key)
-        if return_info:
-            return obs, {}
-        else:
-            return obs
-
-    def render(self, mode="human"):
-        # pylint:disable=g-import-not-at-top
-        from brax.io import image
-
-        if mode == "rgb_array":
-            sys = self._env.sys
-            qp = jp.take(self._state.qp, 0)
-            return image.render_array(sys, qp, 256, 256)
-        else:
-            return super().render(mode=mode)  # just raise an exception

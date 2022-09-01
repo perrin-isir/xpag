@@ -2,10 +2,8 @@
 #
 # Licensed under the BSD 3-Clause License.
 
-from matplotlib import figure
 import numpy as np
 from typing import List, Dict, Any
-from matplotlib import collections as mc
 from xpag.tools.utils import DataType, datatype_convert
 
 
@@ -35,6 +33,9 @@ def single_episode_plot(
     """Plots an episode, using a 1D or 2D projection from observations, or
     from achieved and desired goals in the case of GoalEnv environments.
     """
+    from matplotlib import figure  # lazy import
+    from matplotlib import collections as mc  # lazy import
+
     fig = figure.Figure()
     ax = fig.subplots(1)
     xmax = -np.inf

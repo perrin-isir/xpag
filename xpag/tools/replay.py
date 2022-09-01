@@ -1,38 +1,34 @@
 import os
 import numpy as np
 import gym
-from IPython import display
-from PIL import Image, ImageDraw
-import ipywidgets
 from typing import Callable
-from IPython.display import HTML
-from brax import envs
-from brax.physics.base import QP
-from brax.io import html
-
-
-class DownloadButton(ipywidgets.Button):
-    """Download button with dynamic content
-
-    The content is generated using a callback when the button is clicked.
-    """
-
-    def __init__(self, contents: Callable[[], str], **kwargs):
-        super(DownloadButton, self).__init__(**kwargs)
-        self.contents = contents
-        self.on_click(self.__on_click)
-
-    def __on_click(self, b):
-        filepath = self.contents(self)
-        self.description = "99%"
-        self.description = "Generate gif"
-        print(f"gif saved to: {filepath}")
 
 
 def mujoco_notebook_replay(load_dir: str):
     """
     Episode replay for mujoco environments.
     """
+    from IPython import display  # lazy import
+    from PIL import Image, ImageDraw  # lazy import
+    import ipywidgets  # lazy import
+
+    class DownloadButton(ipywidgets.Button):
+        """Download button with dynamic content
+
+        The content is generated using a callback when the button is clicked.
+        """
+
+        def __init__(self, contents: Callable[[], str], **kwargs):
+            super(DownloadButton, self).__init__(**kwargs)
+            self.contents = contents
+            self.on_click(self.__on_click)
+
+        def __on_click(self, b):
+            filepath = self.contents(self)
+            self.description = "99%"
+            self.description = "Generate gif"
+            print(f"gif saved to: {filepath}")
+
     env_name = str(
         np.loadtxt(os.path.join(load_dir, "episode", "env_name.txt"), dtype="str")
     )
@@ -107,6 +103,12 @@ def brax_notebook_replay(load_dir: str):
     """
     Episode replay for brax environments.
     """
+    from brax import envs  # lazy import
+    from brax.physics.base import QP  # lazy import
+    from brax.io import html  # lazy import
+    from IPython import display  # lazy import
+    from IPython.display import HTML  # lazy import
+
     env_name = str(
         np.loadtxt(os.path.join(load_dir, "episode", "env_name.txt"), dtype="str")
     )
