@@ -45,7 +45,9 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
         "reset_done",
     ):
         # no need to create a VecEnv and wrap it if the env accepts 'num_envs' as an
-        # argument at __init__ and has a reset_done() method.
+        # argument at __init__ and has a reset_done() method. In this case, we trust
+        # the environment to properly handle parallel rollouts.
+
         env = wrap_function(
             gym.make(env_name, num_envs=num_envs).unwrapped  # removing gym wrappers
         )
@@ -92,13 +94,14 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
             max_episode_steps = dummy_env.max_episode_steps
         # env_type = "Mujoco" if isinstance(dummy_env.unwrapped, MujocoEnv) else "Gym"
         # To avoid imposing a dependency to mujoco, we simply guess that the
-        # environment is a mujoco environment when it has the 'init_qpos', 'init_qvel'
-        # and 'state_vector' attributes:
+        # environment is a mujoco environment when it has the 'init_qpos', 'init_qvel',
+        # 'state_vector' and '_mujoco_bindings' attributes:
         env_type = (
             "Mujoco"
             if hasattr(dummy_env.unwrapped, "init_qpos")
             and hasattr(dummy_env.unwrapped, "init_qvel")
             and hasattr(dummy_env.unwrapped, "state_vector")
+            and hasattr(dummy_env.unwrapped, "_mujoco_bindings")
             else "Gym"
         )
         # The 'init_qpos' and 'state_vector' attributes are the one required to

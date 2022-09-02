@@ -99,33 +99,38 @@ an independent entity (e.g. a teacher), or as a part of the agent itself.
 function in [xpag/tools/learn.py](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py))
 in which the following components interact:
 
-<details><summary><B>the environment</B></summary>
+<details><summary><B>the environment (env)</B></summary>
 
-In *xpag*, environments must allow parallel rollouts, and *xpag* keeps the same API even in the case of a single rollout (`num_envs == 1`).
+In *xpag*, environments must allow parallel rollouts, and *xpag* keeps the same API even in the case of a single rollout,
+i.e. when the number of "parallel environments" is 1.
 
-* `reset()`  
+* `env.reset(seed=..., return_info=True, options={...})` ->  `observation, info`  
 Following the gym Vector API
-(see [https://www.gymlibrary.ml/content/vector_api](https://www.gymlibrary.ml/content/vector_api)), environments have 
-a `reset()` function that returns an observation (which is a batch of observations for all 
-parallel rollouts) and an optional dictionary `info` (when the `return_info` argument is
-True, see [https://www.gymlibrary.ml/content/vector_api/#reset](https://www.gymlibrary.ml/content/vector_api/#reset)).
+(see [https://www.gymlibrary.dev/content/vector_api](https://www.gymlibrary.dev/content/vector_api)), environments have 
+a `reset()` function that returns an `observation` (which is actually a batch of observations for all the 
+parallel rollouts) and, when the `return_info` argument is True, an optional dictionary `info` (see [https://www.gymlibrary.dev/content/vector_api/#reset](https://www.gymlibrary.dev/content/vector_api/#reset)).  
+We expect `observation` to be a numpy array, or a jax.numpy array, and its first dimension 
+accounts for the parallel rollouts, which means that `observation[i]` is the observation in
+the i-th rollout. In the case of a single rollout, `observation[0]` is the observation
+in this rollout.
 
 
-* `step()`
+* `env.step(action)` -> `observation, reward, done, info`  
 Again, following the gym Vector API, environments have a `step()` function that takes
 in input an action (which is actually a batch of actions, one per rollout) and returns:
-`observation`, `reward`, `done`, `info` (cf. [https://www.gymlibrary.ml/content/api/#stepping](https://www.gymlibrary.ml/content/api/#stepping)).
-There are differences with the gym Vector API. First, this a detail but we name the
-ouputs `observation`, `reward`, ... (singular) instead of `observations`, `rewards`, ... (plural) because in *xpag* this also covers the case `num_envs == 1`.
-Second, *xpag* assumes that `reward` and `done` have the shape `(num_envs, 1)`, not
-`(num_envs,)`. More broadly, whether they are due to `num_envs == 1` or to
+`observation`, `reward`, `done`, `info` (cf. [https://www.gymlibrary.dev/content/api/#stepping](https://www.gymlibrary.dev/content/api/#stepping)).
+There are differences with the gym Vector API. First, this is a detail but we name the
+ouputs `observation`, `reward`, ... (singular) instead of `observations`, `rewards`, ... (plural) because in *xpag* this also covers the case
+of a single rollout.  
+Second, *xpag* assumes that `reward` and `done` have the shape `(n, 1)`, not
+`(n,)` (where n is the number of parallel rollouts). More broadly, whether they are due to a single rollout or to
 unidimensional elements, single-dimensional entries are not squeezed in *xpag*.
-Third, in *xpag*, `info` is a single dictionary, not a tuple of dictionaries
-(but its entries may be tuples). 
+Third, in *xpag*, `info` is a dictionary, not a tuple of dictionaries
+(however its entries may be tuples). 
 
 
-* `reset_done()`:  
-The most significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which takes the `done` array in input and performs a reset for
+* `env.reset_done(done)`:  
+The most significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which takes a `done` array in input and performs a reset for
 the i-th rollout if and only if `done[i]` is evaluated to True. Besides `done`, the arguments of `reset_done()` are the same as the ones of `reset()`: `seed`, `return_info` and `options`, and its outputs are also the same: either just `observation`, or `observation`, `info` if `return_info` is True.
 For rollouts that are not reset, the returned observation is the same as the observation returned by the last
 `step()`.  
