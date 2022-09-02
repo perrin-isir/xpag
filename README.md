@@ -8,6 +8,27 @@
 -----
 ## Install
 
+<details><summary>JAX</summary>
+<p>
+
+The *xpag* agents are written in JAX and Flax,
+and some functionalities specific to Brax environments require it to be 
+installed.
+
+**The library JAX is a required by *xpag*, but its automatic installation may not work properly (e.g. not GPU-compatible).**  
+We recommend to install it properly before installing *xpag*, following these guidelines:  
+
+[https://github.com/google/jax#installation](https://github.com/google/jax#installation)  
+
+*Remark:* to verify that the installation went well, check the backend used by JAX with the following command (in a python console and with `jax` imported and configured):
+```
+print(jax.lib.xla_bridge.get_backend().platform)
+```
+It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
+
+</p>
+</details>
+
 <details><summary>Option 1: pip</summary>
 <p>
 
@@ -43,30 +64,10 @@ Finally, to install the *xpag* library in the activated virtual environment:
 </details>
 
 
-<details><summary>JAX, Flax, Brax, etc.</summary>
+<details><summary>Tutorials</summary>
 <p>
 
-The *xpag* agents are written in JAX and Flax,
-and some functionalities specific to Brax environments require it to be 
-installed.
-
-**The modules JAX, Flax and Brax are required but are NOT automatically installed as dependencies of *xpag*.**
-
-- To install JAX, follow these guidelines:  
-
-    [https://github.com/google/jax#installation](https://github.com/google/jax#installation)  
-
-    *Remark:* to verify that the installation went well, check the backend used by JAX with the following command (in a python console and with `jax` imported and configured):
-    ```
-    print(jax.lib.xla_bridge.get_backend().platform)
-    ```
-    It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
-
-- Once JAX is installed, `pip install flax` and `pip install brax` should install recent versions of Flax and Brax. If there are issues, follow these guidelines:
-
-  [https://github.com/google/flax#quick-install](https://github.com/google/flax#quick-install) and [https://github.com/google/brax#using-brax-locally](https://github.com/google/brax#using-brax-locally) 
-
-- *xpag* works without the following libraries, but they are required for the [tutorials](https://github.com/perrin-isir/xpag-tutorials):
+The following libraries, not required by *xpag*, are required for the [tutorials](https://github.com/perrin-isir/xpag-tutorials):
   - MuJoCo (`pip install mujoco`): see [https://github.com/deepmind/mujoco](https://github.com/deepmind/mujoco)
   - imageio (`pip install imageio`): see [https://github.com/imageio/imageio](https://github.com/imageio/imageio)
 </p>
