@@ -2,6 +2,7 @@ from xpag.tools.utils import (
     DataType,
     reshape,
     hstack,
+    logical_or,
     maximum,
     datatype_convert,
     get_env_dimensions,

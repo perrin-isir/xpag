@@ -12,9 +12,9 @@ class GoalEnvWrapper(gym.Wrapper):
         env: VectorEnv,
         goal_space: spaces.Space,
         compute_achieved_goal: Callable[[Any], Any],
-        compute_reward: Callable[[Any, Any, Any, Any, Any, Any, Any], Any],
+        compute_reward: Callable[[Any, Any, Any, Any, Any, Any, Any, Any], Any],
         compute_success: Callable[[Any, Any], Any],
-        done_on_succes: bool = False,
+        terminate_on_succes: bool = False,
     ):
         super().__init__(env)
         self.datatype = None
@@ -22,7 +22,7 @@ class GoalEnvWrapper(gym.Wrapper):
         self.compute_achieved_goal = compute_achieved_goal
         self.compute_reward = compute_reward
         self.compute_success = compute_success
-        self.done_on_success = done_on_succes
+        self.terminate_on_success = terminate_on_succes
 
         self.single_observation_space = spaces.Dict(
             dict(
@@ -36,10 +36,7 @@ class GoalEnvWrapper(gym.Wrapper):
         )
 
     def reset(self, **kwargs):
-        if "return_info" in kwargs and kwargs["return_info"]:
-            obs, info = self.env.reset(**kwargs)
-        else:
-            obs = self.env.reset(**kwargs)
+        obs, info = self.env.reset(**kwargs)
         if self.datatype is None:
             self.datatype = get_datatype(obs)
         self.last_desired_goal = datatype_convert(
@@ -50,16 +47,10 @@ class GoalEnvWrapper(gym.Wrapper):
             "achieved_goal": self.compute_achieved_goal(obs),
             "desired_goal": self.last_desired_goal,
         }
-        if "return_info" in kwargs and kwargs["return_info"]:
-            return goalenv_obs, info
-        else:
-            return goalenv_obs
+        return goalenv_obs, info
 
     def reset_done(self, *args, **kwargs):
-        if "return_info" in kwargs and kwargs["return_info"]:
-            obs, info = self.env.reset_done(*args, **kwargs)
-        else:
-            obs = self.env.reset_done(*args, **kwargs)
+        obs, info = self.env.reset_done(*args, **kwargs)
         if self.datatype is None:
             self.datatype = get_datatype(obs)
         self.last_desired_goal = datatype_convert(
@@ -70,13 +61,10 @@ class GoalEnvWrapper(gym.Wrapper):
             "achieved_goal": self.compute_achieved_goal(obs),
             "desired_goal": self.last_desired_goal,
         }
-        if "return_info" in kwargs and kwargs["return_info"]:
-            return goalenv_obs, info
-        else:
-            return goalenv_obs
+        return goalenv_obs, info
 
     def step(self, action):
-        observation, reward, done, info = self.env.step(action)
+        observation, reward, terminated, truncated, info = self.env.step(action)
         assert (
             self.last_desired_goal is not None
         ), "reset() or reset_done() must be called before step()"
@@ -92,7 +80,8 @@ class GoalEnvWrapper(gym.Wrapper):
                 action,
                 observation,
                 reward,
-                done,
+                terminated,
+                truncated,
                 info,
             ),
             self.datatype,
@@ -104,10 +93,16 @@ class GoalEnvWrapper(gym.Wrapper):
             self.datatype,
         )
         info["is_success"] = goalenv_success
-        goalenv_done = where(
-            goalenv_success, datatype_convert(np.ones_like(done), self.datatype), done
+        goalenv_terminated = (
+            where(
+                goalenv_success,
+                datatype_convert(np.ones_like(terminated), self.datatype),
+                terminated,
+            )
+            if self.terminate_on_success
+            else terminated
         )
-        return goalenv_obs, goalenv_reward, goalenv_done, info
+        return goalenv_obs, goalenv_reward, goalenv_terminated, truncated, info
 
     def set_goal(self, goal):
         assert (
@@ -140,24 +135,14 @@ class CumulRewardWrapper(gym.Wrapper):
         )
 
     def reset(self, **kwargs):
-        if "return_info" in kwargs and kwargs["return_info"]:
-            obs, info = self.env.reset(**kwargs)
-            if self.datatype is None:
-                self.datatype = get_datatype(obs)
-            self.cumulative_reward = datatype_convert(
-                np.zeros((self.num_envs, 1)), self.datatype
-            )
-            obs = hstack(obs, self.cumulative_reward)
-            return obs, info
-        else:
-            obs = self.env.reset(**kwargs)
-            if self.datatype is None:
-                self.datatype = get_datatype(obs)
-            self.cumulative_reward = datatype_convert(
-                np.zeros((self.num_envs, 1)), self.datatype
-            )
-            obs = hstack(obs, self.cumulative_reward)
-            return obs
+        obs, info = self.env.reset(**kwargs)
+        if self.datatype is None:
+            self.datatype = get_datatype(obs)
+        self.cumulative_reward = datatype_convert(
+            np.zeros((self.num_envs, 1)), self.datatype
+        )
+        obs = hstack(obs, self.cumulative_reward)
+        return obs, info
 
     def reset_done(self, done, **kwargs):
         assert (
@@ -168,20 +153,15 @@ class CumulRewardWrapper(gym.Wrapper):
             datatype_convert(np.zeros_like(self.cumulative_reward), self.datatype),
             self.cumulative_reward,
         )
-        if "return_info" in kwargs and kwargs["return_info"]:
-            obs, info = self.env.reset_done(done, **kwargs)
-            obs = hstack(obs, self.cumulative_reward)
-            return obs, info
-        else:
-            obs = self.env.reset_done(done, **kwargs)
-            obs = hstack(obs, self.cumulative_reward)
-            return obs
+        obs, info = self.env.reset_done(done, **kwargs)
+        obs = hstack(obs, self.cumulative_reward)
+        return obs, info
 
     def step(self, action):
-        observation, reward, done, info = self.env.step(action)
+        observation, reward, terminated, truncated, info = self.env.step(action)
         assert (
             self.cumulative_reward is not None
         ), "reset() must be called before step()"
         self.cumulative_reward += reward * self.normalization_factor
         observation = hstack(observation, self.cumulative_reward)
-        return observation, reward, done, info
+        return observation, reward, terminated, truncated, info

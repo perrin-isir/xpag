@@ -147,36 +147,22 @@ class ResetDoneVecWrapper(gym.Wrapper):
         self.max_episode_steps = max_episode_steps
 
     def reset(self, **kwargs):
-        if "return_info" in kwargs and kwargs["return_info"]:
-            obs, info_ = self.env.reset(**kwargs)
-            return obs, {"info_tuple": tuple(info_)}
-        else:
-            return self.env.reset(**kwargs)
+        obs, info_ = self.env.reset(**kwargs)
+        return obs, {"info_tuple": tuple(info_)}
 
     def reset_done(self, *args, **kwargs):
-        if "return_info" in kwargs and kwargs["return_info"]:
-            results, info_ = tuple(zip(*self.env.call("reset_done", *args, **kwargs)))
-        else:
-            results = self.env.call("reset_done", *args, **kwargs)
+        results, info_ = tuple(zip(*self.env.call("reset_done", *args, **kwargs)))
         observations = create_empty_array(
             self.env.single_observation_space, n=self.num_envs, fn=np.empty
         )
-        if "return_info" in kwargs and kwargs["return_info"]:
-            info = {"info_tuple": tuple(info_)}
-            return (
-                concatenate(self.env.single_observation_space, results, observations),
-                info,
-            )
-        else:
-            return concatenate(self.env.single_observation_space, results, observations)
+        info = {"info_tuple": tuple(info_)}
+        return (
+            concatenate(self.env.single_observation_space, results, observations),
+            info,
+        )
 
     def step(self, action):
-        obs, reward, done, info_ = self.env.step(action)
-        info_["truncation"] = (
-            info_["TimeLimit.truncated"]
-            if "TimeLimit.truncated" in info_
-            else np.array([False] * self.num_envs).reshape((self.num_envs, 1))
-        )
+        obs, reward, terminated, truncated, info_ = self.env.step(action)
         info_["is_success"] = (
             info_["is_success"]
             if "is_success" in info_
@@ -186,7 +172,8 @@ class ResetDoneVecWrapper(gym.Wrapper):
         return (
             obs,
             reward.reshape((self.env.num_envs, -1)),
-            done.reshape((self.env.num_envs, -1)),
+            terminated.reshape((self.env.num_envs, -1)),
+            truncated.reshape((self.env.num_envs, -1)),
             info_,
         )
 
@@ -206,28 +193,22 @@ def _worker_shared_memory_no_auto_reset(
         while True:
             command, data = pipe.recv()
             if command == "reset":
-                if "return_info" in data and data["return_info"] is True:
-                    observation, info = env.reset(**data)
-                    write_to_shared_memory(
-                        observation_space, index, observation, shared_memory
-                    )
-                    pipe.send(((None, info), True))
-                else:
-                    observation = env.reset(**data)
-                    write_to_shared_memory(
-                        observation_space, index, observation, shared_memory
-                    )
-                    pipe.send((None, True))
-            elif command == "step":
-                observation, reward, done, info = env.step(data)
-                # NO AUTOMATIC RESET
-                # if done:
-                #     info["terminal_observation"] = observation
-                #     observation = env.reset()
+                observation, info = env.reset(**data)
                 write_to_shared_memory(
                     observation_space, index, observation, shared_memory
                 )
-                pipe.send(((None, reward, done, info), True))
+                pipe.send(((None, info), True))
+            elif command == "step":
+                observation, reward, terminated, truncated, info = env.step(data)
+                # NO AUTOMATIC RESET
+                # if terminated or truncated:
+                #     old_observation = observation
+                #     observation, info = env.reset()
+                #     info["final_observation"] = old_observation
+                write_to_shared_memory(
+                    observation_space, index, observation, shared_memory
+                )
+                pipe.send(((None, reward, terminated, truncated, info), True))
             # elif command == "seed":
             #     env.seed(data)
             #     pipe.send((None, True))

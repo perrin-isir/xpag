@@ -7,7 +7,7 @@ from typing import Union, Dict, Any, Optional
 import numpy as np
 from xpag.agents.agent import Agent
 from xpag.setters.setter import Setter
-from xpag.tools.utils import DataType, datatype_convert, hstack
+from xpag.tools.utils import DataType, datatype_convert, hstack, logical_or
 from xpag.tools.timing import timing
 from xpag.tools.logging import eval_log
 from xpag.plotting.plotting import single_episode_plot
@@ -97,7 +97,7 @@ def single_rollout_eval(
     interval_time, _ = timing()
     observation, _ = setter.reset(
         eval_env,
-        *eval_env.reset(seed=master_rng.randint(1e9), return_info=True),
+        *eval_env.reset(seed=master_rng.randint(1e9)),
         eval_mode=True,
     )
     if save_episode and save_dir is not None:
@@ -118,7 +118,7 @@ def single_rollout_eval(
             action_info = action[1]
             action = action[0]
         action = datatype_convert(action, env_datatype)
-        next_observation, reward, done, info = setter.step(
+        next_observation, reward, terminated, truncated, info = setter.step(
             eval_env,
             observation,
             action,
@@ -126,6 +126,7 @@ def single_rollout_eval(
             *eval_env.step(action),
             eval_mode=True,
         )
+        done = logical_or(terminated, truncated)
         if save_episode and save_dir is not None:
             save_ep.update()
         cumulated_reward += reward.mean()

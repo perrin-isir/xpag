@@ -2,10 +2,12 @@
 #
 # Licensed under the BSD 3-Clause License.
 
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, Union, List
 from xpag.wrappers.gym_vec_env import check_goalenv
 import jax
+import jax.numpy as jnp
 import gym
+import numpy as np
 from gym import spaces
 from gym.vector import utils
 from xpag.tools.utils import get_env_dimensions
@@ -53,7 +55,7 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
                 done_ = done
                 if done_.shape:
                     done_ = jp.reshape(
-                        done_, [x.shape[0]] + [1] * (len(x.shape) - 1)
+                        done_, tuple([x.shape[0]] + [1] * (len(x.shape) - 1))
                     )  # type: ignore
                 return jp.where(done_, x, y)
 
@@ -100,7 +102,7 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
 
             obs_high = jp.inf * jp.ones(self._env.observation_size, dtype="float32")
             self.single_observation_space = spaces.Box(
-                -obs_high, obs_high, dtype="float32"
+                -obs_high, obs_high, dtype=np.float32
             )
             self.observation_space = utils.batch_space(
                 self.single_observation_space, self.num_envs
@@ -108,7 +110,7 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
 
             action_high = jp.ones(self._env.action_size, dtype="float32")
             self.single_action_space = spaces.Box(
-                -action_high, action_high, dtype="float32"
+                -action_high, action_high, dtype=np.float32
             )
             self.action_space = utils.batch_space(
                 self.single_action_space, self.num_envs
@@ -125,8 +127,23 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
                 state = self._env.step(state, action)
                 info = state.metrics
                 info["steps"] = state.info["steps"]
-                info["truncation"] = state.info["truncation"]
-                return state, state.obs, state.reward, state.done, info
+                terminated = jnp.logical_and(
+                    state.done, jnp.logical_not(state.info["truncation"])
+                ).reshape((self.num_envs, -1))
+                truncated = (
+                    state.info["truncation"].reshape((self.num_envs, -1)).astype("bool")
+                )
+                # terminated is wrong if the episode was both truncated and reached
+                # a terminal state. However, with the current API of brax envs,
+                # this information cannot be recovered.
+                return (
+                    state,
+                    state.obs.reshape((self.num_envs, -1)),
+                    state.reward.reshape((self.num_envs, -1)),
+                    terminated,
+                    truncated,
+                    info,
+                )
 
             self._step = jax.jit(step, backend=self.backend)
 
@@ -144,28 +161,31 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
         def reset(
             self,
             *,
-            seed: Optional[int] = None,
-            return_info: bool = False,
+            seed: Optional[Union[int, List[int]]] = None,
             options: Optional[dict] = None,
         ):
             if seed is None:
                 if self._key is None:
                     self._key = jax.random.PRNGKey(0)
             else:
-                self._key = jax.random.PRNGKey(seed)
+                if isinstance(seed, int):
+                    self._key = jax.random.PRNGKey(seed)
+                else:
+                    self._key = jax.random.PRNGKey(
+                        seed[0]  # only a single seed is needed
+                    )
             self._state, obs, self._key = self._reset(self._key)
-            if return_info:
-                return obs, {}
-            else:
-                return obs
+            return obs, {}
 
         def step(self, action):
-            self._state, obs, reward, done, info = self._step(self._state, action)
-            info["truncation"] = info["truncation"].reshape((self.num_envs, -1))
+            self._state, obs, reward, terminated, truncated, info = self._step(
+                self._state, action
+            )
             return (
-                obs.reshape((self.num_envs, -1)),
-                reward.reshape((self.num_envs, -1)),
-                done.reshape((self.num_envs, -1)),
+                obs,
+                reward,
+                terminated,
+                truncated,
                 info,
             )
 
@@ -174,7 +194,6 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
             done,
             *,
             seed: Optional[int] = None,
-            return_info: bool = False,
             options: Optional[dict] = None,
         ):
             if seed is None:
@@ -183,10 +202,7 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
             else:
                 self._key = jax.random.PRNGKey(seed)
             self._state, obs, self._key = self._reset_done(done, self._state, self._key)
-            if return_info:
-                return obs, {}
-            else:
-                return obs
+            return obs, {}
 
         def render(self, mode="human"):
             # pylint:disable=g-import-not-at-top
@@ -214,7 +230,7 @@ def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=Fals
     env = wrap_function(
         ResetDoneBraxToGymWrapper(
             ResetDoneBraxWrapper(base_env),
-            base_env.env.episode_length,
+            _envs_episode_length[env_name],
             backend="cpu" if force_cpu_backend else None,
         )
     )

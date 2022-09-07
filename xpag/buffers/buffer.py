@@ -70,7 +70,7 @@ class DefaultBuffer(Buffer):
     def init_buffer(self, step: Dict[str, Any]):
         self.dict_sizes = {}
         self.keys = list(step.keys())
-        assert "done" in self.keys
+        assert "terminated" in self.keys
         for key in self.keys:
             if isinstance(step[key], dict):
                 for k in step[key]:
@@ -79,7 +79,7 @@ class DefaultBuffer(Buffer):
             else:
                 assert len(step[key].shape) == 2
                 self.dict_sizes[key] = step[key].shape[1]
-        self.num_envs = step["done"].shape[0]
+        self.num_envs = step["terminated"].shape[0]
         for key in self.dict_sizes:
             self.buffers[key] = np.zeros([self.size, self.dict_sizes[key]])
         self.zeros = lambda i: np.zeros(i).astype("int")
@@ -177,8 +177,8 @@ class DefaultEpisodicBuffer(EpisodicBuffer):
     def init_buffer(self, step: Dict[str, Any]):
         self.dict_sizes = {}
         self.keys = list(step.keys())
-        assert "done" in self.keys
-        self.num_envs = step["done"].shape[0]
+        assert "terminated" in self.keys
+        self.num_envs = step["terminated"].shape[0]
         for key in self.keys:
             if isinstance(step[key], dict):
                 for k in step[key]:

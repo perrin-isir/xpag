@@ -391,7 +391,7 @@ class TQC(Agent):
             observations=batch["observation"],
             actions=batch["action"],
             rewards=squeeze(batch["reward"]),
-            masks=squeeze(1 - batch["done"] * (1 - batch["truncation"])),
+            masks=squeeze(1 - batch["terminated"]),
             next_observations=batch["next_observation"],
         )
 

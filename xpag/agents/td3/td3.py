@@ -402,7 +402,7 @@ class TD3(Agent):
         actions = batch["action"]
         rewards = batch["reward"]
         new_observations = batch["next_observation"]
-        mask = 1 - batch["done"] * (1 - batch["truncation"])
+        mask = 1 - batch["terminated"]
 
         self.training_state, metrics = self.update_step(
             self.training_state, observations, actions, rewards, new_observations, mask

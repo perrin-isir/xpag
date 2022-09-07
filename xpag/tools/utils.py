@@ -62,6 +62,18 @@ def hstack(
         raise TypeError("Incorrect or non-matching input types.")
 
 
+def logical_or(
+    x: Union[np.ndarray, jnp.ndarray],
+    y: Union[np.ndarray, jnp.ndarray],
+) -> Union[np.ndarray, jnp.ndarray]:
+    if isinstance(x, jnp.ndarray) and isinstance(y, jnp.ndarray):
+        return jnp.logical_or(x, y)
+    elif isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
+        return np.logical_or(x, y)
+    else:
+        raise TypeError("Incorrect or non-matching input types.")
+
+
 def maximum(
     x: Union[np.ndarray, jnp.ndarray],
     y: Union[np.ndarray, jnp.ndarray],

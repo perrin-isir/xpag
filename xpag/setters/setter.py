@@ -12,13 +12,11 @@ class Setter(ABC):
         self.name = name
 
     @abstractmethod
-    def reset(self, env, observation, info=None, eval_mode=False) -> Tuple[Any, Any]:
+    def reset(self, env, observation, info, eval_mode=False) -> Tuple[Any, Any]:
         pass
 
     @abstractmethod
-    def reset_done(
-        self, env, observation, info=None, eval_mode=False
-    ) -> Tuple[Any, Any]:
+    def reset_done(self, env, observation, info, eval_mode=False) -> Tuple[Any, Any]:
         pass
 
     @abstractmethod
@@ -30,10 +28,11 @@ class Setter(ABC):
         action_info,
         new_observation,
         reward,
-        done,
+        terminated,
+        truncated,
         info,
         eval_mode: bool = False,
-    ) -> Tuple[Any, Any, Any, Any]:
+    ) -> Tuple[Any, Any, Any, Any, Any]:
         pass
 
     @abstractmethod
@@ -53,17 +52,11 @@ class DefaultSetter(Setter, ABC):
     def __init__(self):
         super().__init__("DefaultSetter")
 
-    def reset(self, env, observation, info=None, eval_mode=False):
-        if info is None:
-            return observation
-        else:
-            return observation, info
+    def reset(self, env, observation, info, eval_mode=False):
+        return observation, info
 
-    def reset_done(self, env, observation, info=None, eval_mode=False):
-        if info is None:
-            return observation
-        else:
-            return observation, info
+    def reset_done(self, env, observation, info, eval_mode=False):
+        return observation, info
 
     def step(
         self,
@@ -73,11 +66,12 @@ class DefaultSetter(Setter, ABC):
         action_info,
         new_observation,
         reward,
-        done,
+        terminated,
+        truncated,
         info,
         eval_mode=False,
     ):
-        return new_observation, reward, done, info
+        return new_observation, reward, terminated, truncated, info
 
     def write_config(self, output_file: str):
         pass
@@ -95,11 +89,11 @@ class CompositeSetter(Setter, ABC):
         self.setter1 = setter1
         self.setter2 = setter2
 
-    def reset(self, env, observation, info=None, eval_mode=False):
+    def reset(self, env, observation, info, eval_mode=False):
         obs_, info_ = self.setter1.reset(env, observation, info, eval_mode)
         return self.setter2.reset(env, obs_, info_, eval_mode)
 
-    def reset_done(self, env, observation, info=None, eval_mode=False):
+    def reset_done(self, env, observation, info, eval_mode=False):
         obs_, info_ = self.setter1.reset_done(env, observation, info, eval_mode)
         return self.setter2.reset_done(env, obs_, info_, eval_mode)
 
@@ -111,18 +105,20 @@ class CompositeSetter(Setter, ABC):
         action_info,
         new_observation,
         reward,
-        done,
+        terminated,
+        truncated,
         info,
         eval_mode=False,
     ):
-        new_obs_, reward_, done_, info_ = self.setter1.step(
+        new_obs_, reward_, terminated_, truncated_, info_ = self.setter1.step(
             env,
             observation,
             action,
             action_info,
             new_observation,
             reward,
-            done,
+            terminated,
+            truncated,
             info,
             eval_mode,
         )
@@ -133,7 +129,8 @@ class CompositeSetter(Setter, ABC):
             action_info,
             new_obs_,
             reward_,
-            done_,
+            terminated_,
+            truncated_,
             info_,
             eval_mode,
         )

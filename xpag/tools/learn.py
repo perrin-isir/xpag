@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from xpag.tools.eval import single_rollout_eval
-from xpag.tools.utils import get_datatype, datatype_convert, hstack
+from xpag.tools.utils import get_datatype, datatype_convert, hstack, logical_or
 from xpag.tools.logging import eval_log_reset
 from xpag.tools.timing import timing_reset
 from xpag.buffers import Buffer
@@ -39,7 +39,7 @@ def learn(
 
     eval_log_reset()
     timing_reset()
-    reset_obs, reset_info = env.reset(seed=master_rng.randint(1e9), return_info=True)
+    reset_obs, reset_info = env.reset(seed=master_rng.randint(1e9))
     env_datatype = get_datatype(
         reset_obs if not env_info["is_goalenv"] else reset_obs["observation"]
     )
@@ -91,7 +91,7 @@ def learn(
 
         action = datatype_convert(action, env_datatype)
 
-        next_observation, reward, done, info = setter.step(
+        next_observation, reward, terminated, truncated, info = setter.step(
             env, observation, action, action_info, *env.step(action)
         )
 
@@ -99,8 +99,8 @@ def learn(
             "observation": observation,
             "action": action,
             "reward": reward,
-            "truncation": info["truncation"],
-            "done": done,
+            "terminated": terminated,
+            "truncated": truncated,
             "next_observation": next_observation,
         }
         if env_info["is_goalenv"]:
@@ -112,12 +112,12 @@ def learn(
         buffer.insert(step)
         observation = next_observation
 
-        # use store_done() if the buffer is an episodic buffer
-        if episodic_buffer:
-            buffer.store_done(done)
-
+        done = logical_or(terminated, truncated)
         if done.max():
+            # use store_done() if the buffer is an episodic buffer
+            if episodic_buffer:
+                buffer.store_done(done)
             observation, _ = setter.reset_done(
                 env,
-                *env.reset_done(done, seed=master_rng.randint(1e9), return_info=True),
+                *env.reset_done(done, seed=master_rng.randint(1e9)),
             )
