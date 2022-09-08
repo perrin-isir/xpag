@@ -208,7 +208,7 @@ with episode termination).
 
 <details><summary><B>the agent (agent)</B></summary>
 
-*xpag* only considers off-policy agents. 
+*xpag* only considers off-policy agents. (TODO) 
 
 </details>
 
