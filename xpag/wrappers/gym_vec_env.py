@@ -4,6 +4,7 @@
 
 import sys
 import inspect
+from typing import Callable
 import numpy as np
 import gym
 from gym.vector.utils import write_to_shared_memory, concatenate, create_empty_array
@@ -135,7 +136,7 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
     return env, env_info
 
 
-def gym_vec_env(env_name, num_envs, wrap_function=None):
+def gym_vec_env(env_name: str, num_envs: int, wrap_function: Callable = None):
     env, env_info = gym_vec_env_(env_name, num_envs, wrap_function)
     eval_env, _ = gym_vec_env_(env_name, 1, wrap_function)
     return env, eval_env, env_info

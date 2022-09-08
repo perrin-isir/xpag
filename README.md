@@ -89,77 +89,104 @@ goal-conditioned reinforcement learning (GCRL) in mind (check out the [train_gma
 tutorial for a simple example of GCRL). 
 
 In GCRL, agents have a goal, and the reward mainly depends on 
-the degree of achievement of that goal. *xpag* introduces a 
+the degree of achievement of that goal. Beyond the usual modules in 
+RL platforms (environment, agent, buffer/sampler), *xpag* introduces a 
 module called "setter" which, among other things, can help to set and manage
-goals. Although the setter is largely similar to an environment wrapper, it 
+goals (for example modifying the goal several times in a single episode).
+Although the setter is largely similar to an environment wrapper, it 
 is separated from the environment because in some cases it should be considered as 
 an independent entity (e.g. a teacher), or as a part of the agent itself.
 
 *xpag* relies on a single reinforcement learning loop (the `learn()`
 function in [xpag/tools/learn.py](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py))
-in which the following components interact:
+in which the environment, the agent, the buffer and the setter interact (see below). 
+The `learn()` function  has the following first 3 arguments (returned by [gym_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/gym_vec_env.py) and 
+[brax_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/brax_vec_env.py)):
+  * `env`: the training environment, which runs 1 or more rollouts in parallel.
+  * `eval_env`: the evaluation environment, identical to `env` except that it runs 
+  a single rollout.
+  * `env_info`: a dictionary containing information about the environment:
+    * `env_info["env_type"]`: the type of environment; for the moment *xpag* 
+  differentiates 3 types of environments: "Brax" environments, "Mujoco" environments, and
+  "Gym" environments. This information is used to adapt the way episodes are saved.
+    * `env_info["name"]`: the name of the environment.
+    * `env_info["is_goalenv"]`: whether the environment is a goal-based environment or 
+  not.
+    * `env_info["num_envs"]`: the number of parallel rollouts in `env`
+    * `env_info["max_episode_steps"]`: the maximum number of steps in episodes (*xpag* 
+  does not allow potentially infinite episodes).
+    * `env_info["action_space"]`: the action space (of type [gym.spaces.Space](https://github.com/openai/gym/blob/master/gym/spaces/space.py)) that takes into account parallel rollouts.
+  This can be useful to sample random actions.
+    * `env_info["single_action_space"]`: the action space (of type [gym.spaces.Space](https://github.com/openai/gym/blob/master/gym/spaces/space.py)) for single rollouts.  
+  
+  Detailed information about the remaining arguments of `learn()` can be
+  found in the code documentation (check [xpag/tools/learn.py](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py)).
 
+The components that interact during the learning:
 <details><summary><B>the environment (env)</B></summary>
 
 In *xpag*, environments must allow parallel rollouts, and *xpag* keeps the same API even in the case of a single rollout,
-i.e. when the number of "parallel environments" is 1.
+i.e. when the number of "parallel environments" is 1. Basically, all environments are 
+"vector environments".
 
-* `env.reset(seed=..., return_info=True, options={...})` ->  `observation, info`  
+* `env.reset(seed: Optional[Union[int, List[int]]], options: Optional[dict])` -> `observation: Union[np.array, jax.numpy.array], info: dict`  
 Following the gym Vector API
-(see [https://www.gymlibrary.dev/content/vector_api](https://www.gymlibrary.dev/content/vector_api)), environments have 
+(see [https://www.gymlibrary.dev/api/vector/#vectorenv](https://www.gymlibrary.dev/api/vector/#vectorenv)), environments have 
 a `reset()` function that returns an `observation` (which is actually a batch of observations for all the 
-parallel rollouts) and, when the `return_info` argument is True, an optional dictionary `info` (see [https://www.gymlibrary.dev/content/vector_api/#reset](https://www.gymlibrary.dev/content/vector_api/#reset)).  
+parallel rollouts) and an optional dictionary `info` (see [https://www.gymlibrary.dev/api/vector/#reset](https://www.gymlibrary.dev/api/vector/#reset)).  
 We expect `observation` to be a numpy array, or a jax.numpy array, and its first dimension 
-accounts for the parallel rollouts, which means that `observation[i]` is the observation in
+selects between parallel rollouts, which means that `observation[i]` is the observation in
 the i-th rollout. In the case of a single rollout, `observation[0]` is the observation
 in this rollout.
 
 
-* `env.step(action)` -> `observation, reward, done, info`  
+* `env.step(action: Union[np.array, jax.numpy.array])` -> `observation, reward, terminated, truncated, info`  
 Again, following the gym Vector API, environments have a `step()` function that takes
 in input an action (which is actually a batch of actions, one per rollout) and returns:
-`observation`, `reward`, `done`, `info` (cf. [https://www.gymlibrary.dev/content/api/#stepping](https://www.gymlibrary.dev/content/api/#stepping)).
-There are differences with the gym Vector API. First, this is a detail but we name the
-ouputs `observation`, `reward`, ... (singular) instead of `observations`, `rewards`, ... (plural) because in *xpag* this also covers the case
-of a single rollout.  
-Second, *xpag* assumes that `reward` and `done` have the shape `(n, 1)`, not
+`observation`, `reward`, `terminated`, `truncated`, `info` (cf. [https://www.gymlibrary.dev/api/vector/#step](https://www.gymlibrary.dev/api/vector/#step)).
+There are slight differences with the gym Vector API. First, in *xpag* this API also covers the case
+of a single rollout. Second, *xpag* assumes that `reward` and `done` have shape `(n, 1)`, not
 `(n,)` (where n is the number of parallel rollouts). More broadly, whether they are due to a single rollout or to
 unidimensional elements, single-dimensional entries are not squeezed in *xpag*.
 Third, in *xpag*, `info` is a dictionary, not a tuple of dictionaries
 (however its entries may be tuples). 
 
 
-* `env.reset_done(done)`:  
-The most significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which takes a `done` array in input and performs a reset for
-the i-th rollout if and only if `done[i]` is evaluated to True. Besides `done`, the arguments of `reset_done()` are the same as the ones of `reset()`: `seed`, `return_info` and `options`, and its outputs are also the same: either just `observation`, or `observation`, `info` if `return_info` is True.
+* `env.reset_done(done, seed: Optional[Union[int, List[int]]], options: Optional[dict])` -> `observation, info`   
+The most significant difference with the gym Vector API is that *xpag* requires a `reset_done()` function which takes a `done` array of Booleans in input and performs a reset for
+the i-th rollout if and only if `done[i]` is evaluated to True. Besides `done`, the arguments of `reset_done()` are the same as the ones of `reset()`: `seed` and `options`, and its outputs are also the same: `observation`, `info`.
 For rollouts that are not reset, the returned observation is the same as the observation returned by the last
-`step()`.  
-The [gym_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/gym_vec_env.py) and 
-[brax_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/brax_vec_env.py) functions (see [tutorials](https://github.com/perrin-isir/xpag-tutorials))
-call wrappers that automatically add the `reset_done()` function to Gym and Brax 
-environments, and make the wrapped environments fit the *xpag* API. `reset()` must be called once for the initial reset, and afterwards only `reset_done()` should be used. Auto-resets (automatic resets after terminal transitions) are not allowed in *xpag*. 
+`step()`. `reset()` must be called once for the initial reset, and afterwards only `reset_done()` should be used. Auto-resets (automatic resets after terminal transitions) are not allowed in *xpag*. 
 The main reason to prefer `reset_done()` to auto-resets
 is that with auto-resets, terminal transitions must be special and contain additional
 information. With `reset_done()`, this is no longer necessary. Furthermore,
 by modifying the `done` array returned by a step of the environment, it becomes possible 
-to force the termination of an episode, or to force an episode to continue despite 
+to easily force the termination of an episode, or to force an episode to continue despite 
 reaching a terminal transition (but this must be done with caution).
+
+
+* `gym_vec_env(env_name: str, num_envs: int, wrap_function: Callable = None)` -> `env, eval_env, env_info: dict`  
+`brax_vec_env(env_name: str, num_envs: int, wrap_function: Callable = None, *, force_cpu_backend : bool = False)` -> `env, eval_env, env_info: dict`  
+The [gym_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/gym_vec_env.py) and 
+[brax_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/brax_vec_env.py) functions (see [tutorials](https://github.com/perrin-isir/xpag-tutorials))
+call wrappers that automatically add the `reset_done()` function to Gym and Brax 
+environments, and make the wrapped environments fit the *xpag* API.
 
 
 * *Goal-based environments:*  
 Goal-based environments (for GCRL) must have a similar interface to the one defined in 
 the [Gym-Robotics](https://github.com/Farama-Foundation/gym-robotics) library
-(see `GoalEnv` in [core.py](https://github.com/Farama-Foundation/Gym-Robotics/blob/main/gym_robotics/core.py)).
+(see `GoalEnv` in [core.py](https://github.com/Farama-Foundation/Gym-Robotics/blob/main/gym_robotics/core.py)), with minor differences.
 Their observation spaces are of type [gym.spaces.Dict](https://github.com/openai/gym/blob/master/gym/spaces/dict.py), with the following keys 
 in the `observation` dictionaries: "observation", "achieved_goal", and "desired_goal".
 Goal-based environments must also have in attribute a `compute_reward()` function that computes rewards.
-The inputs to the `compute_reward()` functions considered in *xpag* differ slightly from
-the original `GoalEnv` class. In the
+In *xpag*, the inputs of `compute_reward()` can be different from the ones considered in 
+the original `GoalEnv` class. For example, in the
 [GoalEnvWrapper](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/goalenv_wrapper.py) class,
 which can be used to turn standard environments into goal-based environments, the
-arguments of `compute_reward()` are `achieved_goal` (the goal achieved *after* `step()`),
-`desired_goal` (the desired goal *before* `step()`), `action`, `observation` (the observation after `step()`),
-`reward` (the reward of the base environment), `done` and `info` (the outputs of the
+arguments of `compute_reward()` are assumed to be `achieved_goal` (the goal achieved *after* `step()`),
+`desired_goal` (the desired goal *before* `step()`), `action`, `observation` (the observation *after* `step()`),
+`reward` (the reward of the base environment), `terminated`, `truncated` and `info` (the outputs of the
 `step()` function). In the version of [HER](https://github.com/perrin-isir/xpag/blob/main/xpag/samplers/HER.py)
   (cf. [https://arxiv.org/pdf/1707.01495.pdf](https://arxiv.org/pdf/1707.01495.pdf)) in *xpag*,
 it is assumed that `compute_reward()` depends only on  `achieved_goal`, `desired_goal`, `action` and `observation`.  
@@ -171,53 +198,23 @@ achieved goals and desired goals.
 
 
 * `info`  
-The `info` dictionary returned by the environment steps must always contain
-`info["truncation"]`, an array of Booleans (one per rollout). `info["truncation"][i]`
-is True if the i-th rollout has been terminated without reaching a terminal state 
-(for example because the episode reached maximum length). *Remark:* in gym, the
-conventional name is `info["TimeLimit.truncated"]`, but this is automatically 
-modified in the wrapper applied by the 
-[gym_vec_env()](https://github.com/perrin-isir/xpag/blob/main/xpag/wrappers/gym_vec_env.py)
-function.  
-*xpag* also assumes that, for goal-based environments, the `info` dictionary 
+*xpag* assumes that, in goal-based environments, the `info` dictionary returned by `step()`
 always contains `info["is_success"]`, an array of Booleans (one per rollout)
 that are `True` if the corresponding transition is a successfull achievement of the
 desired goal, and `False` otherwise (*remark:* this does not need to coincide
-with episode termination).  
-
-
-* `env_info`:  
-The [learn()](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py) function 
-is the functions that runs the training loop in *xpag*. Its three first arguments are:
-  * `env`: the training environment, which runs `num_envs` rollouts in parallel.
-  * `eval_env`: the evaluation environment, identical to `env` except that it runs 
-  single rollouts.
-  * `env_info`: a dictionary containing information about the environment:
-    * `env_info["env_type"]`: the type of environment; for the moment *xpag* 
-  differentiates 3 types of environments: "Brax" environments, "Mujoco" environments, and
-  "Gym" environments. This information is used to adapt the way episodes are saved.
-    * `env_info["name"]`: the name of the environment.
-    * `env_info["is_goalenv"]`: whether the environment is a goal-based environment or 
-  not.
-    * `env_info["num_envs"]`: the number of parallel rollouts in `env`
-    * `env_info["max_episode_steps"]`: the maximum number of steps in episodes (*xpag* 
-  does not allow potentially infinite episodes).
-  *Remark:* 
-    * `env_info["action_space"]`: the action space (of type [gym.spaces.Space](https://github.com/openai/gym/blob/master/gym/spaces/space.py)) that takes into account parallel rollouts.
-  This can be useful to sample random actions.
-    * `env_info["single_action_space"]`: the action space for single rollouts.
+with episode termination).
 
 </details>
 
-<details><summary><B>the agent</B></summary>
+<details><summary><B>the agent (agent)</B></summary>
 
-*xpag* only considers the case of a unique off-policy agent training on parallel rollouts. 
+*xpag* only considers off-policy agents. 
 
 </details>
 
-<details><summary><B>the buffer</B></summary> TODO </details>
-<details><summary><B>the sampler</B></summary> TODO </details>
-<details><summary><B>the setter</B></summary> TODO </details>
+<details><summary><B>the buffer (buffer)</B></summary> TODO </details>
+<details><summary><B>the sampler (sampler)</B></summary> TODO </details>
+<details><summary><B>the setter (setter)</B></summary> TODO </details>
 
 The figure below summarizes the RL loop and the interactions between the components:
 (TODO)

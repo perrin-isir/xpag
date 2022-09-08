@@ -7,7 +7,7 @@ from xpag.tools.timing import timing_reset
 from xpag.buffers import Buffer
 from xpag.agents.agent import Agent
 from xpag.setters.setter import Setter
-from typing import Dict, Any, Union, List, Optional
+from typing import Dict, Any, Union, List, Optional, Callable
 
 
 def learn(
@@ -26,11 +26,61 @@ def learn(
     save_agent_every_x_steps: int = np.inf,
     save_dir: Union[None, str] = None,
     save_episode: bool = False,
-    plot_projection=None,
-    custom_eval_function=None,
+    plot_projection: Optional[Callable] = None,
+    custom_eval_function: Optional[Callable] = None,
     additional_step_keys: Optional[List[str]] = None,
     seed: Optional[int] = None,
 ):
+    """
+    The function that runs the main training loop.
+
+    It "plays" parallel rollouts, using the agent to choose actions, calling the setter,
+    collecting transitions and putting them in the buffer, and training the agent on
+    batches sampled from the buffer. It also uses the evaluation environment (eval_env)
+    to periodically evaluate the performance of the agent.
+
+    Args:
+        env: the environment used for training (multiple rollouts in parallel).
+        eval_env: the environment used for evaluation (identical to env except that it
+            runs a single rollout).
+        env_info: dictionary with information about the env (returned by gym_vec_env()
+            and brax_vec_env()).
+        agent: the agent.
+        buffer: the buffer.
+        setter: the setter.
+        batch_size (int): the size of the batches of transitions on which the agent is
+            trained.
+        gd_steps_per_step (int): the number of gradient steps (i.e. calls to
+            agent.train_on_batch()) per step in the environment (remark:
+            if there n rollouts in parallel, one call to env.step() counts as n steps).
+        start_training_after_x_steps (int): the number of inital steps with random
+            actions before starting using and training the agent.
+        max_steps (int): the maximum number of steps in the environment before stopping
+            the learning (remark: if there n rollouts in parallel, one call to
+            env.step() counts as n steps).
+        evaluate_every_x_steps (int): the number of steps between two evaluations of the
+            agent (remark: if there n rollouts in parallel, one call to
+            env.step() counts as n steps).
+        save_agent_every_x_steps (int): it defines how frequently the agent is saved to
+            the disk (remark: if there n rollouts in parallel, one call to
+            env.step() counts as n steps).
+        save_dir (str): the directory in which the config, agent, plots, evaluation
+            episodes and logs are saved.
+        save_episode (bool): if True, the evaluation episodes are saved.
+        plot_projection (Callable): a function with 2D outputs from either the
+            observation space or the achieved/desired goal space (in the case of a
+            goal-based environment). It is used to plot evaluation episodes.
+        custom_eval_function (Callable): a custom function used to replace the
+            default function for evaluations (single_rollout_eval).
+        additional_step_keys (Optional[List[str]]): by default, the transitions are
+            stored as dicts with the following entries: "observation", "action",
+            "reward", "terminated", "truncated", "next_observation".
+            additional_step_keys lists optional additional entries that would be stored
+            in the info dict returned by env.step() and setter.step().
+        seed (Optional[int]): the random seed for the training.
+            Remark: JAX/XLA is not deterministic on GPU, so with JAX agents, the seed
+            does not prevent results from varying.
+    """
     master_rng = np.random.RandomState(
         seed if seed is not None else np.random.randint(1e9)
     )
@@ -86,7 +136,7 @@ def learn(
                 action_info = action[1]
                 action = action[0]
             if i > 0:
-                for _ in range(max(round(gd_steps_per_step * env_info["num_envs"]), 1)):
+                for _ in range(max(gd_steps_per_step * env_info["num_envs"], 1)):
                     _ = agent.train_on_batch(buffer.sample(batch_size))
 
         action = datatype_convert(action, env_datatype)

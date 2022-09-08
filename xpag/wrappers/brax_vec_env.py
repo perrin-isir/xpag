@@ -2,7 +2,7 @@
 #
 # Licensed under the BSD 3-Clause License.
 
-from typing import ClassVar, Optional, Union, List
+from typing import ClassVar, Optional, Union, List, Callable
 from xpag.wrappers.gym_vec_env import check_goalenv
 import jax
 import jax.numpy as jnp
@@ -32,7 +32,13 @@ _envs_episode_length = {
 }
 
 
-def brax_vec_env_(env_name, num_envs, wrap_function=None, force_cpu_backend=False):
+def brax_vec_env_(
+    env_name: str,
+    num_envs: int,
+    wrap_function: Callable = None,
+    *,
+    force_cpu_backend=False,
+):
     from brax import envs  # lazy import
     from brax import jumpy as jp  # lazy import
     from brax.envs import env as brax_env  # lazy import
