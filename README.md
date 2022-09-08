@@ -119,10 +119,10 @@ The `learn()` function  has the following first 3 arguments (returned by [gym_ve
   This can be useful to sample random actions.
     * `env_info["single_action_space"]`: the action space (of type [gym.spaces.Space](https://github.com/openai/gym/blob/master/gym/spaces/space.py)) for single rollouts.  
   
-  Detailed information about the remaining arguments of `learn()` can be
+  `learn()` also takes in input the agent, the buffer and the setter. Detailed information about the other arguments of `learn()` can be
   found in the code documentation (check [xpag/tools/learn.py](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py)).
 
-The components that interact during the learning:
+The components that interact during learning:
 <details><summary><B>the environment (env)</B></summary>
 
 In *xpag*, environments must allow parallel rollouts, and *xpag* keeps the same API even in the case of a single rollout,
