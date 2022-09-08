@@ -26,10 +26,48 @@ def _qvalue(
 
 
 class SAC(Agent):
+    """
+    Interface to the SAC agent from JAXRL (https://github.com/ikostrikov/jaxrl)
+
+    Methods:
+    - :meth:`value` - computes Q-values given a batch of observations and a batch of
+        actions.
+    - :meth:`select_action` - selects actions given a batch of observations ; there are
+        two modes: one that includes stochasticity for exploration (eval_mode==False),
+        and one that deterministically returns the best possible action
+        (eval_mode==True).
+    - :meth:`train_on_batch` - trains the agent on a batch of transitions (one gradient
+        step).
+    - :meth:`save` - saves the agent to the disk.
+    - :meth:`load` - loads a saved agent.
+    - :meth:`write_config` - writes the configuration of the agent (mainly its
+        non-default parameters) in a file.
+
+    Attributes:
+    - :attr:`_config_string` - the configuration of the agent (mainly its non-default
+        parameters)
+    - :attr:`saclearner_params` - the SAC parameters in a dict :
+        "actor_lr" (default=3e-3): the actor learning rate
+        "critic_lr" (default=3e-3): the critic learning rate
+        "temp_lr" (default=3e-3): the temperature learning rate
+        "backup_entropy" (default=True): if True, activates the entropy-regularization
+            of the critic loss
+        "discount" (default=0.99): the discount factor
+        "hidden_dims" (default=(256,256)): the hidden layer dimensions for the actor
+            and critic networks
+        "init_temperature" (default=1.): the initial temperature
+        "target_entropy": the target entropy; if None, it will be set
+            to -action_dim / 2
+        "target_update_period" (default=1): defines how often a soft update of the
+            target critic is performed
+        "tau" (default=5e-2): the soft update coefficient
+        "policy_final_fc_init_scale" (default=1.): scale parameter for the
+            initialization of the final fully connected layers of the actor network
+    - :attr:`sac` - the SACLearner object that contains and trains the agent and critic
+        networks
+    """
+
     def __init__(self, observation_dim, action_dim, params=None):
-        """
-        Interface to the SAC agent from JAXRL (https://github.com/ikostrikov/jaxrl)
-        """
 
         self._config_string = str(list(locals().items())[1:])
         super().__init__("SAC", observation_dim, action_dim, params)

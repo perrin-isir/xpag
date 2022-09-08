@@ -61,7 +61,7 @@ def learn(
         evaluate_every_x_steps (int): the number of steps between two evaluations of the
             agent (remark: if there n rollouts in parallel, one call to
             env.step() counts as n steps).
-        save_agent_every_x_steps (int): it defines how frequently the agent is saved to
+        save_agent_every_x_steps (int): it defines how often the agent is saved to
             the disk (remark: if there n rollouts in parallel, one call to
             env.step() counts as n steps).
         save_dir (str): the directory in which the config, agent, plots, evaluation
