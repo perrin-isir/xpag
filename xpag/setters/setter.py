@@ -16,7 +16,9 @@ class Setter(ABC):
         pass
 
     @abstractmethod
-    def reset_done(self, env, observation, info, eval_mode=False) -> Tuple[Any, Any]:
+    def reset_done(
+        self, env, observation, info, done, eval_mode=False
+    ) -> Tuple[Any, Any, Any]:
         pass
 
     @abstractmethod
@@ -55,8 +57,8 @@ class DefaultSetter(Setter, ABC):
     def reset(self, env, observation, info, eval_mode=False):
         return observation, info
 
-    def reset_done(self, env, observation, info, eval_mode=False):
-        return observation, info
+    def reset_done(self, env, observation, info, done, eval_mode=False):
+        return observation, info, done
 
     def step(
         self,
@@ -93,9 +95,11 @@ class CompositeSetter(Setter, ABC):
         obs_, info_ = self.setter1.reset(env, observation, info, eval_mode)
         return self.setter2.reset(env, obs_, info_, eval_mode)
 
-    def reset_done(self, env, observation, info, eval_mode=False):
-        obs_, info_ = self.setter1.reset_done(env, observation, info, eval_mode)
-        return self.setter2.reset_done(env, obs_, info_, eval_mode)
+    def reset_done(self, env, observation, info, done, eval_mode=False):
+        obs_, info_, done_ = self.setter1.reset_done(
+            env, observation, info, done, eval_mode
+        )
+        return self.setter2.reset_done(env, obs_, info_, done_, eval_mode)
 
     def step(
         self,

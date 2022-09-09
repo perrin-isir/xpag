@@ -167,7 +167,8 @@ def learn(
             # use store_done() if the buffer is an episodic buffer
             if episodic_buffer:
                 buffer.store_done(done)
-            observation, _ = setter.reset_done(
+            observation, _, _ = setter.reset_done(
                 env,
                 *env.reset_done(done, seed=master_rng.randint(1e9)),
+                done,
             )
