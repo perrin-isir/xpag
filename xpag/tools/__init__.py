@@ -1,10 +1,13 @@
 from xpag.tools.utils import (
     DataType,
+    get_datatype,
+    datatype_convert,
     reshape,
     hstack,
     logical_or,
     maximum,
-    datatype_convert,
+    squeeze,
+    where,
     get_env_dimensions,
 )
 from xpag.tools.eval import single_rollout_eval
