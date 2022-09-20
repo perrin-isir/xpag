@@ -32,7 +32,7 @@ def mujoco_notebook_replay(load_dir: str):
     env_name = str(
         np.loadtxt(os.path.join(load_dir, "episode", "env_name.txt"), dtype="str")
     )
-    env_replay = gym.make(env_name)
+    env_replay = gym.make(env_name, render_mode="rgb_array")
     env_replay.reset()
     qpos = np.load(os.path.join(load_dir, "episode", "qpos.npy"))
     qvel = np.load(os.path.join(load_dir, "episode", "qvel.npy"))
@@ -50,7 +50,7 @@ def mujoco_notebook_replay(load_dir: str):
 
     def compute_image(step):
         env_replay.set_state(qpos[step], qvel[step])
-        img_ = Image.fromarray(env_replay.render(mode="rgb_array"))
+        img_ = Image.fromarray(env_replay.render())
         ImageDraw.Draw(img_).text((0, 0), f"step: {step}", (255, 255, 255))
         return img_
 

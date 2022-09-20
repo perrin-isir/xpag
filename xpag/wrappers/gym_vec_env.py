@@ -96,13 +96,14 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
         # env_type = "Mujoco" if isinstance(dummy_env.unwrapped, MujocoEnv) else "Gym"
         # To avoid imposing a dependency to mujoco, we simply guess that the
         # environment is a mujoco environment when it has the 'init_qpos', 'init_qvel',
-        # 'state_vector' and '_mujoco_bindings' attributes:
+        # 'state_vector', 'do_simulation' and 'get_body_com' attributes:
         env_type = (
             "Mujoco"
             if hasattr(dummy_env.unwrapped, "init_qpos")
             and hasattr(dummy_env.unwrapped, "init_qvel")
             and hasattr(dummy_env.unwrapped, "state_vector")
-            and hasattr(dummy_env.unwrapped, "_mujoco_bindings")
+            and hasattr(dummy_env.unwrapped, "do_simulation")
+            and hasattr(dummy_env.unwrapped, "get_body_com")
             else "Gym"
         )
         # The 'init_qpos' and 'state_vector' attributes are the one required to
