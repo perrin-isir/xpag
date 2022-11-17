@@ -255,6 +255,10 @@ def brax_vec_env_(
 
 
 def brax_vec_env(env_name, num_envs, wrap_function=None, force_cpu_backend=False):
-    env, env_info = brax_vec_env_(env_name, num_envs, wrap_function, force_cpu_backend)
-    eval_env, _ = brax_vec_env_(env_name, 1, wrap_function, force_cpu_backend)
+    env, env_info = brax_vec_env_(
+        env_name, num_envs, wrap_function, force_cpu_backend=force_cpu_backend
+    )
+    eval_env, _ = brax_vec_env_(
+        env_name, 1, wrap_function, force_cpu_backend=force_cpu_backend
+    )
     return env, eval_env, env_info

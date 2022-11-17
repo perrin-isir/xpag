@@ -283,13 +283,13 @@ class TD3(Agent):
             )
             q_params = optax.apply_updates(state.q_params, q_params_update)
 
-            new_target_q_params = jax.tree_multimap(
+            new_target_q_params = jax.tree_util.tree_map(
                 lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
                 state.target_q_params,
                 q_params,
             )
 
-            new_target_policy_params = jax.tree_multimap(
+            new_target_policy_params = jax.tree_util.tree_map(
                 lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
                 state.target_policy_params,
                 policy_params,
@@ -380,7 +380,7 @@ class TD3(Agent):
     def load(self, directory):
         load_all = {}
         for filename in self.training_state.__dict__.keys():
-            load_all[filename] = jax.tree_util.tree_multimap(
+            load_all[filename] = jax.tree_util.tree_map(
                 jnp.array, joblib.load(os.path.join(directory, filename + ".joblib"))
             )
         self.training_state = TrainingState(

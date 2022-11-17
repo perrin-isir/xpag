@@ -165,9 +165,9 @@ class Model:
         with open(os.path.join(load_path, "opt_state.flax"), "rb") as f3:
             opt_state = flax.serialization.from_bytes(self.opt_state, f3.read())
         return self.replace(
-            step=jax.tree_util.tree_multimap(jnp.array, step),
-            params=jax.tree_util.tree_multimap(jnp.array, params),
-            opt_state=jax.tree_util.tree_multimap(jnp.array, opt_state),
+            step=jax.tree_util.tree_map(jnp.array, step),
+            params=jax.tree_util.tree_map(jnp.array, params),
+            opt_state=jax.tree_util.tree_map(jnp.array, opt_state),
         )
 
 
@@ -219,7 +219,7 @@ def update_actor(
 
 
 def target_update(critic: Model, target_critic: Model, tau: float) -> Model:
-    new_target_params = jax.tree_multimap(
+    new_target_params = jax.tree_util.tree_map(
         lambda p, tp: p * tau + tp * (1 - tau), critic.params, target_critic.params
     )
 
