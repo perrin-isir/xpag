@@ -22,6 +22,7 @@ setup(
         "optax>=0.1.2",
         "brax>=0.0.10",
         "tensorflow-probability>=0.15.0",
+        "mediapy>=1.1.4",
     ],
     license="LICENSE",
 )
