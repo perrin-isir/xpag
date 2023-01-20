@@ -88,7 +88,7 @@ The *xpag-tutorials* repository contains a list of tutorials (colab notebooks) f
 goal-conditioned reinforcement learning (GCRL) in mind (check out the [train_gmazes.ipynb](https://colab.research.google.com/github/perrin-isir/xpag-tutorials/blob/main/train_gmazes.ipynb)
 tutorial for a simple example of GCRL). 
 
-In GCRL, agents have a goal, and the reward mainly depends on 
+In GCRL, agents have a goal, which is part of the input they take, and the reward mainly depends on 
 the degree of achievement of that goal. Beyond the usual modules in 
 RL platforms (environment, agent, buffer/sampler), *xpag* introduces a 
 module called "setter" which, among other things, can help to set and manage
@@ -108,21 +108,20 @@ The `learn()` function  has the following first 3 arguments (returned by [gym_ve
   * `env_info`: a dictionary containing information about the environment:
     * `env_info["env_type"]`: the type of environment; for the moment *xpag* 
   differentiates 3 types of environments: "Brax" environments, "Mujoco" environments, and
-  "Gym" environments. This information is used to adapt the way episodes are saved.
+  "Gym" environments. This information is used to adapt the way episodes are saved and replayed.
     * `env_info["name"]`: the name of the environment.
     * `env_info["is_goalenv"]`: whether the environment is a goal-based environment or 
   not.
     * `env_info["num_envs"]`: the number of parallel rollouts in `env`
     * `env_info["max_episode_steps"]`: the maximum number of steps in episodes (*xpag* 
   does not allow potentially infinite episodes).
-    * `env_info["action_space"]`: the action space (of type [gym.spaces.Space](https://github.com/openai/gym/blob/master/gym/spaces/space.py)) that takes into account parallel rollouts.
-  This can be useful to sample random actions.
+    * `env_info["action_space"]`: the action space (of type [gym.spaces.Space](https://github.com/openai/gym/blob/master/gym/spaces/space.py)) that takes into account parallel rollouts. It can be useful to sample random actions.
     * `env_info["single_action_space"]`: the action space (of type [gym.spaces.Space](https://github.com/openai/gym/blob/master/gym/spaces/space.py)) for single rollouts.  
   
-  `learn()` also takes in input the agent, the buffer and the setter. Detailed information about the other arguments of `learn()` can be
+  `learn()` also takes in input the agent, the buffer and the setter and various parameters. Detailed information about the arguments of `learn()` can be
   found in the code documentation (check [xpag/tools/learn.py](https://github.com/perrin-isir/xpag/blob/main/xpag/tools/learn.py)).
 
-The components that interact during learning:
+The components that interact during learning are:
 <details><summary><B>the environment (env)</B></summary>
 
 In *xpag*, environments must allow parallel rollouts, and *xpag* keeps the same API even in the case of a single rollout,
@@ -178,7 +177,7 @@ Goal-based environments (for GCRL) must have a similar interface to the one defi
 the [Gym-Robotics](https://github.com/Farama-Foundation/gym-robotics) library
 (see `GoalEnv` in [core.py](https://github.com/Farama-Foundation/Gym-Robotics/blob/main/gym_robotics/core.py)), with minor differences.
 Their observation spaces are of type [gym.spaces.Dict](https://github.com/openai/gym/blob/master/gym/spaces/dict.py), with the following keys 
-in the `observation` dictionaries: "observation", "achieved_goal", and "desired_goal".
+in the `observation` dictionaries: `"observation"`, `"achieved_goal"`, and `"desired_goal"`.
 Goal-based environments must also have in attribute a `compute_reward()` function that computes rewards.
 In *xpag*, the inputs of `compute_reward()` can be different from the ones considered in 
 the original `GoalEnv` class. For example, in the
@@ -193,7 +192,7 @@ it is assumed that `compute_reward()` depends only on  `achieved_goal`, `desired
 In goal-based environments, the multiple observations from parallel rollouts are concatenated as in the gym function `concatenate()`
 (cf. [https://github.com/openai/gym/blob/master/gym/vector/utils/numpy_utils.py](https://github.com/openai/gym/blob/master/gym/vector/utils/numpy_utils.py)), 
 which means that the batched observations are always single dictionaries in which the 
-entries "observation", "achieved_goal" and "desired_goal" are arrays of observations,
+entries `"observation"`, `"achieved_goal"` and `"desired_goal"` are arrays of observations,
 achieved goals and desired goals.
 
 
