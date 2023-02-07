@@ -13,7 +13,7 @@
 
 The *xpag* agents are written in JAX and Flax,
 and some functionalities specific to Brax environments require it to be 
-installed.
+installed too.
 
 **The library JAX is required by *xpag*, but its automatic installation may not work properly (e.g. not GPU-compatible).**  
 We recommend to install it properly before installing *xpag*, following these guidelines:  
@@ -26,9 +26,10 @@ print(jax.lib.xla_bridge.get_backend().platform)
 ```
 It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
 
-Flax should be installed automatically as a dependency of xpag, but if necessary you can follow these guidelines to install it:
+Flax and Brax should be installed automatically as dependencies of xpag, but if necessary you can follow these guidelines to install it:
     
-[https://github.com/google/flax#quick-install](https://github.com/google/flax#quick-install)
+[https://github.com/google/flax#quick-install](https://github.com/google/flax#quick-install)  
+[https://github.com/google/brax#using-brax-locally](https://github.com/google/brax#using-brax-locally)
 </p>
 </details>
 
