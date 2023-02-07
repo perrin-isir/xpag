@@ -26,7 +26,7 @@ print(jax.lib.xla_bridge.get_backend().platform)
 ```
 It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
 
-Flax should be automatically installed as an *xpag* dependency, but if needed you can follow these guidelines to install it:
+Flax should be installed automatically as a dependency of xpag, but if necessary you can follow these guidelines to install it:
     
 [https://github.com/google/flax#quick-install](https://github.com/google/flax#quick-install)
 </p>
