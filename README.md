@@ -26,7 +26,8 @@ print(jax.lib.xla_bridge.get_backend().platform)
 ```
 It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
 
-Likewise, follow these guidelines to install Flax:  
+Likewise, follow these guidelines to install Flax:
+    
 [https://github.com/google/flax#quick-install](https://github.com/google/flax#quick-install)
 </p>
 </details>
