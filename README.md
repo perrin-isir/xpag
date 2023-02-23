@@ -11,14 +11,13 @@
 <details><summary>Option 1: conda (preferred option)</summary>
 <p>
 	
-    This option is preferred because it relies mainly on conda-forge packages (which among other things simplifies the installation of JAX).
+This option is preferred because it relies mainly on conda-forge packages (which among other things simplifies the installation of JAX).
 
     git clone https://github.com/perrin-isir/xpag.git
     cd xpag
-    
     conda update conda
    
-Install micromamba if you don't already have it (you can also simply use conda, by replacing below `micromamba create`, `micromamba update` and `micromamba activate` respectively by `conda env create`, `conda env update` and `conda activate`; however, this will lead to a significantly slower install):
+Install micromamba if you don't already have it (you can also simply use conda, by replacing below `micromamba create`, `micromamba update` and `micromamba activate` respectively by `conda env create`, `conda env update` and `conda activate`, but this will lead to a significantly slower installation):
 
     conda install -c conda-forge micromamba
 
@@ -31,11 +30,11 @@ If you prefer to update an existing environment (`existing_env`):
 
     micromamba update --name existing_env --file environment.yaml
 
-To activate the `xpagenv` environment:
+Then, activate the `xpagenv` environment:
 
     micromamba activate xpagenv
 
-Finally, to install the *xpag* library in the activated virtual environment:
+Finally, install the *xpag* library in the activated environment:
 
     pip install -e .
 
@@ -45,7 +44,7 @@ Finally, to install the *xpag* library in the activated virtual environment:
 <details><summary>Option 2: pip</summary>
 <p>
 
-    For the pip install, you need to properly install JAX yourself. Otherwise, if JAX is installed automatically as a pip dependency of *xpag*, it will probably not work as desired (e.g. it will not be GPU-compatible). So you should install it beforehand, following these guidelines: 
+For the pip install, you need to properly install JAX yourself. Otherwise, if JAX is installed automatically as a pip dependency of *xpag*, it will probably not work as desired (e.g. it will not be GPU-compatible). So you should install it beforehand, following these guidelines: 
 
 [https://github.com/google/jax#installation](https://github.com/google/jax#installation) 
    
@@ -53,7 +52,7 @@ Finally, to install the *xpag* library in the activated virtual environment:
 ```
 print(jax.lib.xla_bridge.get_backend().platform)
 ```
-It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
+It will print "cpu", "gpu" or "tpu" depending on the platform JAX is using.
 
 Once JAX is working well, install *xpag* with:
 
