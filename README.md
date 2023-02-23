@@ -8,61 +8,56 @@
 -----
 ## Install
 
-<details><summary>JAX</summary>
+<details><summary>Option 1: conda (preferred option)</summary>
+<p>
+	
+    This option is preferred because it relies mainly on conda-forge packages (which among other things simplifies the installation of JAX).
+
+    git clone https://github.com/perrin-isir/xpag.git
+    cd xpag
+    
+    conda update conda
+   
+Install micromamba if you don't already have it (you can also simply use conda, by replacing below `micromamba create`, `micromamba update` and `micromamba activate` respectively by `conda env create`, `conda env update` and `conda activate`; however, this will lead to a significantly slower install):
+
+    conda install -c conda-forge micromamba
+
+Choose a conda environmnent name, for instance `xpagenv`.  
+The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](environment.yaml):
+
+    micromamba create --name xpagenv --file environment.yaml
+
+If you prefer to update an existing environment (`existing_env`):
+
+    micromamba update --name existing_env --file environment.yaml
+
+To activate the `xpagenv` environment:
+
+    micromamba activate xpagenv
+
+Finally, to install the *xpag* library in the activated virtual environment:
+
+    pip install -e .
+
+</p>
+</details>
+
+<details><summary>Option 2: pip</summary>
 <p>
 
-The *xpag* agents are written in JAX and Flax,
-and some functionalities specific to Brax environments require it to be 
-installed too.
+    For the pip install, you need to properly install JAX yourself. Otherwise, if JAX is installed automatically as a pip dependency of *xpag*, it will probably not work as desired (e.g. it will not be GPU-compatible). So you should install it beforehand, following these guidelines: 
 
-**The library JAX is required by *xpag*, but its automatic installation may not work properly (e.g. not GPU-compatible).**  
-We recommend to install it properly before installing *xpag*, following these guidelines:  
-
-[https://github.com/google/jax#installation](https://github.com/google/jax#installation)  
-
+[https://github.com/google/jax#installation](https://github.com/google/jax#installation) 
+   
 *Remark:* to verify that the installation went well, check the backend used by JAX with the following command (in a python console and with `jax` imported and configured):
 ```
 print(jax.lib.xla_bridge.get_backend().platform)
 ```
 It will print "cpu", "gpu" or "tpu" depending on the platform that JAX is using.
 
-Flax and Brax should be installed automatically as dependencies of xpag, but if necessary you can follow these guidelines to install it:
-    
-[https://github.com/google/flax#quick-install](https://github.com/google/flax#quick-install)  
-[https://github.com/google/brax#using-brax-locally](https://github.com/google/brax#using-brax-locally)
-</p>
-</details>
-
-<details><summary>Option 1: pip</summary>
-<p>
+Once JAX is working well, install *xpag* with:
 
     pip install git+https://github.com/perrin-isir/xpag
-
-</p>
-</details>
-
-<details><summary>Option 2: conda</summary>
-<p>
-
-    git clone https://github.com/perrin-isir/xpag.git
-    cd xpag
-
-Choose a conda environmnent name, for instance `xpagenv`.  
-The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](environment.yaml):
-
-    conda env create --name xpagenv --file environment.yaml
-
-If you prefer to update an existing environment (`existing_env`):
-
-    conda env update --name existing_env --file environment.yaml
-
-To activate the `xpagenv` environment:
-
-    conda activate xpagenv
-
-Finally, to install the *xpag* library in the activated virtual environment:
-
-    pip install -e .
 
 </p>
 </details>
