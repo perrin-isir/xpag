@@ -50,11 +50,11 @@ Flax and Brax should be installed automatically as dependencies of xpag, but if 
 Choose a conda environmnent name, for instance `xpagenv`.  
 The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](environment.yaml):
 
-    conda env create --name xpagenv --file environment.yaml
+    conda create --name xpagenv --file environment.yaml
 
 If you prefer to update an existing environment (`existing_env`):
 
-    conda env update --name existing_env --file environment.yaml
+    conda update --name existing_env --file environment.yaml
 
 To activate the `xpagenv` environment:
 
