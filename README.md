@@ -47,20 +47,25 @@ Finally, install the *xpag* library in the activated environment:
 For the pip install, you need to properly install JAX yourself. Otherwise, if JAX is installed automatically as a pip dependency of *xpag*, it will probably not work as desired (e.g. it will not be GPU-compatible). So you should install it beforehand, following these guidelines: 
 
 [https://github.com/google/jax#installation](https://github.com/google/jax#installation) 
-   
-*Remark:* to verify that the installation went well, check the backend used by JAX with the following command (in a python console and with `jax` imported and configured):
-```
-print(jax.lib.xla_bridge.get_backend().platform)
-```
-It will print "cpu", "gpu" or "tpu" depending on the platform JAX is using.
 
-Once JAX is working well, install *xpag* with:
+Then, install *xpag* with:
 
     pip install git+https://github.com/perrin-isir/xpag
 
 </p>
 </details>
 
+<details><summary>JAX</summary>
+<p>
+
+To verify that the JAX installation went well, check the backend used by JAX with the following command:
+```
+python -c "import jax; print(jax.lib.xla_bridge.get_backend().platform)"
+```
+It will print "cpu", "gpu" or "tpu" depending on the platform JAX is using.
+
+</p>
+</details>
 
 <details><summary>Tutorials</summary>
 <p>
