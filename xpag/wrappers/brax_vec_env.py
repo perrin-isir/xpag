@@ -8,8 +8,8 @@ import jax
 import jax.numpy as jnp
 import gymnasium as gym
 import numpy as np
-from gym import spaces
-from gym.vector import utils
+from gymnasium import spaces
+from gymnasium.vector import utils
 from xpag.tools.utils import get_env_dimensions
 
 _envs_episode_length = {

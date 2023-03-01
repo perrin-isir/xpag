@@ -7,8 +7,12 @@ import inspect
 from typing import Callable
 import numpy as np
 import gymnasium as gym
-from gym.vector.utils import write_to_shared_memory, concatenate, create_empty_array
-from gym.vector import VectorEnv, AsyncVectorEnv
+from gymnasium.vector.utils import (
+    write_to_shared_memory,
+    concatenate,
+    create_empty_array,
+)
+from gymnasium.vector import VectorEnv, AsyncVectorEnv
 from xpag.wrappers.reset_done import ResetDoneWrapper
 from xpag.tools.utils import get_env_dimensions
 
@@ -50,13 +54,15 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
         # the environment to properly handle parallel rollouts.
 
         env = wrap_function(
-            gym.make(env_name, num_envs=num_envs).unwrapped  # removing gym wrappers
+            gym.make(
+                env_name, num_envs=num_envs
+            ).unwrapped  # removing gymnasium wrappers
         )
 
         # We force the environment to have a time limit, but
         # env.spec.max_episode_steps cannot exist as it would automatically trigger
-        # the TimeLimit wrapper of gym, which does not handle batch envs. We require
-        # max_episode_steps to be stored as an attribute of env:
+        # the TimeLimit wrapper of gymnasium, which does not handle batch envs.
+        # We require max_episode_steps to be stored as an attribute of env:
         assert (
             (
                 not hasattr(env.spec, "max_episode_steps")
@@ -72,9 +78,9 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
         env_type = "Gym"
     else:
         dummy_env = gym.make(env_name)
-        # We force the env to have either a standard gym time limit (with the max number
-        # of steps defined in .spec.max_episode_steps), or the max number of steps
-        # defined in .max_episode_steps (and in this case we trust the environment
+        # We force the env to either have a standard gymnasium time limit (with the
+        # max number of steps defined in .spec.max_episode_steps), or the max number of
+        # steps defined in .max_episode_steps (and in this case we trust the environment
         # to appropriately prevent episodes from exceeding max_episode_steps steps).
         assert (
             hasattr(dummy_env.spec, "max_episode_steps")
@@ -83,7 +89,7 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
             hasattr(dummy_env, "max_episode_steps")
             and dummy_env.max_episode_steps is not None
         ), (
-            "Only allowing gym envs with time limit (defined in "
+            "Only allowing gym(nasium) envs with time limit (defined in "
             ".spec.max_episode_steps or .max_episode_steps)."
         )
         if (
@@ -184,8 +190,8 @@ def _worker_shared_memory_no_auto_reset(
     index, env_fn, pipe, parent_pipe, shared_memory, error_queue
 ):
     """
-    This function is derived from _worker_shared_memory() in gym. See:
-    https://github.com/openai/gym/blob/master/gym/vector/async_vector_env.py
+    This function is derived from _worker_shared_memory() in gymnasium. See:
+    https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/vector/async_vector_env.py
     """
     assert shared_memory is not None
     env = env_fn()
