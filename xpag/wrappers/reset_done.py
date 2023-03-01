@@ -3,7 +3,7 @@
 # Licensed under the BSD 3-Clause License.
 
 import numpy as np
-import gym
+import gymnasium as gym
 
 
 class ResetDoneWrapper(gym.Wrapper):

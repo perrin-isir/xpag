@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 from gym.vector import VectorEnv
 from gym import spaces
 from xpag.tools.utils import get_datatype, datatype_convert, where, hstack

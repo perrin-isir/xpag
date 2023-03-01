@@ -6,7 +6,7 @@ import sys
 import inspect
 from typing import Callable
 import numpy as np
-import gym
+import gymnasium as gym
 from gym.vector.utils import write_to_shared_memory, concatenate, create_empty_array
 from gym.vector import VectorEnv, AsyncVectorEnv
 from xpag.wrappers.reset_done import ResetDoneWrapper

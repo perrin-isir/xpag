@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import gym
+import gymnasium as gym
 import mediapy as media
 from typing import Callable
 
@@ -111,13 +111,15 @@ def mujoco_notebook_replay(load_dir: str):
         imgs = []
         for i in range(len(qpos)):
             imgs.append(np.array(img_dict[i]))
-        media.show_video(imgs, fps=1./(env_replay.model.opt.timestep * env_replay.frame_skip))
+        media.show_video(
+            imgs, fps=1.0 / (env_replay.model.opt.timestep * env_replay.frame_skip)
+        )
 
     display.display(
         ipywidgets.widgets.HBox(
             (
                 DownloadButton(contents=create_gif, description="Generate gif"),
-                DownloadButton(contents=create_mp4, description="Generate mp4")
+                DownloadButton(contents=create_mp4, description="Generate mp4"),
             )
         )
     )
