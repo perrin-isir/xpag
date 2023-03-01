@@ -10,4 +10,4 @@ xpag
     :maxdepth: 1
 
     installation.rst
-    agents.rst
+    api-reference.rst

@@ -21,13 +21,23 @@ extensions = [
     "sphinx-mathjax-offline",
     "sphinx.ext.napoleon",  # before sphinx_autodoc_typehints
     "sphinx_autodoc_typehints",
+    "sphinx.ext.autosummary",  # summary table
 ]
 
 # List of modules to be mocked up
-autodoc_mock_imports = ["ecos", "gurobipy", "mosek", "osqp", "qpoases"]
+autodoc_mock_imports = []
+
+# Configure sphinx.ext.autosummary
+autosummary_generate = True
+autoclass_content = "both"  # add __init__ docstrings to class summaries
+html_show_sourcelink = False  # remove "view source code" from top of page
+autodoc_inherit_docstrings = True  # if no docstring, inherit from base class
+set_type_checking_flag = True  # 'expensive' imports (sphinx_autodoc_typehints)
+nbsphinx_allow_errors = True  # continue through Jupyter errors
+add_module_names = False  # remove namespaces from class/method signatures
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = []
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -73,7 +83,7 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_templates"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
