@@ -1,0 +1,5 @@
+__pycache__
+_build
+build/
+doc/_autosummary
+xpag.egg-info/
