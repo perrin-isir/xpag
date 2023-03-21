@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2022 Nicolas Perrin-Gilbert.
+# Copyright 2022-2023, CNRS.
 #
 # Licensed under the BSD 3-Clause License.
 
@@ -50,7 +50,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "xpag"
-copyright = "2022 Nicolas Perrin-Gilbert"
+copyright = "2022-2023 CNRS"
 author = "Nicolas Perrin-Gilbert"
 
 # The version info for the project you're documenting, acts as replacement for
