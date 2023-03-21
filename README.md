@@ -2,6 +2,7 @@
 
 ![version](https://img.shields.io/badge/version-0.1.0-blue)
 [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Documentation](https://img.shields.io/github/actions/workflow/status/perrin-isir/xpag/docs.yml?branch=main&label=docs)](https://perrin-isir.github.io/xpag/)
 
 *xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning library with JAX agents, currently in beta version.
 
