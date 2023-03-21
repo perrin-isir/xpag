@@ -26,9 +26,12 @@ from typing import Dict, Any
 
 class RBQueue(Generic[Sample]):
     """Replay buffer.
+
     * It behaves as a limited size queue (if buffer is full it removes the oldest
-      elements when new one is inserted).
-    * It supports batch insertion only (no single element)
+        elements when new ones are inserted).
+
+    * It supports batch insertion only (no single element).
+
     """
 
     def __init__(self, max_replay_size: int, dummy_data_sample: Sample):
@@ -56,6 +59,7 @@ class RBQueue(Generic[Sample]):
         Returns:
           New buffer state.
         """
+
         if buffer_state.data.shape != self._data_shape:
             raise ValueError(
                 f"buffer_state.data.shape ({buffer_state.data.shape}) "
@@ -112,12 +116,14 @@ class JaxBuffer(Buffer):
         Init the replay buffer with a dummy step.
         (!! do not include the batch dimension !!)
         """
+
         self.replay_buffer = RBQueue(self.buffer_size, dummy_step)
         self.buffer_state = self.replay_buffer.init(jax.random.PRNGKey(rng))
         self.replay_buffer.insert_jit = jax.jit(self.replay_buffer.insert)
 
     def insert(self, step_batch: Dict[str, Any]):
         """Inserts a transition in the buffer"""
+
         if not self.initialized:
             dummy_step = {}
             for key in step_batch.keys():
@@ -131,6 +137,7 @@ class JaxBuffer(Buffer):
 
     def sample(self, batch_size) -> Dict[str, jnp.ndarray]:
         """Returns a batch of transitions"""
+
         self.buffer_state, batch = self.sampler.sample_jit(
             self.buffer_state, batch_size
         )

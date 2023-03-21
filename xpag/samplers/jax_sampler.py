@@ -39,8 +39,10 @@ class ReplayBufferState:
 
 class RBUniformSampling(Generic[Sample]):
     """Uniform sampling in the Replay buffer.
+
     * It performs uniform random sampling with replacement of a batch of size
       `batch_size`
+
     """
 
     def __init__(self, dummy_data_sample: Sample):
