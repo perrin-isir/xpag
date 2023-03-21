@@ -26,7 +26,7 @@ jobs:
               with:
                   cache-downloads: true
                   cache-env: true
-                  environment-file: environment.yml
+                  environment-file: doc/environment.yml
                   environment-name: xpagenv
 
             - name: Install PyPI dependencies
