@@ -2,8 +2,8 @@
 Installation
 ************
 
-Conda
-=====
+Option 1: conda (preferred option)
+==================================
 
 This option is preferred because it relies mainly on conda-forge packages (which among other things simplifies the installation of JAX).
 
@@ -19,7 +19,7 @@ Install micromamba if you don't already have it (you can also simply use conda, 
 
     conda install -c conda-forge micromamba
 
-Choose a conda environmnent name, for instance `xpagenv`. The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](environment.yaml):
+Choose a conda environmnent name, for instance `xpagenv`. The following command creates the `xpagenv` environment with the requirements listed in `environment.yaml <https://github.com/perrin-isir/xpag/blob/main/environment.yaml>`__:
 
 .. code:: console
 
@@ -43,12 +43,12 @@ Finally, install the *xpag* library in the activated environment:
 
     pip install -e .
 
-PyPI
-====
+Option 2: pip
+=============
 
 For the pip install, you need to properly install JAX yourself. Otherwise, if JAX is installed automatically as a pip dependency of *xpag*, it will probably not work as desired (e.g. it will not be GPU-compatible). So you should install it beforehand, following these guidelines: 
 
-[https://github.com/google/jax#installation](https://github.com/google/jax#installation) 
+`https://github.com/google/jax#installation <https://github.com/google/jax#installation>`__
 
 Then, install *xpag* with:
 
@@ -73,5 +73,5 @@ Tutorials
 
 The following libraries, not required by *xpag*, are required for the `tutorials <https://github.com/perrin-isir/xpag-tutorials>`__:
 
-- MuJoCo (``pip install mujoco``): see [https://github.com/deepmind/mujoco](https://github.com/deepmind/mujoco)
-- imageio (``pip install imageio``): see [https://github.com/imageio/imageio](https://github.com/imageio/imageio)
+- MuJoCo (``pip install mujoco``): see `https://github.com/deepmind/mujoco <https://github.com/deepmind/mujoco>`__
+- imageio (``pip install imageio``): see `https://github.com/imageio/imageio <https://github.com/imageio/imageio>`__

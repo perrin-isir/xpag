@@ -232,6 +232,7 @@ The figure below summarizes the RL loop and the interactions between the compone
   Other people who contributed to *xpag*:
   - Olivier Serris (ISIR)
   - Alexandre Chenu (ISIR)
+  - Stéphane Caron (Inria)
 
 * The [SAC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/sac) is based on the implementation of SAC in [JAXRL](https://github.com/ikostrikov/jaxrl), and some elements of the [TQC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/tqc) come from the implementation of TQC in [RLJAX](https://github.com/ku2482/rljax).
 
