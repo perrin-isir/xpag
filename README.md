@@ -22,7 +22,7 @@ Install micromamba if you don't already have it (you can also simply use conda, 
 
     conda install -c conda-forge micromamba
 
-Choose an environmnent name, for instance `xpagenv`.  
+Choose an environment name, for instance `xpagenv`.  
 The following command creates the `xpagenv` environment with the requirements listed in [environment.yaml](environment.yaml):
 
     micromamba create --name xpagenv --file environment.yaml
