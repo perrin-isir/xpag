@@ -51,7 +51,7 @@ For the pip install, you need to properly install JAX yourself. Otherwise, if JA
 
 Then, install *xpag* with:
 
-    pip install git+https://github.com/perrin-isir/xpag
+    pip install xpag
 
 </p>
 </details>
