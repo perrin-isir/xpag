@@ -324,7 +324,6 @@ class SDQN(Agent):
             new_observations,
             rewards,
             mask,
-            key_,
         ) -> jnp.ndarray:
             next_actions = self.greedy_actions(
                 self.action_bins, self.action_dim, critic_low_params, new_observations
@@ -332,7 +331,7 @@ class SDQN(Agent):
 
             # Compute the target Q value
             target_q1, target_q2 = self.critic_up.apply(
-                critic_up_params, new_observations, next_actions, 1
+                target_critic_up_params, new_observations, next_actions, 1
             )
             next_v = jnp.min(jnp.array([target_q1, target_q2]), axis=0)
             target_q = jax.lax.stop_gradient(
@@ -435,7 +434,6 @@ class SDQN(Agent):
                 new_observations,
                 rewards,
                 mask,
-                key_critic,
             )
 
             (
@@ -444,9 +442,13 @@ class SDQN(Agent):
             ) = self.critic_up_optimizer.update(
                 critic_up_grads, state.critic_up_optimizer_state
             )
+
+            __import__("IPython").embed()
+
             critic_up_params = optax.apply_updates(
                 state.critic_up_params, critic_up_params_update
             )
+
             new_target_critic_up_params = jax.tree_util.tree_map(
                 lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
                 state.target_q_params,
