@@ -120,7 +120,7 @@ class TD3(Agent):
             action_size: int,
             hidden_layer_sizes: Tuple[int, ...],
         ) -> Tuple[FeedForwardModel, FeedForwardModel]:
-            """Creates a policy and value networks for TD3."""
+            """Creates a policy and Q-value networks for TD3."""
             policy_module = CustomMLP(
                 layer_sizes=hidden_layer_sizes + (action_size,),
                 activation=linen.relu,

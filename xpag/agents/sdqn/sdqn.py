@@ -10,8 +10,9 @@ import jax
 import jax.numpy as jnp
 import optax
 from xpag.agents.agent import Agent
-import os
-import joblib
+
+# import os
+# import joblib
 
 Params = Any
 PRNGKey = jnp.ndarray
@@ -27,12 +28,12 @@ class FeedForwardModel:
 class TrainingState:
     """Contains training state for the learner."""
 
-    policy_optimizer_state: optax.OptState
-    policy_params: Params
-    target_policy_params: Params
-    q_optimizer_state: optax.OptState
-    q_params: Params
-    target_q_params: Params
+    critic_up_optimizer_state: optax.OptState
+    critic_up_params: Params
+    target_critic_up_params: Params
+    critic_low_optimizer_states: Sequence[optax.OptState]
+    critic_low_params: Sequence[Params]
+    target_critic_low_params: Sequence[Params]
     key: PRNGKey
     steps: jnp.ndarray
 
@@ -46,8 +47,6 @@ class SDQN(Agent):
     ):
         """
         Jax implementation of SDQN ().
-        This version assumes that the actions are between -1 and 1 (for all
-        dimensions).
         """
 
         discount = 0.99 if "discount" not in params else params["discount"]
@@ -59,6 +58,22 @@ class SDQN(Agent):
             (256, 256) if "hidden_dims" not in params else params["hidden_dims"]
         )
         start_seed = 0 if "seed" not in params else params["seed"]
+        action_bins = 5 if "action_bins" not in params else params["action_bins"]
+        # By default, actions are assumed to be between -1 and 1 across all
+        # dimensions
+        max_action = 1.0
+        action_array = (
+            jnp.tile(
+                jnp.arange(
+                    -max_action + max_action / action_bins,
+                    max_action,
+                    2.0 * max_action / action_bins,
+                ),
+                (action_dim, 1),
+            )
+            if "action_array" not in params
+            else jnp.array(params["action_array"])
+        )
         # cpu, gpu or tpu backend
         self.backend = None if "backend" not in params else params["backend"]
 
@@ -115,20 +130,15 @@ class SDQN(Agent):
             mval = 1e-3
             return jax.random.uniform(key_, shape, dtype, -mval, mval)
 
-        def make_td3_networks(
+        def make_sdqn_networks(
             obs_size: int,
             action_size: int,
+            action_bins: int,
             hidden_layer_sizes: Tuple[int, ...],
         ) -> Tuple[FeedForwardModel, FeedForwardModel]:
-            """Creates a policy and value networks for TD3."""
-            policy_module = CustomMLP(
-                layer_sizes=hidden_layer_sizes + (action_size,),
-                activation=linen.relu,
-                kernel_init_hidden_layer=kernel_init_hidden_layer,
-                kernel_init_last_layer=init_last_layer,
-                bias_init_hidden_layer=bias_init_hidden_layer,
-                bias_init_last_layer=init_last_layer,
-            )
+            """
+            Create Q-value networks for SDQN.
+            """
 
             class QModule(linen.Module):
                 """Q Module."""
@@ -136,12 +146,14 @@ class SDQN(Agent):
                 n_critics: int = 2
 
                 @linen.compact
-                def __call__(self, obs: jnp.ndarray, actions: jnp.ndarray):
+                def __call__(
+                    self, obs: jnp.ndarray, actions: jnp.ndarray, output_size: int
+                ):
                     hidden = jnp.concatenate([obs, actions], axis=-1)
                     res = []
                     for _ in range(self.n_critics):
                         q = CustomMLP(
-                            layer_sizes=hidden_layer_sizes + (1,),
+                            layer_sizes=hidden_layer_sizes + (output_size,),
                             activation=linen.relu,
                             kernel_init_hidden_layer=kernel_init_hidden_layer,
                             kernel_init_last_layer=init_last_layer,
@@ -149,250 +161,326 @@ class SDQN(Agent):
                             bias_init_last_layer=init_last_layer,
                         )(hidden)
                         res.append(q)
-                    return jnp.concatenate(res, axis=-1)
+                    # return jnp.concatenate(res, axis=-1)
+                    return res
 
-            q_module = QModule()
+            critic_up = FeedForwardModel(
+                init=lambda key_: QModule().init(
+                    key_,
+                    jnp.zeros((1, obs_size)),
+                    jnp.zeros((1, action_size * action_bins)),
+                    1,
+                ),
+                apply=QModule().apply,
+            )
 
-            dummy_obs = jnp.zeros((1, obs_size))
-            dummy_action = jnp.zeros((1, action_size))
-            policy = FeedForwardModel(
-                init=lambda key_: policy_module.init(key_, dummy_obs),
-                apply=policy_module.apply,
-            )
-            value = FeedForwardModel(
-                init=lambda key_: q_module.init(key_, dummy_obs, dummy_action),
-                apply=q_module.apply,
-            )
-            return policy, value
+            critics_low = []
+            for i in range(action_size):
+                critics_low.append(
+                    FeedForwardModel(
+                        init=lambda key_, i_: QModule().init(
+                            key_,
+                            jnp.zeros((1, obs_size)),
+                            jnp.zeros((1, i_ * action_bins)),
+                            action_bins,
+                        ),
+                        apply=QModule().apply,
+                    )
+                )
+
+            return critic_up, critics_low
 
         self._config_string = str(list(locals().items())[1:])
-        super().__init__("TD3", observation_dim, action_dim, params)
+        super().__init__("SDQN", observation_dim, action_dim, params)
 
         self.discount = discount
         self.reward_scale = reward_scale
         self.soft_target_tau = soft_target_tau
+        self.action_bins = action_bins
+        self.action_array = action_array
 
         self.key, local_key, key_models = jax.random.split(
             jax.random.PRNGKey(start_seed), 3
         )
 
-        self.policy_model, self.value_model = make_td3_networks(
-            observation_dim, action_dim, hidden_layer_sizes=hidden_dims
+        key_models, key_q = jax.random.split(key_models)
+        self.critic_up, self.critic_low = make_sdqn_networks(
+            observation_dim, action_dim, self.action_bins, hidden_dims
         )
-
-        self.policy_optimizer = optax.adam(learning_rate=1.0 * actor_lr)
-        self.q_optimizer = optax.adam(learning_rate=1.0 * critic_lr)
-
-        key_policy, key_q = jax.random.split(key_models)
-        self.policy_params = self.policy_model.init(key_policy)
-        self.policy_optimizer_state = self.policy_optimizer.init(self.policy_params)
-        self.q_params = self.value_model.init(key_q)
-        self.q_optimizer_state = self.q_optimizer.init(self.q_params)
-
-        def postprocess(x):
-            return jnp.tanh(x)
-
-        self.postprocess = postprocess
-
-        def actor_loss(
-            policy_params: Params, q_params: Params, observations
-        ) -> jnp.ndarray:
-            p_actions = self.policy_model.apply(policy_params, observations)
-            p_actions = self.postprocess(p_actions)
-            q_action = self.value_model.apply(q_params, observations, p_actions)
-            min_q = jnp.min(q_action, axis=-1)
-            return -jnp.mean(min_q)
-
-        def critic_loss(
-            q_params: Params,
-            target_policy_params: Params,
-            target_q_params: Params,
-            observations,
-            actions,
-            new_observations,
-            rewards,
-            mask,
-            key_,
-        ) -> jnp.ndarray:
-            next_pre_actions = self.policy_model.apply(
-                target_policy_params, new_observations
-            )
-            new_next_actions = self.postprocess(next_pre_actions)
-            policy_noise = 0.2
-            noise_clip = 0.5
-            new_next_actions = jnp.clip(
-                new_next_actions
-                + jnp.clip(
-                    policy_noise
-                    * jax.random.normal(key_, shape=new_next_actions.shape),
-                    -noise_clip,
-                    noise_clip,
-                ),
-                -1.0,
-                1.0,
-            )
-
-            q_old_action = self.value_model.apply(q_params, observations, actions)
-            next_q = self.value_model.apply(
-                target_q_params, new_observations, new_next_actions
-            )
-            next_v = jnp.min(next_q, axis=-1)
-            target_q = jax.lax.stop_gradient(
-                rewards * self.reward_scale
-                + mask * discount * jnp.expand_dims(next_v, -1)
-            )
-            q_error = q_old_action - target_q
-            q_loss = 2.0 * jnp.mean(jnp.square(q_error))
-            return q_loss
-
-        self.critic_grad = jax.value_and_grad(critic_loss)
-        self.actor_grad = jax.value_and_grad(actor_loss)
-
-        def update_step(
-            state: TrainingState, observations, actions, rewards, new_observations, mask
-        ) -> Tuple[TrainingState, dict]:
-
-            key, key_critic = jax.random.split(state.key, 2)
-
-            actor_l, actor_grads = self.actor_grad(
-                state.policy_params, state.target_q_params, observations
-            )
-
-            policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
-                actor_grads, state.policy_optimizer_state
-            )
-
-            policy_params = optax.apply_updates(
-                state.policy_params, policy_params_update
-            )
-
-            critic_l, critic_grads = self.critic_grad(
-                state.q_params,
-                state.target_policy_params,
-                state.target_q_params,
-                observations,
-                actions,
-                new_observations,
-                rewards,
-                mask,
-                key_critic,
-            )
-
-            q_params_update, q_optimizer_state = self.q_optimizer.update(
-                critic_grads, state.q_optimizer_state
-            )
-            q_params = optax.apply_updates(state.q_params, q_params_update)
-
-            new_target_q_params = jax.tree_util.tree_map(
-                lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
-                state.target_q_params,
-                q_params,
-            )
-
-            new_target_policy_params = jax.tree_util.tree_map(
-                lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
-                state.target_policy_params,
-                policy_params,
-            )
-
-            new_state = TrainingState(
-                policy_optimizer_state=policy_optimizer_state,
-                policy_params=policy_params,
-                target_policy_params=new_target_policy_params,
-                q_optimizer_state=q_optimizer_state,
-                q_params=q_params,
-                target_q_params=new_target_q_params,
-                key=key,
-                steps=state.steps + 1,
-            )
-
-            metrics = {}
-
-            return new_state, metrics
-
-        self.update_step = jax.jit(update_step, backend=self.backend)
-
-        def select_action_probabilistic(observation, policy_params, key_):
-            pre_action = self.policy_model.apply(policy_params, observation)
-            pre_action = self.postprocess(pre_action)
-            expl_noise = 0.1
-            return jnp.clip(
-                pre_action
-                + expl_noise * jax.random.normal(key_, shape=pre_action.shape),
-                -1.0,
-                1.0,
-            )
-
-        def select_action_deterministic(observation, policy_params, key_=None):
-            pre_action = self.policy_model.apply(policy_params, observation)
-            return self.postprocess(pre_action)
-
-        self.select_action_probabilistic = jax.jit(
-            select_action_probabilistic, backend=self.backend
+        self.critic_up_params = self.critic_up.init(key_q)
+        self.critic_up_optimizer = optax.adam(learning_rate=1.0 * critic_lr)
+        self.critic_optimizer_state = self.critic_up_optimizer.init(
+            self.critic_up_params
         )
-        self.select_action_deterministic = jax.jit(
-            select_action_deterministic, backend=self.backend
-        )
+        self.critic_low_params = []
+        self.critic_low_optimizers = []
+        self.critic_low_optimizer_states = []
+        for i, qmod in enumerate(self.critic_low):
+            key_models, key_q = jax.random.split(key_models)
+            qparams = qmod.init(key_q, i)
+            self.critic_low_params.append(qparams)
+            optimizer = optax.adam(learning_rate=1.0 * critic_lr)
+            self.critic_low_optimizers.append(optimizer)
+            self.critic_low_optimizer_states.append(optimizer.init(qparams))
 
-        def q_value(observation, action, q_params):
-            q_action = self.value_model.apply(q_params, observation, action)
-            min_q = jnp.min(q_action, axis=-1)
-            return min_q
+        self.critic_low_params = tuple(self.critic_low_params)
+        self.critic_low_optimizers = tuple(self.critic_low_optimizers)
+        self.critic_low_optimizer_states = tuple(self.critic_low_optimizer_states)
 
-        self.q_value = jax.jit(q_value, backend=self.backend)
+        self.dummy_obs = jnp.zeros((2, self.observation_dim))
+        self.dummy_action = jnp.zeros((2, self.action_dim * self.action_bins))
 
-        self.training_state = TrainingState(
-            policy_optimizer_state=self.policy_optimizer_state,
-            policy_params=self.policy_params,
-            target_policy_params=self.policy_params,
-            q_optimizer_state=self.q_optimizer_state,
-            q_params=self.q_params,
-            target_q_params=self.q_params,
-            key=local_key,
-            steps=jnp.zeros((1,)),
-        )
+        def greedy_actions(action_bins: int, critic_low_params: Sequence[Params], obs):
+            obs_shape = obs.shape[0]
+            carry = jnp.zeros((obs_shape, 0 * action_bins))
 
-    def value(self, observation, action):
-        return self.q_value(
-            observation,
-            action,
-            self.training_state.q_params,
-        )
+            def action_progress(carry_action, i_):
+                res1, res2 = self.critic_low[i_].apply(
+                    critic_low_params[i_], obs, carry_action, action_bins
+                )
+                action_choice_array = jnp.argmax(res1, axis=-1)
+                a_progress = (
+                    jnp.zeros((obs_shape, action_bins))
+                    .at[jnp.arange(obs_shape), action_choice_array]
+                    .set(1)
+                )
+                return jnp.column_stack((carry_action, a_progress))
+
+            for k in range(action_bins):
+                carry = action_progress(carry, k)
+
+            return carry
+
+        self.greedy_actions = jax.jit(greedy_actions, static_argnames=["action_bins"])
+
+        # def critic_up_loss(
+        #     critic_up_params: Params,
+        #     target_critic_up_params: Params,
+        #     observations,
+        #     actions,
+        #     new_observations,
+        #     rewards,
+        #     mask,
+        #     key_,
+        # ) -> jnp.ndarray:
+
+        # carry = action_progress(carry_action_init, 0)
+        # result = action_progress(carry, 1)
+        # final, result = jax.lax.scan(action_progress, carry_action_init, indices)
+        # return final, result
+
+        #
+        #     nr_obs = observation.size()[0]
+        #     chosen_actions = torch.zeros([nr_obs, 0])
+        #     for j in range(self.action_dim):
+        #         value = self.critics_low_target.critics[j](observation,
+        #         chosen_actions)[
+        #             0].detach()
+        #         i = torch.argmax(value, dim=1).reshape([nr_obs, 1])
+        #         ones = torch.ones([nr_obs, 1])
+        #         actions = torch.zeros([nr_obs, self.bins_per_action]).scatter_(1, i,
+        #                                                                        ones)
+        #         chosen_actions = torch.cat([chosen_actions, actions], 1)
+        #     return chosen_actions
+
+        # def critic_up_loss(
+        #     q_up_params: Params,
+        #     target_q_up_params: Params,
+        #     observations,
+        #     actions,
+        #     new_observations,
+        #     rewards,
+        #     mask,
+        #     key_,
+        # ) -> jnp.ndarray:
+        #     next_pre_actions = self.policy_model.apply(
+        #         target_policy_params, new_observations
+        #     )
+        #     new_next_actions = self.postprocess(next_pre_actions)
+        #     policy_noise = 0.2
+        #     noise_clip = 0.5
+        #     new_next_actions = jnp.clip(
+        #         new_next_actions
+        #         + jnp.clip(
+        #             policy_noise
+        #             * jax.random.normal(key_, shape=new_next_actions.shape),
+        #             -noise_clip,
+        #             noise_clip,
+        #         ),
+        #         -1.0,
+        #         1.0,
+        #     )
+        #
+        #     q_old_action = self.value_model.apply(q_params, observations, actions)
+        #     next_q = self.value_model.apply(
+        #         target_q_params, new_observations, new_next_actions
+        #     )
+        #     next_v = jnp.min(next_q, axis=-1)
+        #     target_q = jax.lax.stop_gradient(
+        #         rewards * self.reward_scale
+        #         + mask * discount * jnp.expand_dims(next_v, -1)
+        #     )
+        #     q_error = q_old_action - target_q
+        #     q_loss = 2.0 * jnp.mean(jnp.square(q_error))
+        #     return q_loss
+        #
+        # self.critic_grad = jax.value_and_grad(critic_loss)
+        # self.actor_grad = jax.value_and_grad(actor_loss)
+        #
+        # def update_step(
+        #     state:
+        #     TrainingState, observations, actions, rewards, new_observations, mask
+        # ) -> Tuple[TrainingState, dict]:
+        #
+        #     key, key_critic = jax.random.split(state.key, 2)
+        #
+        #     actor_l, actor_grads = self.actor_grad(
+        #         state.policy_params, state.target_q_params, observations
+        #     )
+        #
+        #     policy_params_update, policy_optimizer_state =
+        #     self.policy_optimizer.update(
+        #         actor_grads, state.policy_optimizer_state
+        #     )
+        #
+        #     policy_params = optax.apply_updates(
+        #         state.policy_params, policy_params_update
+        #     )
+        #
+        #     critic_l, critic_grads = self.critic_grad(
+        #         state.q_params,
+        #         state.target_policy_params,
+        #         state.target_q_params,
+        #         observations,
+        #         actions,
+        #         new_observations,
+        #         rewards,
+        #         mask,
+        #         key_critic,
+        #     )
+        #
+        #     q_params_update, q_optimizer_state = self.q_optimizer.update(
+        #         critic_grads, state.q_optimizer_state
+        #     )
+        #     q_params = optax.apply_updates(state.q_params, q_params_update)
+        #
+        #     new_target_q_params = jax.tree_util.tree_map(
+        #         lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
+        #         state.target_q_params,
+        #         q_params,
+        #     )
+        #
+        #     new_target_policy_params = jax.tree_util.tree_map(
+        #         lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
+        #         state.target_policy_params,
+        #         policy_params,
+        #     )
+        #
+        #     new_state = TrainingState(
+        #         policy_optimizer_state=policy_optimizer_state,
+        #         policy_params=policy_params,
+        #         target_policy_params=new_target_policy_params,
+        #         q_optimizer_state=q_optimizer_state,
+        #         q_params=q_params,
+        #         target_q_params=new_target_q_params,
+        #         key=key,
+        #         steps=state.steps + 1,
+        #     )
+        #
+        #     metrics = {}
+        #
+        #     return new_state, metrics
+        #
+        # self.update_step = jax.jit(update_step, backend=self.backend)
+        #
+        # def select_action_probabilistic(observation, policy_params, key_):
+        #     pre_action = self.policy_model.apply(policy_params, observation)
+        #     pre_action = self.postprocess(pre_action)
+        #     expl_noise = 0.1
+        #     return jnp.clip(
+        #         pre_action
+        #         + expl_noise * jax.random.normal(key_, shape=pre_action.shape),
+        #         -1.0,
+        #         1.0,
+        #     )
+        #
+        # def select_action_deterministic(observation, policy_params, key_=None):
+        #     pre_action = self.policy_model.apply(policy_params, observation)
+        #     return self.postprocess(pre_action)
+        #
+        # self.select_action_probabilistic = jax.jit(
+        #     select_action_probabilistic, backend=self.backend
+        # )
+        # self.select_action_deterministic = jax.jit(
+        #     select_action_deterministic, backend=self.backend
+        # )
+        #
+        # def q_value(observation, action, q_params):
+        #     q_action = self.value_model.apply(q_params, observation, action)
+        #     min_q = jnp.min(q_action, axis=-1)
+        #     return min_q
+        #
+        # self.q_value = jax.jit(q_value, backend=self.backend)
+        #
+        # self.training_state = TrainingState(
+        #     policy_optimizer_state=self.policy_optimizer_state,
+        #     policy_params=self.policy_params,
+        #     target_policy_params=self.policy_params,
+        #     q_optimizer_state=self.q_optimizer_state,
+        #     q_params=self.q_params,
+        #     target_q_params=self.q_params,
+        #     key=local_key,
+        #     steps=jnp.zeros((1,)),
+        # )
+
+    # def value(self, observation, action):
+    #     return self.q_value(
+    #         observation,
+    #         action,
+    #         self.training_state.q_params,
+    #     )
 
     def select_action(self, observation, eval_mode=False):
-        self.key, key_sample = jax.random.split(self.key)
-        if eval_mode:
-            apply_func = self.select_action_deterministic
-        else:
-            apply_func = self.select_action_probabilistic
-        action = apply_func(observation, self.training_state.policy_params, key_sample)
-        if len(action.shape) == 1:
-            return jnp.expand_dims(action, axis=0)
-        else:
-            return action
+        pass
+
+    #     self.key, key_sample = jax.random.split(self.key)
+    #     if eval_mode:
+    #         apply_func = self.select_action_deterministic
+    #     else:
+    #         apply_func = self.select_action_probabilistic
+    #     action = apply_func(observation,
+    #     self.training_state.policy_params, key_sample)
+    #     if len(action.shape) == 1:
+    #         return jnp.expand_dims(action, axis=0)
+    #     else:
+    #         return action
 
     def save(self, directory):
-        os.makedirs(directory, exist_ok=True)
-        for filename in self.training_state.__dict__.keys():
-            with open(os.path.join(directory, filename + ".joblib"), "wb") as f_:
-                joblib.dump(self.training_state.__dict__[filename], f_)
+        pass
 
+    #     os.makedirs(directory, exist_ok=True)
+    #     for filename in self.training_state.__dict__.keys():
+    #         with open(os.path.join(directory, filename + ".joblib"), "wb") as f_:
+    #             joblib.dump(self.training_state.__dict__[filename], f_)
+    #
     def load(self, directory):
-        load_all = {}
-        for filename in self.training_state.__dict__.keys():
-            load_all[filename] = jax.tree_util.tree_map(
-                jnp.array, joblib.load(os.path.join(directory, filename + ".joblib"))
-            )
-        self.training_state = TrainingState(
-            policy_optimizer_state=load_all["policy_optimizer_state"],
-            policy_params=load_all["policy_params"],
-            target_policy_params=load_all["target_policy_params"],
-            q_optimizer_state=load_all["q_optimizer_state"],
-            q_params=load_all["q_params"],
-            target_q_params=load_all["target_q_params"],
-            key=load_all["key"],
-            steps=load_all["steps"],
-        )
+        pass
+
+    #     load_all = {}
+    #     for filename in self.training_state.__dict__.keys():
+    #         load_all[filename] = jax.tree_util.tree_map(
+    #             jnp.array, joblib.load(os.path.join(directory, filename + ".joblib"))
+    #         )
+    #     self.training_state = TrainingState(
+    #         policy_optimizer_state=load_all["policy_optimizer_state"],
+    #         policy_params=load_all["policy_params"],
+    #         target_policy_params=load_all["target_policy_params"],
+    #         q_optimizer_state=load_all["q_optimizer_state"],
+    #         q_params=load_all["q_params"],
+    #         target_q_params=load_all["target_q_params"],
+    #         key=load_all["key"],
+    #         steps=load_all["steps"],
+    #     )
 
     def write_config(self, output_file: str):
         print(self._config_string, file=output_file)
