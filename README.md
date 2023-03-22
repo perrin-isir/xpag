@@ -1,4 +1,4 @@
-# ![xpag logo](https://raw.githubusercontent.com/perrin-isir/xpag/main/logo.png "logo")
+# ![alt text](https://raw.githubusercontent.com/perrin-isir/xpag/main/logo.png "xpag logo")
 
 ![version](https://img.shields.io/badge/version-0.1.4-blue)
 [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
