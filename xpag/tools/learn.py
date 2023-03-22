@@ -141,9 +141,15 @@ def learn(
 
         action = datatype_convert(action, env_datatype)
 
-        next_observation, reward, terminated, truncated, info = setter.step(
-            env, observation, action, action_info, *env.step(action)
-        )
+        (
+            observation,
+            action,
+            next_observation,
+            reward,
+            terminated,
+            truncated,
+            info,
+        ) = setter.step(env, observation, action, action_info, *env.step(action))
 
         step = {
             "observation": observation,

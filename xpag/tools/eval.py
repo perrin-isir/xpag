@@ -118,7 +118,15 @@ def single_rollout_eval(
             action_info = action[1]
             action = action[0]
         action = datatype_convert(action, env_datatype)
-        next_observation, reward, terminated, truncated, info = setter.step(
+        (
+            observation,
+            action,
+            next_observation,
+            reward,
+            terminated,
+            truncated,
+            info,
+        ) = setter.step(
             eval_env,
             observation,
             action,

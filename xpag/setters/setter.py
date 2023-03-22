@@ -34,7 +34,7 @@ class Setter(ABC):
         truncated,
         info,
         eval_mode: bool = False,
-    ) -> Tuple[Any, Any, Any, Any, Any]:
+    ) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
         pass
 
     @abstractmethod
@@ -73,7 +73,7 @@ class DefaultSetter(Setter, ABC):
         info,
         eval_mode=False,
     ):
-        return new_observation, reward, terminated, truncated, info
+        return observation, action, new_observation, reward, terminated, truncated, info
 
     def write_config(self, output_file: str):
         pass
@@ -114,7 +114,7 @@ class CompositeSetter(Setter, ABC):
         info,
         eval_mode=False,
     ):
-        new_obs_, reward_, terminated_, truncated_, info_ = self.setter1.step(
+        obs, act, new_obs_, reward_, terminated_, truncated_, info_ = self.setter1.step(
             env,
             observation,
             action,
@@ -128,8 +128,8 @@ class CompositeSetter(Setter, ABC):
         )
         return self.setter2.step(
             env,
-            observation,
-            action,
+            obs,
+            act,
             action_info,
             new_obs_,
             reward_,

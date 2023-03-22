@@ -10,6 +10,7 @@ import jax
 import jax.numpy as jnp
 import optax
 from xpag.agents.agent import Agent
+from xpag.setters.setter import Setter
 
 # import os
 # import joblib
@@ -36,6 +37,49 @@ class TrainingState:
     target_critic_low_params: Sequence[Params]
     key: PRNGKey
     steps: jnp.ndarray
+
+
+class SDQNSetter(Setter):
+    def __init__(self):
+        super().__init__("SDQNSetter")
+
+    def reset(self, env, observation, info, eval_mode=False):
+        return observation, info
+
+    def reset_done(self, env, observation, info, done, eval_mode=False):
+        return observation, info, done
+
+    def step(
+        self,
+        env,
+        observation,
+        action,
+        action_info,
+        new_observation,
+        reward,
+        terminated,
+        truncated,
+        info,
+        eval_mode=False,
+    ):
+        return (
+            observation,
+            action_info["onehot_action"],
+            new_observation,
+            reward,
+            terminated,
+            truncated,
+            info,
+        )
+
+    def write_config(self, output_file: str):
+        pass
+
+    def save(self, directory: str):
+        pass
+
+    def load(self, directory: str):
+        pass
 
 
 class SDQN(Agent):
@@ -135,7 +179,7 @@ class SDQN(Agent):
             action_size: int,
             action_bins: int,
             hidden_layer_sizes: Tuple[int, ...],
-        ) -> Tuple[FeedForwardModel, FeedForwardModel]:
+        ) -> Tuple[FeedForwardModel, Sequence[FeedForwardModel]]:
             """
             Create Q-value networks for SDQN.
             """
@@ -209,7 +253,7 @@ class SDQN(Agent):
         )
         self.critic_up_params = self.critic_up.init(key_q)
         self.critic_up_optimizer = optax.adam(learning_rate=1.0 * critic_lr)
-        self.critic_optimizer_state = self.critic_up_optimizer.init(
+        self.critic_up_optimizer_state = self.critic_up_optimizer.init(
             self.critic_up_params
         )
         self.critic_low_params = []
@@ -227,10 +271,23 @@ class SDQN(Agent):
         self.critic_low_optimizers = tuple(self.critic_low_optimizers)
         self.critic_low_optimizer_states = tuple(self.critic_low_optimizer_states)
 
+        self.training_state = TrainingState(
+            critic_up_optimizer_state=self.critic_up_optimizer_state,
+            critic_up_params=self.critic_up_params,
+            target_critic_up_params=self.critic_up_params,
+            critic_low_optimizer_states=self.critic_low_optimizer_states,
+            critic_low_params=self.critic_low_params,
+            target_critic_low_params=self.critic_low_params,
+            key=local_key,
+            steps=jnp.zeros((1,)),
+        )
+
         self.dummy_obs = jnp.zeros((2, self.observation_dim))
         self.dummy_action = jnp.zeros((2, self.action_dim * self.action_bins))
 
-        def greedy_actions(action_bins: int, critic_low_params: Sequence[Params], obs):
+        def greedy_actions(
+            action_bins: int, action_dim: int, critic_low_params: Sequence[Params], obs
+        ):
             obs_shape = obs.shape[0]
             carry = jnp.zeros((obs_shape, 0 * action_bins))
 
@@ -246,23 +303,57 @@ class SDQN(Agent):
                 )
                 return jnp.column_stack((carry_action, a_progress))
 
-            for k in range(action_bins):
+            for k in range(action_dim):
                 carry = action_progress(carry, k)
 
             return carry
 
-        self.greedy_actions = jax.jit(greedy_actions, static_argnames=["action_bins"])
+        self.greedy_actions = jax.jit(
+            greedy_actions,
+            static_argnames=["action_bins", "action_dim"],
+            backend=self.backend,
+        )
 
-        # def critic_up_loss(
-        #     critic_up_params: Params,
-        #     target_critic_up_params: Params,
-        #     observations,
-        #     actions,
-        #     new_observations,
-        #     rewards,
-        #     mask,
-        #     key_,
-        # ) -> jnp.ndarray:
+        def critic_up_loss(
+            # action_bins: int,
+            critic_low_params: Sequence[Params],
+            critic_up_params: Params,
+            target_critic_up_params: Params,
+            observations,
+            actions,
+            new_observations,
+            rewards,
+            mask,
+            key_,
+        ) -> jnp.ndarray:
+            next_actions = self.greedy_actions(
+                self.action_bins, self.action_dim, critic_low_params, new_observations
+            )
+
+            # Compute the target Q value
+            target_q1, target_q2 = self.critic_up.apply(
+                critic_up_params, new_observations, next_actions, 1
+            )
+            next_v = jnp.min(jnp.array([target_q1, target_q2]), axis=0)
+            target_q = jax.lax.stop_gradient(
+                rewards * self.reward_scale + mask * self.discount * next_v
+            )
+            current_q1, current_q2 = self.critic_up.apply(
+                critic_up_params, observations, actions, 1
+            )
+            critic_up_loss = jnp.mean(
+                jnp.square(((current_q1 - target_q) + (current_q2 - target_q)))
+            )
+            return critic_up_loss
+
+            # __import__("IPython").embed()
+
+            # return 0
+
+        self.critic_up_grad = jax.value_and_grad(critic_up_loss)
+
+        #
+        # self.critic_up = jax.jit(critic_up_loss, static_argnames=["action_bins"])
 
         # carry = action_progress(carry_action_init, 0)
         # result = action_progress(carry, 1)
@@ -327,6 +418,57 @@ class SDQN(Agent):
         # self.critic_grad = jax.value_and_grad(critic_loss)
         # self.actor_grad = jax.value_and_grad(actor_loss)
         #
+
+        def update_step(
+            state: TrainingState, observations, actions, rewards, new_observations, mask
+        ) -> Tuple[TrainingState, dict]:
+
+            key, key_critic = jax.random.split(state.key, 2)
+
+            critic_up_l, critic_up_grads = self.critic_up_grad(
+                # self.action_bins,
+                state.critic_low_params,
+                state.critic_up_params,
+                state.target_critic_up_params,
+                observations,
+                actions,
+                new_observations,
+                rewards,
+                mask,
+                key_critic,
+            )
+
+            (
+                critic_up_params_update,
+                critic_up_optimizer_state,
+            ) = self.critic_up_optimizer.update(
+                critic_up_grads, state.critic_up_optimizer_state
+            )
+            critic_up_params = optax.apply_updates(
+                state.critic_up_params, critic_up_params_update
+            )
+            new_target_critic_up_params = jax.tree_util.tree_map(
+                lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
+                state.target_q_params,
+                critic_up_params,
+            )
+
+            new_state = TrainingState(
+                critic_up_optimizer_state=critic_up_optimizer_state,
+                critic_up_params=critic_up_params,
+                target_critic_up_params=new_target_critic_up_params,
+                critic_low_optimizer_states=self.critic_low_optimizer_states,
+                critic_low_params=self.critic_low_params,
+                target_critic_low_params=self.critic_low_params,
+                key=key,
+                steps=state.steps + 1,
+            )
+
+            metrics = {}
+            return new_state, metrics
+
+        self.update_step = update_step
+
         # def update_step(
         #     state:
         #     TrainingState, observations, actions, rewards, new_observations, mask
@@ -441,7 +583,14 @@ class SDQN(Agent):
     #     )
 
     def select_action(self, observation, eval_mode=False):
-        pass
+        onehot_action = self.greedy_actions(
+            self.action_bins, self.action_dim, self.critic_low_params, observation
+        )
+        where_ones = jnp.where(onehot_action == 1)[1].reshape(
+            (observation.shape[0], self.action_dim)
+        )
+        act = jnp.take(self.action_array, where_ones)
+        return act, {"onehot_action": onehot_action}
 
     #     self.key, key_sample = jax.random.split(self.key)
     #     if eval_mode:
