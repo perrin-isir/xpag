@@ -26,10 +26,10 @@ class SaveEpisode:
 
     def update(self):
         if self.env_info["env_type"] == "Brax":
-            self.qpos.append(self.env.unwrapped._state.qp.pos.to_py())
-            self.qrot.append(self.env.unwrapped._state.qp.rot.to_py())
-            self.qvel.append(self.env.unwrapped._state.qp.vel.to_py())
-            self.qang.append(self.env.unwrapped._state.qp.ang.to_py())
+            self.qpos.append(np.asarray(self.env.unwrapped._state.qp.pos))
+            self.qrot.append(np.asarray(self.env.unwrapped._state.qp.rot))
+            self.qvel.append(np.asarray(self.env.unwrapped._state.qp.vel))
+            self.qang.append(np.asarray(self.env.unwrapped._state.qp.ang))
         elif self.env_info["env_type"] == "Mujoco":
             posvel = np.split(
                 np.array(self.env.call("state_vector")),

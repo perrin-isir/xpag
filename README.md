@@ -1,6 +1,6 @@
 # ![alt text](https://github.com/perrin-isir/xpag/blob/main/logo.png "logo")
 
-![version](https://img.shields.io/badge/version-0.1.2-blue)
+![version](https://img.shields.io/badge/version-0.1.3-blue)
 [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation](https://img.shields.io/github/actions/workflow/status/perrin-isir/xpag/docs.yml?branch=main&label=docs)](https://perrin-isir.github.io/xpag/)
 
