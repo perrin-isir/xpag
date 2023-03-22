@@ -1,8 +1,10 @@
-# ![alt text](https://github.com/perrin-isir/xpag/blob/main/logo.png "logo")
+# ![xpag logo](https://raw.githubusercontent.com/perrin-isir/xpag/main/logo.png "logo")
 
-![version](https://img.shields.io/badge/version-0.1.3-blue)
+![version](https://img.shields.io/badge/version-0.1.4-blue)
 [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation](https://img.shields.io/github/actions/workflow/status/perrin-isir/xpag/docs.yml?branch=main&label=docs)](https://perrin-isir.github.io/xpag/)
+[![PyPI version](https://img.shields.io/pypi/v/xpag)](https://pypi.org/project/xpag/)
+
 
 *xpag* ("e**xp**loring **ag**ents") is a modular reinforcement learning library with JAX agents, currently in beta version.
 
@@ -233,6 +235,7 @@ The figure below summarizes the RL loop and the interactions between the compone
   - Olivier Serris (ISIR)
   - Alexandre Chenu (ISIR)
   - Stéphane Caron (Inria)
+  - Fabian Schramm (Inria)
 
 * The [SAC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/sac) is based on the implementation of SAC in [JAXRL](https://github.com/ikostrikov/jaxrl), and some elements of the [TQC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/tqc) come from the implementation of TQC in [RLJAX](https://github.com/ku2482/rljax).
 
