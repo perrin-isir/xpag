@@ -32,9 +32,9 @@ class TrainingState:
     critic_up_optimizer_state: optax.OptState
     critic_up_params: Params
     target_critic_up_params: Params
-    critic_low_optimizer_states: Sequence[optax.OptState]
-    critic_low_params: Sequence[Params]
-    target_critic_low_params: Sequence[Params]
+    critic_low_optimizer_state: optax.OptState
+    critic_low_params: Params
+    target_critic_low_params: Params
     key: PRNGKey
     steps: jnp.ndarray
 
@@ -256,26 +256,34 @@ class SDQN(Agent):
         self.critic_up_optimizer_state = self.critic_up_optimizer.init(
             self.critic_up_params
         )
-        self.critic_low_params = []
-        self.critic_low_optimizers = []
-        self.critic_low_optimizer_states = []
+        list_critic_low_params = []
+        # self.critic_low_optimizers = []
+        # self.critic_low_optimizer_states = []
         for i, qmod in enumerate(self.critic_low):
             key_models, key_q = jax.random.split(key_models)
             qparams = qmod.init(key_q, i)
-            self.critic_low_params.append(qparams)
-            optimizer = optax.adam(learning_rate=1.0 * critic_lr)
-            self.critic_low_optimizers.append(optimizer)
-            self.critic_low_optimizer_states.append(optimizer.init(qparams))
+            list_critic_low_params.append(qparams)
+            # optimizer = optax.adam(learning_rate=1.0 * critic_lr)
+            # self.critic_low_optimizers.append(optimizer)
+            # self.critic_low_optimizer_states.append(optimizer.init(qparams))
 
-        self.critic_low_params = tuple(self.critic_low_params)
-        self.critic_low_optimizers = tuple(self.critic_low_optimizers)
-        self.critic_low_optimizer_states = tuple(self.critic_low_optimizer_states)
+        self.critic_low_params = flax.core.frozen_dict.FrozenDict(
+            {str(i): list_critic_low_params[i] for i in range(len(self.critic_low))}
+        )
+        self.critic_low_optimizer = optax.adam(learning_rate=1.0 * critic_lr)
+        self.critic_low_optimizer_state = self.critic_low_optimizer.init(
+            self.critic_low_params
+        )
+
+        # self.critic_low_params = tuple(self.critic_low_params)
+        # self.critic_low_optimizers = tuple(self.critic_low_optimizers)
+        # self.critic_low_optimizer_states = tuple(self.critic_low_optimizer_states)
 
         self.training_state = TrainingState(
             critic_up_optimizer_state=self.critic_up_optimizer_state,
             critic_up_params=self.critic_up_params,
             target_critic_up_params=self.critic_up_params,
-            critic_low_optimizer_states=self.critic_low_optimizer_states,
+            critic_low_optimizer_state=self.critic_low_optimizer_state,
             critic_low_params=self.critic_low_params,
             target_critic_low_params=self.critic_low_params,
             key=local_key,
@@ -286,14 +294,14 @@ class SDQN(Agent):
         self.dummy_action = jnp.zeros((2, self.action_dim * self.action_bins))
 
         def greedy_actions(
-            action_bins: int, action_dim: int, critic_low_params: Sequence[Params], obs
+            action_bins: int, action_dim: int, critic_low_params: Params, obs
         ):
             obs_shape = obs.shape[0]
             carry = jnp.zeros((obs_shape, 0 * action_bins))
 
             def action_progress(carry_action, i_):
                 res1, res2 = self.critic_low[i_].apply(
-                    critic_low_params[i_], obs, carry_action, action_bins
+                    critic_low_params[str(i_)], obs, carry_action, action_bins
                 )
                 action_choice_array = jnp.argmax(res1, axis=-1)
                 a_progress = (
@@ -315,10 +323,9 @@ class SDQN(Agent):
         )
 
         def critic_up_loss(
-            # action_bins: int,
-            critic_low_params: Sequence[Params],
             critic_up_params: Params,
             target_critic_up_params: Params,
+            critic_low_params: Params,
             observations,
             actions,
             new_observations,
@@ -340,17 +347,44 @@ class SDQN(Agent):
             current_q1, current_q2 = self.critic_up.apply(
                 critic_up_params, observations, actions, 1
             )
-            critic_up_loss = jnp.mean(
-                jnp.square(((current_q1 - target_q) + (current_q2 - target_q)))
+            c_up_loss = jnp.mean(
+                jnp.square(current_q1 - target_q) + jnp.square(current_q2 - target_q)
             )
-            return critic_up_loss
-
-            # __import__("IPython").embed()
-
-            # return 0
+            return c_up_loss
 
         self.critic_up_grad = jax.value_and_grad(critic_up_loss)
 
+        def critic_low_equality_loss(
+            critic_low_params: Params,
+            critic_up_params: Params,
+            observations,
+            actions,
+        ) -> jnp.ndarray:
+            obs_shape = observations.shape[0]
+            current_q1, current_q2 = self.critic_up.apply(
+                critic_up_params, observations, actions, 1
+            )
+            actions_first_part, actions_second_part = jnp.split(
+                actions, [(self.action_dim - 1) * self.action_bins], axis=1
+            )
+            idxs = jnp.argmax(actions_second_part, axis=1).reshape((obs_shape, 1))
+            res1, res2 = self.critic_low[self.action_dim - 1].apply(
+                critic_low_params[str(self.action_dim - 1)],
+                observations,
+                actions_first_part,
+                self.action_bins,
+            )
+            current_q1_low = jnp.take(res1, idxs)
+            current_q2_low = jnp.take(res2, idxs)
+            equality_loss = jnp.mean(
+                jnp.square(current_q1 - current_q1_low)
+                + jnp.square(current_q2 - current_q2_low)
+            )
+            return equality_loss
+
+        self.critic_low_equality_loss_grad = jax.value_and_grad(
+            critic_low_equality_loss
+        )
         #
         # self.critic_up = jax.jit(critic_up_loss, static_argnames=["action_bins"])
 
@@ -419,16 +453,22 @@ class SDQN(Agent):
         #
 
         def update_step(
-            state: TrainingState, observations, actions, rewards, new_observations, mask
+            action_bins: int,
+            action_dim: int,
+            state: TrainingState,
+            observations,
+            actions,
+            rewards,
+            new_observations,
+            mask,
         ) -> Tuple[TrainingState, dict]:
 
             key, key_critic = jax.random.split(state.key, 2)
 
             critic_up_l, critic_up_grads = self.critic_up_grad(
-                # self.action_bins,
-                state.critic_low_params,
                 state.critic_up_params,
                 state.target_critic_up_params,
+                state.critic_low_params,
                 observations,
                 actions,
                 new_observations,
@@ -443,25 +483,53 @@ class SDQN(Agent):
                 critic_up_grads, state.critic_up_optimizer_state
             )
 
-            __import__("IPython").embed()
-
             critic_up_params = optax.apply_updates(
                 state.critic_up_params, critic_up_params_update
             )
 
-            new_target_critic_up_params = jax.tree_util.tree_map(
+            target_critic_up_params = jax.tree_util.tree_map(
                 lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
-                state.target_q_params,
+                state.target_critic_up_params,
                 critic_up_params,
             )
+
+            (
+                critic_low_equality_l,
+                critic_low_equality_grads,
+            ) = self.critic_low_equality_loss_grad(
+                state.critic_low_params,
+                critic_up_params,
+                observations,
+                actions,
+            )
+
+            (
+                critic_low_params_update,
+                critic_low_optimizer_state,
+            ) = self.critic_low_optimizer.update(
+                critic_low_equality_grads, state.critic_low_optimizer_state
+            )
+
+            critic_low_params = optax.apply_updates(
+                state.critic_low_params, critic_low_params_update
+            )
+
+            target_critic_low_params = jax.tree_util.tree_map(
+                lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
+                state.target_critic_low_params,
+                critic_low_params,
+            )
+
+            # for k in range(action_dim):
+            #     j = action_dim - 1 - k
 
             new_state = TrainingState(
                 critic_up_optimizer_state=critic_up_optimizer_state,
                 critic_up_params=critic_up_params,
-                target_critic_up_params=new_target_critic_up_params,
-                critic_low_optimizer_states=self.critic_low_optimizer_states,
-                critic_low_params=self.critic_low_params,
-                target_critic_low_params=self.critic_low_params,
+                target_critic_up_params=target_critic_up_params,
+                critic_low_optimizer_state=critic_low_optimizer_state,
+                critic_low_params=critic_low_params,
+                target_critic_low_params=target_critic_low_params,
                 key=key,
                 steps=state.steps + 1,
             )
@@ -469,7 +537,12 @@ class SDQN(Agent):
             metrics = {}
             return new_state, metrics
 
-        self.update_step = update_step
+        self.update_step = jax.jit(
+            update_step,
+            static_argnames=["action_bins", "action_dim"],
+            backend=self.backend,
+        )
+        # self.update_step = update_step
 
         # def update_step(
         #     state:
@@ -644,6 +717,13 @@ class SDQN(Agent):
         mask = 1 - batch["terminated"]
 
         self.training_state, metrics = self.update_step(
-            self.training_state, observations, actions, rewards, new_observations, mask
+            self.action_bins,
+            self.action_dim,
+            self.training_state,
+            observations,
+            actions,
+            rewards,
+            new_observations,
+            mask,
         )
         return metrics
