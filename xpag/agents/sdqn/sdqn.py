@@ -44,14 +44,14 @@ class SDQN(Agent):
         params=None,
     ):
         """
-        Jax implementation of SDQN ().
+        Jax implementation of SDQN (https://arxiv.org/pdf/1705.05035.pdf).
         """
 
         discount = 0.99 if "discount" not in params else params["discount"]
         reward_scale = 1.0 if "reward_scale" not in params else params["reward_scale"]
         actor_lr = 1e-3 if "actor_lr" not in params else params["actor_lr"]
         critic_lr = 1e-3 if "critic_lr" not in params else params["critic_lr"]
-        soft_target_tau = 0.0025 if "tau" not in params else params["tau"]
+        soft_target_tau = 5e-2 if "tau" not in params else params["tau"]
         hidden_dims = (
             (256, 256) if "hidden_dims" not in params else params["hidden_dims"]
         )
@@ -72,6 +72,19 @@ class SDQN(Agent):
             if "action_array" not in params
             else jnp.array(params["action_array"])
         )
+        # action_array = (
+        #     jnp.tile(
+        #         jnp.arange(
+        #             -max_action,
+        #             max_action + 1e-9,
+        #             2.0 * max_action / (action_bins-1),
+        #         ),
+        #         (action_dim, 1),
+        #     )
+        #     if "action_array" not in params
+        #     else jnp.array(params["action_array"])
+        # )
+
         # cpu, gpu or tpu backend
         self.backend = None if "backend" not in params else params["backend"]
 
@@ -289,6 +302,8 @@ class SDQN(Agent):
             target_q = jax.lax.stop_gradient(
                 rewards * self.reward_scale + mask * self.discount * next_v
             )
+
+            # Get current Q estimates
             current_q1, current_q2 = self.critic_up.apply(
                 critic_up_params, observations, actions, 1
             )
@@ -313,6 +328,8 @@ class SDQN(Agent):
                 actions, [(self.action_dim - 1) * self.action_bins], axis=1
             )
             idxs = jnp.argmax(actions_second_part, axis=1).reshape((obs_shape, 1))
+
+            # Current estimates with critics_low
             res1, res2 = self.critic_low[self.action_dim - 1].apply(
                 critic_low_params[str(self.action_dim - 1)],
                 observations,
@@ -376,17 +393,6 @@ class SDQN(Agent):
             )
             return inner_loss
 
-        # self.critic_low_inner_loss_grad = []
-        # for j in range(self.action_dim):
-        #     if j == 0:
-        #         self.critic_low_inner_loss_grad.append(None)
-        #     else:
-        #         self.critic_low_inner_loss_grad.append(jax.value_and_grad(
-        #             lambda clp, tclp, o, a: critic_low_inner_loss(
-        #                 clp, tclp, o, a, 3
-        #             )
-        #         ))
-
         def critic_low_inner_loss_grad(j):
             return jax.value_and_grad(
                 lambda clp, tclp, o, a: critic_low_inner_loss(clp, tclp, o, a, j)
@@ -440,7 +446,7 @@ class SDQN(Agent):
                 critic_low_equality_grads,
             ) = self.critic_low_equality_loss_grad(
                 state.critic_low_params,
-                state.critic_up_params,
+                critic_up_params,
                 observations,
                 actions,
             )
@@ -497,15 +503,16 @@ class SDQN(Agent):
                 steps=state.steps + 1,
             )
 
-            metrics = {"critic_up_loss": critic_up_l}
+            # metrics = {"critic_up_loss": critic_up_l}
+            metrics = {}
             return new_state, metrics
 
+        # self.update_step = update_step
         self.update_step = jax.jit(
             update_step,
             static_argnames=["action_bins", "action_dim"],
             backend=self.backend,
         )
-        # self.update_step = update_step
 
     def select_action(self, observation, eval_mode=False):
         onehot_action = self.greedy_actions(
@@ -546,8 +553,6 @@ class SDQN(Agent):
             new_observations,
             mask,
         )
-
-        # print(metrics["critic_up_loss"])
         return metrics
 
     @staticmethod
@@ -591,7 +596,9 @@ class SDQNSetter(Setter):
             ).reshape((action_shape, self.agent.action_dim, self.agent.action_bins))
             action_bin_choices = jnp.argmin(action_compare_bins, axis=-1)
             onehot_action = (
-                jnp.zeros((10, 30))
+                jnp.zeros(
+                    (action_shape, self.agent.action_bins * self.agent.action_dim)
+                )
                 .at[
                     jnp.repeat(
                         jnp.arange(action_shape).reshape((action_shape, 1)),
