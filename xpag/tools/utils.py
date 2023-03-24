@@ -5,6 +5,7 @@
 from enum import Enum
 from typing import Tuple, Union, Dict, Any
 import numpy as np
+import jax
 import jax.numpy as jnp
 
 
@@ -148,3 +149,11 @@ def get_env_dimensions(info: dict, is_goalenv: bool, env) -> Dict[str, int]:
             env.observation_space["desired_goal"].shape[-1] if is_goalenv else None
         )
     return dims
+
+
+def tree_sum(tree: Any):
+    elt_list = jax.tree_util.tree_flatten(tree)[0]
+    cumsum = 0.0
+    for elt in elt_list:
+        cumsum += elt.sum()
+    return cumsum

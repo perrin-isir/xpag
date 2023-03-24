@@ -555,14 +555,6 @@ class SDQN(Agent):
         )
         return metrics
 
-    @staticmethod
-    def tree_sum(tree):
-        elt_list = jax.tree_util.tree_flatten(tree)[0]
-        cumsum = 0.0
-        for elt in elt_list:
-            cumsum += elt.sum()
-        return cumsum
-
 
 class SDQNSetter(Setter):
     def __init__(self, sdqn_agent: SDQN):

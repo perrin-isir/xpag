@@ -9,6 +9,7 @@ from xpag.tools.utils import (
     squeeze,
     where,
     get_env_dimensions,
+    tree_sum,
 )
 from xpag.tools.eval import single_rollout_eval
 from xpag.tools.timing import timing
