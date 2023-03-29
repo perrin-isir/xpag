@@ -44,9 +44,9 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
             return x
 
     if "num_envs" in inspect.signature(
-        gym.envs.registration.load(gym.spec(env_name).entry_point).__init__
+        gym.envs.registration.load_env_creator(gym.spec(env_name).entry_point).__init__
     ).parameters and hasattr(
-        gym.envs.registration.load(gym.spec(env_name).entry_point),
+        gym.envs.registration.load_env_creator(gym.spec(env_name).entry_point),
         "reset_done",
     ):
         # no need to create a VecEnv and wrap it if the env accepts 'num_envs' as an
