@@ -9,7 +9,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="xpag",
-    version="0.1.4",
+    version="0.1.5",  # -version-
     author="Nicolas Perrin-Gilbert",
     description="xpag: Exploring Agents",
     long_description=long_description,
