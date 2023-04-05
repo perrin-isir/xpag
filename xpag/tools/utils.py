@@ -7,6 +7,7 @@ from typing import Tuple, Union, Dict, Any
 import numpy as np
 import jax
 import jax.numpy as jnp
+from gymnasium import spaces
 
 
 class DataType(Enum):
@@ -119,6 +120,10 @@ def get_env_dimensions(info: dict, is_goalenv: bool, env) -> Dict[str, int]:
         gymvecenv = False
     dims = {}
     if gymvecenv:
+        assert isinstance(env.single_observation_space, spaces.box.Box) and isinstance(
+            env.single_action_space, spaces.box.Box
+        ), "xpag only allows spaces of type gymnasium.spaces.box.Box"
+
         info["action_dim"] = env.single_action_space.shape[-1]
         info["observation_dim"] = (
             env.single_observation_space["observation"].shape[-1]
@@ -136,6 +141,10 @@ def get_env_dimensions(info: dict, is_goalenv: bool, env) -> Dict[str, int]:
             else None
         )
     else:
+        assert isinstance(env.observation_space, spaces.box.Box) and isinstance(
+            env.action_space, spaces.box.Box
+        ), "xpag only allows spaces of type gymnasium.spaces.box.Box"
+
         info["action_dim"] = env.action_space.shape[-1]
         info["observation_dim"] = (
             env.observation_space["observation"].shape[-1]

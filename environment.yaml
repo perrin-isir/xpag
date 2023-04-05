@@ -15,7 +15,7 @@ dependencies:
 - mediapy >= 1.1.4
 - pip:
     - tensorflow-probability>=0.15.0
-    - gymnasium>=0.26.0
+    - gymnasium>=0.28.1
     - optax>=0.1.2
     - brax>=0.0.10
     - flax>=0.6.3
