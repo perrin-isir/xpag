@@ -150,7 +150,7 @@ Again, following the gym Vector API, environments have a `step()` function that 
 in input an action (which is actually a batch of actions, one per rollout) and returns:
 `observation`, `reward`, `terminated`, `truncated`, `info` (cf. [https://www.gymlibrary.dev/api/vector/#step](https://www.gymlibrary.dev/api/vector/#step)).
 There are slight differences with the gym Vector API. First, in *xpag* this API also covers the case
-of a single rollout. Second, *xpag* assumes that `reward` and `done` have shape `(n, 1)`, not
+of a single rollout. Second, *xpag* assumes that `reward`, `terminated` and `truncated` have shape `(n, 1)`, not
 `(n,)` (where n is the number of parallel rollouts). More broadly, whether they are due to a single rollout or to
 unidimensional elements, single-dimensional entries are not squeezed in *xpag*.
 Third, in *xpag*, `info` is a dictionary, not a tuple of dictionaries
