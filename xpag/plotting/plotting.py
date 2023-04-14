@@ -5,6 +5,8 @@
 import numpy as np
 from typing import List, Dict, Any
 from xpag.tools.utils import DataType, datatype_convert
+from matplotlib import figure
+from matplotlib import collections as mc
 
 
 def _from_1d_to_2d(t, v):
@@ -33,8 +35,6 @@ def single_episode_plot(
     """Plots an episode, using a 1D or 2D projection from observations, or
     from achieved and desired goals in the case of GoalEnv environments.
     """
-    from matplotlib import figure  # lazy import
-    from matplotlib import collections as mc  # lazy import
 
     fig = figure.Figure()
     ax = fig.subplots(1)

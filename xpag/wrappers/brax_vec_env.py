@@ -90,10 +90,6 @@ def brax_vec_env_(
         ):
             self.max_episode_steps = max_episode_steps
             self._env = env
-            self.metadata = {
-                "render.modes": ["human", "rgb_array"],
-                "video.frames_per_second": 1 / self._env.sys.dt,
-            }
             if not hasattr(self._env, "batch_size"):
                 raise ValueError("underlying env must be batched")
 
@@ -205,16 +201,6 @@ def brax_vec_env_(
                 self._key = jax.random.PRNGKey(seed)
             self._state, obs, self._key = self._reset_done(done, self._state, self._key)
             return obs, {}
-
-        # def render(self, mode="human"):
-        #     if mode == "rgb_array":
-        #         sys = self._env.sys
-        #         qp = jnp.take(self._state.qp, 0)
-        #         return html.render(
-        #             sys, qp, height='256vh', colab=False, base_url='/js/viewer.js'
-        #         )
-        #     else:
-        #         return super().render(mode=mode)  # just raise an exception
 
     if wrap_function is None:
 

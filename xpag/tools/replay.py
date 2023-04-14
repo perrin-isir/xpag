@@ -4,19 +4,19 @@ import gymnasium as gym
 import mediapy as media
 from typing import Callable
 import joblib
+import jax
 from brax import envs
 from brax.io import html
 from IPython import display
 from IPython.display import HTML
+from PIL import Image, ImageDraw
+import ipywidgets
 
 
 def mujoco_notebook_replay(load_dir: str):
     """
     Episode replay for mujoco environments.
     """
-    from IPython import display  # lazy import
-    from PIL import Image, ImageDraw  # lazy import
-    import ipywidgets  # lazy import
 
     class DownloadButton(ipywidgets.Button):
         """Download button with dynamic content
@@ -140,5 +140,8 @@ def brax_notebook_replay(load_dir: str):
     env = envs.create(env_name=env_name)
     with open(os.path.join(load_dir, "episode", "states.joblib"), "rb") as f:
         states = joblib.load(f)
-    episode = [state.pipeline_state for state in states]
-    display.display(HTML(html.render(env.sys, episode)))
+    episode = [
+        jax.tree_util.tree_map(lambda x: x.squeeze(axis=0), st.pipeline_state)
+        for st in states
+    ]
+    display.display(HTML(html.render(env.sys.replace(dt=env.dt), episode)))
