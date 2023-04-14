@@ -3,6 +3,11 @@ import numpy as np
 import gymnasium as gym
 import mediapy as media
 from typing import Callable
+import joblib
+from brax import envs
+from brax.io import html
+from IPython import display
+from IPython.display import HTML
 
 
 def mujoco_notebook_replay(load_dir: str):
@@ -129,22 +134,11 @@ def brax_notebook_replay(load_dir: str):
     """
     Episode replay for brax environments.
     """
-    from brax import envs  # lazy import
-    from brax.physics.base import QP  # lazy import
-    from brax.io import html  # lazy import
-    from IPython import display  # lazy import
-    from IPython.display import HTML  # lazy import
-
     env_name = str(
         np.loadtxt(os.path.join(load_dir, "episode", "env_name.txt"), dtype="str")
     )
-    qp_pos = np.load(os.path.join(load_dir, "episode", "qp_pos.npy"))
-    qp_rot = np.load(os.path.join(load_dir, "episode", "qp_rot.npy"))
-    qp_vel = np.load(os.path.join(load_dir, "episode", "qp_vel.npy"))
-    qp_ang = np.load(os.path.join(load_dir, "episode", "qp_ang.npy"))
     env = envs.create(env_name=env_name)
-    episode_length = len(qp_pos)
-    episode = [
-        QP(qp_pos[i], qp_rot[i], qp_vel[i], qp_ang[i]) for i in range(episode_length)
-    ]
+    with open(os.path.join(load_dir, "episode", "states.joblib"), "rb") as f:
+        states = joblib.load(f)
+    episode = [state.pipeline_state for state in states]
     display.display(HTML(html.render(env.sys, episode)))

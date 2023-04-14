@@ -11,6 +11,7 @@ from xpag.tools.utils import DataType, datatype_convert, hstack, logical_or
 from xpag.tools.timing import timing
 from xpag.tools.logging import eval_log
 from xpag.plotting.plotting import single_episode_plot
+import joblib
 
 
 class SaveEpisode:
@@ -20,16 +21,12 @@ class SaveEpisode:
         self.env = env
         self.env_info = env_info
         self.qpos = []
-        self.qrot = []
         self.qvel = []
-        self.qang = []
+        self.states = []
 
     def update(self):
         if self.env_info["env_type"] == "Brax":
-            self.qpos.append(np.asarray(self.env.unwrapped._state.qp.pos))
-            self.qrot.append(np.asarray(self.env.unwrapped._state.qp.rot))
-            self.qvel.append(np.asarray(self.env.unwrapped._state.qp.vel))
-            self.qang.append(np.asarray(self.env.unwrapped._state.qp.ang))
+            self.states.append(self.env.unwrapped._state)
         elif self.env_info["env_type"] == "Mujoco":
             posvel = np.split(
                 np.array(self.env.call("state_vector")),
@@ -46,22 +43,12 @@ class SaveEpisode:
         if self.env_info["env_type"] == "Brax":
             with open(os.path.join(save_dir, "episode", "env_name.txt"), "w") as f:
                 print(self.env_info["name"], file=f)
-            np.save(
-                os.path.join(save_dir, "episode", "qp_pos"),
-                [pos[i] for pos in self.qpos],
-            )
-            np.save(
-                os.path.join(save_dir, "episode", "qp_rot"),
-                [rot[i] for rot in self.qrot],
-            )
-            np.save(
-                os.path.join(save_dir, "episode", "qp_vel"),
-                [vel[i] for vel in self.qvel],
-            )
-            np.save(
-                os.path.join(save_dir, "episode", "qp_ang"),
-                [ang[i] for ang in self.qang],
-            )
+            with open(
+                os.path.join(save_dir, "episode", "episode_length.txt"), "w"
+            ) as f:
+                print(len(self.states), file=f)
+            with open(os.path.join(save_dir, "episode", "states.joblib"), "wb") as f:
+                joblib.dump(self.states, f)
         elif self.env_info["env_type"] == "Mujoco":
             with open(os.path.join(save_dir, "episode", "env_name.txt"), "w") as f:
                 print(self.env_info["name"], file=f)
@@ -73,9 +60,8 @@ class SaveEpisode:
             )
 
         self.qpos = []
-        self.qrot = []
         self.qvel = []
-        self.qang = []
+        self.states = []
 
 
 def single_rollout_eval(

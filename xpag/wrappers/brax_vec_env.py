@@ -11,6 +11,8 @@ import numpy as np
 from gymnasium import spaces
 from gymnasium.vector import utils
 from xpag.tools.utils import get_env_dimensions
+from brax import envs
+from brax.envs import env as brax_env
 
 _envs_episode_length = {
     "acrobot": 1000,
@@ -39,42 +41,36 @@ def brax_vec_env_(
     *,
     force_cpu_backend=False,
 ):
-    from brax import envs  # lazy import
-    from brax import jumpy as jp  # lazy import
-    from brax.envs import env as brax_env  # lazy import
-
     class ResetDoneBraxWrapper(brax_env.Wrapper):
         """Adds reset_done() to Brax envs."""
 
-        def reset(self, rng: jp.ndarray) -> brax_env.State:
+        def reset(self, rng: jnp.ndarray) -> brax_env.State:
             state = self.env.reset(rng)
-            state.info["first_qp"] = state.qp
-            state.info["first_obs"] = state.obs
             return state
 
-        def step(self, state: brax_env.State, action: jp.ndarray) -> brax_env.State:
+        def step(self, state: brax_env.State, action: jnp.ndarray) -> brax_env.State:
             return self.env.step(state, action)
 
-        def reset_done(self, done: jp.ndarray, state: brax_env.State, rng: jp.ndarray):
+        def reset_done(
+            self, done: jnp.ndarray, state: brax_env.State, rng: jnp.ndarray
+        ):
             # done = state.done
             def where_done(x, y):
                 done_ = done
                 if done_.shape:
-                    done_ = jp.reshape(
+                    done_ = jnp.reshape(
                         done_, tuple([x.shape[0]] + [1] * (len(x.shape) - 1))
                     )  # type: ignore
-                return jp.where(done_, x, y)
+                return jnp.where(done_, x, y)
 
             if "steps" in state.info:
                 steps = state.info["steps"]
-                steps = where_done(jp.zeros_like(steps), steps)
+                steps = where_done(jnp.zeros_like(steps), steps)
                 state.info.update(steps=steps)
 
             reset_state = self.env.reset(rng)
-            qp = jp.tree_map(where_done, reset_state.qp, state.qp)
-            obs = where_done(reset_state.obs, state.obs)
-            state = state.replace(qp=qp, obs=obs)
-            return state.replace(done=where_done(jp.zeros_like(state.done), state.done))
+            new_state = jax.tree_util.tree_map(where_done, reset_state, state)
+            return new_state
 
     class ResetDoneBraxToGymWrapper(gym.vector.VectorEnv):
         """
@@ -96,7 +92,7 @@ def brax_vec_env_(
             self._env = env
             self.metadata = {
                 "render.modes": ["human", "rgb_array"],
-                "video.frames_per_second": 1 / self._env.sys.config.dt,
+                "video.frames_per_second": 1 / self._env.sys.dt,
             }
             if not hasattr(self._env, "batch_size"):
                 raise ValueError("underlying env must be batched")
@@ -106,7 +102,7 @@ def brax_vec_env_(
             self._state = None
             self._key = None
 
-            obs_high = jp.inf * jp.ones(self._env.observation_size, dtype="float32")
+            obs_high = np.inf * np.ones(self._env.observation_size, dtype="float32")
             self.single_observation_space = spaces.Box(
                 -obs_high, obs_high, dtype=np.float32
             )
@@ -114,7 +110,7 @@ def brax_vec_env_(
                 self.single_observation_space, self.num_envs
             )
 
-            action_high = jp.ones(self._env.action_size, dtype="float32")
+            action_high = np.ones(self._env.action_size, dtype="float32")
             self.single_action_space = spaces.Box(
                 -action_high, action_high, dtype=np.float32
             )
@@ -123,7 +119,7 @@ def brax_vec_env_(
             )
 
             def reset(key):
-                key1, key2 = jp.random_split(key)
+                key1, key2 = jax.random.split(key)
                 state = self._env.reset(key2)
                 return state, state.obs, key1
 
@@ -131,17 +127,17 @@ def brax_vec_env_(
 
             def step(state, action):
                 state = self._env.step(state, action)
-                info = state.metrics
+                info = state.metrics.copy()
                 info["steps"] = state.info["steps"]
                 terminated = jnp.logical_and(
                     state.done, jnp.logical_not(state.info["truncation"])
                 ).reshape((self.num_envs, -1))
+                # terminated has the wrong value here if the episode was both truncated
+                # and reached a terminal state. However, with the current API of brax
+                # envs, this information cannot be recovered.
                 truncated = (
                     state.info["truncation"].reshape((self.num_envs, -1)).astype("bool")
                 )
-                # terminated is wrong if the episode was both truncated and reached
-                # a terminal state. However, with the current API of brax envs,
-                # this information cannot be recovered.
                 return (
                     state,
                     state.obs.reshape((self.num_envs, -1)),
@@ -154,7 +150,7 @@ def brax_vec_env_(
             self._step = jax.jit(step, backend=self.backend)
 
             def reset_done(done, state, key):
-                key1, key2 = jp.random_split(key)
+                key1, key2 = jax.random.split(key)
                 if state is None:
                     raise ValueError(
                         "Use reset() for the first reset, not reset_idxs()."
@@ -210,16 +206,15 @@ def brax_vec_env_(
             self._state, obs, self._key = self._reset_done(done, self._state, self._key)
             return obs, {}
 
-        def render(self, mode="human"):
-            # pylint:disable=g-import-not-at-top
-            from brax.io import image  # lazy import
-
-            if mode == "rgb_array":
-                sys = self._env.sys
-                qp = jp.take(self._state.qp, 0)
-                return image.render_array(sys, qp, 256, 256)
-            else:
-                return super().render(mode=mode)  # just raise an exception
+        # def render(self, mode="human"):
+        #     if mode == "rgb_array":
+        #         sys = self._env.sys
+        #         qp = jnp.take(self._state.qp, 0)
+        #         return html.render(
+        #             sys, qp, height='256vh', colab=False, base_url='/js/viewer.js'
+        #         )
+        #     else:
+        #         return super().render(mode=mode)  # just raise an exception
 
     if wrap_function is None:
 

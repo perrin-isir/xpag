@@ -9,7 +9,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="xpag",
-    version="0.1.5",  # -version-
+    version="0.1.6",  # -version-
     author="Nicolas Perrin-Gilbert",
     description="xpag: Exploring Agents",
     long_description=long_description,
@@ -24,10 +24,10 @@ setup(
         "gymnasium>=0.28.1",
         "Pillow>=9.0.1",
         "ipywidgets>=7.6.5",
-        "jax>=0.3.23",
+        "jax>=0.4.8",
         "optax>=0.1.2",
         "flax>=0.6.3",
-        "brax>=0.0.10",
+        "brax>=0.9.0",
         "tensorflow-probability>=0.15.0",
         "mediapy>=1.1.4",
     ],
