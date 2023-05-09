@@ -11,6 +11,7 @@ from typing import Union, Dict
 class Sampler(ABC):
     def __init__(self, *, seed: Union[int, None] = None):
         self.seed = seed
+        self.rng = np.random.default_rng(seed)
         pass
 
     @abstractmethod
@@ -24,8 +25,8 @@ class Sampler(ABC):
 
 
 class DefaultSampler(Sampler):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *, seed: Union[int, None] = None):
+        super().__init__(seed=seed)
 
     def sample(
         self,
@@ -33,7 +34,7 @@ class DefaultSampler(Sampler):
         batch_size: int,
     ) -> Dict[str, Union[np.ndarray]]:
         buffer_size = next(iter(buffer.values())).shape[0]
-        idxs = np.random.choice(
+        idxs = self.rng.choice(
             buffer_size,
             size=batch_size,
             replace=True,
@@ -52,7 +53,7 @@ class DefaultEpisodicSampler(Sampler):
         batch_size: int,
     ) -> Dict[str, Union[np.ndarray]]:
         rollout_batch_size = buffer["episode_length"].shape[0]
-        episode_idxs = np.random.choice(
+        episode_idxs = self.rng.choice(
             np.arange(rollout_batch_size),
             size=batch_size,
             replace=True,
@@ -60,7 +61,7 @@ class DefaultEpisodicSampler(Sampler):
             / buffer["episode_length"][:, 0, 0].sum(),
         )
         t_max_episodes = buffer["episode_length"][episode_idxs, 0].flatten()
-        t_samples = np.random.randint(t_max_episodes)
+        t_samples = self.rng.integers(t_max_episodes)
         transitions = {
             key: buffer[key][episode_idxs, t_samples] for key in buffer.keys()
         }
