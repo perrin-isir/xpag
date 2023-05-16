@@ -120,11 +120,31 @@ def get_env_dimensions(info: dict, is_goalenv: bool, env) -> Dict[str, int]:
         gymvecenv = False
     dims = {}
     if gymvecenv:
-        assert isinstance(env.single_observation_space, spaces.box.Box) and isinstance(
-            env.single_action_space, spaces.box.Box
-        ), "xpag only allows spaces of type gymnasium.spaces.box.Box"
-
         info["action_dim"] = env.single_action_space.shape[-1]
+        if is_goalenv:
+            assert (
+                isinstance(env.single_observation_space["observation"], spaces.box.Box)
+                and isinstance(
+                    env.single_observation_space["achieved_goal"], spaces.box.Box
+                )
+                and isinstance(
+                    env.single_observation_space["desired_goal"], spaces.box.Box
+                )
+                and isinstance(env.single_action_space, spaces.box.Box)
+            ), (
+                'env.single_observation_space["observation"] and '
+                'env.single_observation_space["achieved_goal"] and '
+                'env.single_observation_space["desired_goal"] and '
+                "env.single_action_space must be of type gymnasium.spaces.box.Box"
+            )
+        else:
+            assert isinstance(
+                env.single_observation_space, spaces.box.Box
+            ) and isinstance(env.single_action_space, spaces.box.Box), (
+                "env.single_observation_space and "
+                "env.single_action_space must be of type gymnasium.spaces.box.Box"
+            )
+
         info["observation_dim"] = (
             env.single_observation_space["observation"].shape[-1]
             if is_goalenv
@@ -141,9 +161,25 @@ def get_env_dimensions(info: dict, is_goalenv: bool, env) -> Dict[str, int]:
             else None
         )
     else:
-        assert isinstance(env.observation_space, spaces.box.Box) and isinstance(
-            env.action_space, spaces.box.Box
-        ), "xpag only allows spaces of type gymnasium.spaces.box.Box"
+        if is_goalenv:
+            assert (
+                isinstance(env.observation_space["observation"], spaces.box.Box)
+                and isinstance(env.observation_space["achieved_goal"], spaces.box.Box)
+                and isinstance(env.observation_space["desired_goal"], spaces.box.Box)
+                and isinstance(env.action_space, spaces.box.Box)
+            ), (
+                'env.observation_space["observation"] and '
+                'env.observation_space["achieved_goal"] and '
+                'env.observation_space["desired_goal"] and '
+                "env.action_space must be of type gymnasium.spaces.box.Box"
+            )
+        else:
+            assert isinstance(env.observation_space, spaces.box.Box) and isinstance(
+                env.action_space, spaces.box.Box
+            ), (
+                "env.observation_space and "
+                "env.action_space must be of type gymnasium.spaces.box.Box"
+            )
 
         info["action_dim"] = env.action_space.shape[-1]
         info["observation_dim"] = (
