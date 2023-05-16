@@ -1,12 +1,12 @@
 import gymnasium as gym
-from gymnasium.vector import VectorEnv
+from gymnasium.vector import VectorEnv, VectorEnvWrapper
 from gymnasium import spaces
 from xpag.tools.utils import get_datatype, datatype_convert, where, hstack
 import numpy as np
 from typing import Callable, Any
 
 
-class GoalEnvWrapper(gym.Wrapper):
+class GoalEnvWrapper(VectorEnvWrapper):
     def __init__(
         self,
         env: VectorEnv,
@@ -111,7 +111,7 @@ class GoalEnvWrapper(gym.Wrapper):
         self.last_desired_goal = datatype_convert(goal, self.datatype)
 
 
-class CumulRewardWrapper(gym.Wrapper):
+class CumulRewardWrapper(VectorEnvWrapper):
     """An environment wrapper that adds the cumulative reward to observations.
     It assumes that the environment is not a goal-based environment, and that
     observations are 1D arrays (with .single_observation_space of type spaces.Box).

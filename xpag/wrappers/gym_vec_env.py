@@ -12,7 +12,7 @@ from gymnasium.vector.utils import (
     concatenate,
     create_empty_array,
 )
-from gymnasium.vector import VectorEnv, AsyncVectorEnv
+from gymnasium.vector import VectorEnv, AsyncVectorEnv, VectorEnvWrapper
 from xpag.wrappers.reset_done import ResetDoneWrapper
 from xpag.tools.utils import get_env_dimensions
 
@@ -149,7 +149,7 @@ def gym_vec_env(env_name: str, num_envs: int, wrap_function: Callable = None):
     return env, eval_env, env_info
 
 
-class ResetDoneVecWrapper(gym.Wrapper):
+class ResetDoneVecWrapper(VectorEnvWrapper):
     def __init__(self, env: VectorEnv, max_episode_steps: int):
         super().__init__(env)
         self.max_episode_steps = max_episode_steps
