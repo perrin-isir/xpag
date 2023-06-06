@@ -341,7 +341,7 @@ class TQC(Agent):
         """
 
         self._config_string = str(list(locals().items())[1:])
-        super().__init__("SAC", observation_dim, action_dim, params)
+        super().__init__("TQC", observation_dim, action_dim, params)
 
         start_seed = 0 if "seed" not in params else params["seed"]
 

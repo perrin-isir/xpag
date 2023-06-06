@@ -254,18 +254,6 @@ class TD3(Agent):
 
             key, key_critic = jax.random.split(state.key, 2)
 
-            actor_l, actor_grads = self.actor_grad(
-                state.policy_params, state.target_q_params, observations
-            )
-
-            policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
-                actor_grads, state.policy_optimizer_state
-            )
-
-            policy_params = optax.apply_updates(
-                state.policy_params, policy_params_update
-            )
-
             critic_l, critic_grads = self.critic_grad(
                 state.q_params,
                 state.target_policy_params,
@@ -287,6 +275,21 @@ class TD3(Agent):
                 lambda x, y: x * (1 - soft_target_tau) + y * soft_target_tau,
                 state.target_q_params,
                 q_params,
+            )
+
+            actor_l, actor_grads = self.actor_grad(
+                state.policy_params,
+                q_params,
+                observations
+                # state.policy_params, new_target_q_params, observations
+            )
+
+            policy_params_update, policy_optimizer_state = self.policy_optimizer.update(
+                actor_grads, state.policy_optimizer_state
+            )
+
+            policy_params = optax.apply_updates(
+                state.policy_params, policy_params_update
             )
 
             new_target_policy_params = jax.tree_util.tree_map(

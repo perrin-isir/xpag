@@ -49,8 +49,15 @@ class SDQN(Agent):
 
         discount = 0.99 if "discount" not in params else params["discount"]
         reward_scale = 1.0 if "reward_scale" not in params else params["reward_scale"]
-        actor_lr = 1e-3 if "actor_lr" not in params else params["actor_lr"]
-        critic_lr = 1e-3 if "critic_lr" not in params else params["critic_lr"]
+        critic_lr = 3e-3 if "critic_lr" not in params else params["critic_lr"]
+        critic_up_lr = (
+            critic_lr if "critic_up_lr" not in params else params["critic_up_lr"]
+        )
+        critic_low_lr = (
+            0.1 * critic_lr
+            if "critic_low_lr" not in params
+            else params["critic_low_lr"]
+        )
         soft_target_tau = 5e-2 if "tau" not in params else params["tau"]
         hidden_dims = (
             (256, 256) if "hidden_dims" not in params else params["hidden_dims"]
@@ -219,7 +226,7 @@ class SDQN(Agent):
             observation_dim, action_dim, self.action_bins, hidden_dims
         )
         self.critic_up_params = self.critic_up.init(key_q)
-        self.critic_up_optimizer = optax.adam(learning_rate=1.0 * critic_lr)
+        self.critic_up_optimizer = optax.adam(learning_rate=critic_up_lr)
         self.critic_up_optimizer_state = self.critic_up_optimizer.init(
             self.critic_up_params
         )
@@ -232,7 +239,7 @@ class SDQN(Agent):
         self.critic_low_params = flax.core.frozen_dict.FrozenDict(
             {str(i): list_critic_low_params[i] for i in range(len(self.critic_low))}
         )
-        self.critic_low_optimizer = optax.adam(learning_rate=1.0 * critic_lr)
+        self.critic_low_optimizer = optax.adam(learning_rate=critic_low_lr)
         self.critic_low_optimizer_state = self.critic_low_optimizer.init(
             self.critic_low_params
         )

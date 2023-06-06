@@ -136,7 +136,7 @@ def learn(
                 action_info = action[1]
                 action = action[0]
             if i > 0:
-                for _ in range(max(gd_steps_per_step * env_info["num_envs"], 1)):
+                for _ in range(gd_steps_per_step * env_info["num_envs"]):
                     _ = agent.train_on_batch(buffer.sample(batch_size))
 
         action = datatype_convert(action, env_datatype)
