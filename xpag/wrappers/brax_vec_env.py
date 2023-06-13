@@ -12,7 +12,7 @@ from gymnasium import spaces
 from gymnasium.vector import utils
 from xpag.tools.utils import get_env_dimensions
 from brax import envs
-from brax.envs import env as brax_env
+from brax.envs import Wrapper, State
 
 _envs_episode_length = {
     "acrobot": 1000,
@@ -41,19 +41,17 @@ def brax_vec_env_(
     *,
     force_cpu_backend=False,
 ):
-    class ResetDoneBraxWrapper(brax_env.Wrapper):
+    class ResetDoneBraxWrapper(Wrapper):
         """Adds reset_done() to Brax envs."""
 
-        def reset(self, rng: jnp.ndarray) -> brax_env.State:
+        def reset(self, rng: jnp.ndarray) -> State:
             state = self.env.reset(rng)
             return state
 
-        def step(self, state: brax_env.State, action: jnp.ndarray) -> brax_env.State:
+        def step(self, state: State, action: jnp.ndarray) -> State:
             return self.env.step(state, action)
 
-        def reset_done(
-            self, done: jnp.ndarray, state: brax_env.State, rng: jnp.ndarray
-        ):
+        def reset_done(self, done: jnp.ndarray, state: State, rng: jnp.ndarray):
             # done = state.done
             def where_done(x, y):
                 done_ = done

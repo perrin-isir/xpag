@@ -27,7 +27,7 @@ setup(
         "jax>=0.4.8",
         "optax>=0.1.2",
         "flax>=0.6.3",
-        "brax>=0.9.0",
+        "brax>=0.9.1",
         "tensorflow-probability>=0.15.0",
         "mediapy>=1.1.4",
     ],
