@@ -51,6 +51,7 @@ import flax.linen as nn
 import jax
 import optax
 import jax.numpy as jnp
+import numpy as np
 
 
 @functools.partial(jax.jit, static_argnames="critic_apply_fn")
@@ -343,12 +344,12 @@ class TQC(Agent):
         self._config_string = str(list(locals().items())[1:])
         super().__init__("TQC", observation_dim, action_dim, params)
 
-        start_seed = 0 if "seed" not in params else params["seed"]
+        start_seed = np.random.randint(1e9) if "seed" not in params else params["seed"]
 
         self.tqclearner_params = {
-            "actor_lr": 3e-3,
+            "actor_lr": 3e-4,
             "critic_lr": 3e-3,
-            "temp_lr": 3e-3,
+            "temp_lr": 3e-4,
             "backup_entropy": True,
             "discount": 0.99,
             "hidden_dims_actor": (256, 256),

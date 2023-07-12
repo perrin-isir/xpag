@@ -11,6 +11,7 @@ from typing import Callable, Any, Tuple
 import flax
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 
 @functools.partial(jax.jit, static_argnames="critic_apply_fn")
@@ -74,12 +75,12 @@ class SAC(Agent):
         self._config_string = str(list(locals().items())[1:])
         super().__init__("SAC", observation_dim, action_dim, params)
 
-        start_seed = 0 if "seed" not in params else params["seed"]
+        start_seed = np.random.randint(1e9) if "seed" not in params else params["seed"]
 
         self.saclearner_params = {
-            "actor_lr": 3e-3,
+            "actor_lr": 3e-4,
             "critic_lr": 3e-3,
-            "temp_lr": 3e-3,
+            "temp_lr": 3e-4,
             "backup_entropy": True,
             "discount": 0.99,
             "hidden_dims": (256, 256),

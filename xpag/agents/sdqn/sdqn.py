@@ -11,6 +11,7 @@ import jax.numpy as jnp
 import optax
 from xpag.agents.agent import Agent
 from xpag.setters.setter import Setter
+import numpy as np
 
 Params = Any
 PRNGKey = jnp.ndarray
@@ -62,7 +63,7 @@ class SDQN(Agent):
         hidden_dims = (
             (256, 256) if "hidden_dims" not in params else params["hidden_dims"]
         )
-        start_seed = 0 if "seed" not in params else params["seed"]
+        start_seed = np.random.randint(1e9) if "seed" not in params else params["seed"]
         action_bins = 5 if "action_bins" not in params else params["action_bins"]
         # By default, actions are assumed to be between -1 and 1 across all
         # dimensions

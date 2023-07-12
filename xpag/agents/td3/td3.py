@@ -12,6 +12,7 @@ import optax
 from xpag.agents.agent import Agent
 import os
 import joblib
+import numpy as np
 
 Params = Any
 PRNGKey = jnp.ndarray
@@ -45,20 +46,21 @@ class TD3(Agent):
         params=None,
     ):
         """
-        Jax implementation of TD3 (https://arxiv.org/abs/1802.09477).
+        Jax implementation of TD3 (https://arxiv.org/abs/1802.09477),
+        without delayed policy updates.
         This version assumes that the actions are between -1 and 1 (for all
         dimensions).
         """
 
         discount = 0.99 if "discount" not in params else params["discount"]
         reward_scale = 1.0 if "reward_scale" not in params else params["reward_scale"]
-        actor_lr = 3e-3 if "actor_lr" not in params else params["actor_lr"]
+        actor_lr = 3e-4 if "actor_lr" not in params else params["actor_lr"]
         critic_lr = 3e-3 if "critic_lr" not in params else params["critic_lr"]
         soft_target_tau = 5e-2 if "tau" not in params else params["tau"]
         hidden_dims = (
             (256, 256) if "hidden_dims" not in params else params["hidden_dims"]
         )
-        start_seed = 0 if "seed" not in params else params["seed"]
+        start_seed = np.random.randint(1e9) if "seed" not in params else params["seed"]
         # cpu, gpu or tpu backend
         self.backend = None if "backend" not in params else params["backend"]
 
@@ -278,10 +280,7 @@ class TD3(Agent):
             )
 
             actor_l, actor_grads = self.actor_grad(
-                state.policy_params,
-                q_params,
-                observations
-                # state.policy_params, new_target_q_params, observations
+                state.policy_params, q_params, observations
             )
 
             policy_params_update, policy_optimizer_state = self.policy_optimizer.update(

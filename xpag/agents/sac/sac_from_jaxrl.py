@@ -51,6 +51,7 @@ from typing import Union, Any, Callable, Dict, Optional, Sequence, Tuple
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
+from tensorflow_probability.substrates import jax as tfp
 
 
 def default_init(scale: Optional[float] = jnp.sqrt(2)):
@@ -415,8 +416,6 @@ class SACLearner(object):
         An implementation of the version of Soft-Actor-Critic described in
         https://arxiv.org/abs/1812.05905
         """
-        from tensorflow_probability.substrates import jax as tfp  # lazy import
-
         tfd = tfp.distributions
         tfb = tfp.bijectors
 
