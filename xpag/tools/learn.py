@@ -60,10 +60,12 @@ def learn(
             env.step() counts as n steps).
         evaluate_every_x_steps (int): the number of steps between two evaluations of the
             agent (remark: if there n rollouts in parallel, one call to
-            env.step() counts as n steps).
+            env.step() counts as n steps). With the default value, np.inf, there is no
+            evaluation.
         save_agent_every_x_steps (int): it defines how often the agent is saved to
             the disk (remark: if there n rollouts in parallel, one call to
-            env.step() counts as n steps).
+            env.step() counts as n steps). With the default value, np.inf, the agent
+            is never saved.
         save_dir (str): the directory in which the config, agent, plots, evaluation
             episodes and logs are saved.
         save_episode (bool): if True, the evaluation episodes are saved.
