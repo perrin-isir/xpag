@@ -66,7 +66,7 @@ class SAC(Agent):
         "tau" (default=5e-2): the soft update coefficient
         "policy_final_fc_init_scale" (default=1.): scale parameter for the
         initialization of the final fully connected layers of the actor network
-    - :attr:`sac` - the SACLearner object that contains and trains the agent and critic
+    - :attr:`sac` - the SACLearner object that contains and trains the actor and critic
         networks
     """
 

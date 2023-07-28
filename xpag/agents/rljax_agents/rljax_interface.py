@@ -6,8 +6,6 @@
 from xpag.agents.agent import Agent
 from xpag.agents.rljax_agents.algorithm import SAC
 
-from xpag.tools.utils import squeeze
-
 # import functools
 # from typing import Callable, Any, Tuple
 # import flax
@@ -62,25 +60,18 @@ class RLJAXSAC(Agent):
 
     - :attr:`_config_string` - the configuration of the agent (mainly its non-default
         parameters)
-    - :attr:`saclearner_params` - the SAC parameters in a dict :
+    - :attr:`sac_params` - the SAC parameters in a dict :
         "actor_lr" (default=3e-3): the actor learning rate
         "critic_lr" (default=3e-3): the critic learning rate
         "temp_lr" (default=3e-3): the temperature learning rate
-        "backup_entropy" (default=True): if True, activates the entropy-regularization
-        of the critic loss
         "discount" (default=0.99): the discount factor
         "hidden_dims" (default=(256,256)): the hidden layer dimensions for the actor
         and critic networks
         "init_temperature" (default=1.): the initial temperature
-        "target_entropy": the target entropy; if None, it will be set
-        to -action_dim / 2
         "target_update_period" (default=1): defines how often a soft update of the
         target critic is performed
         "tau" (default=5e-2): the soft update coefficient
-        "policy_final_fc_init_scale" (default=1.): scale parameter for the
-        initialization of the final fully connected layers of the actor network
-    - :attr:`sac` - the SACLearner object that contains and trains the agent and critic
-        networks
+    - :attr:`sac` - the SAC algorithm as implemented in the RLJAX library
     """
 
     def __init__(self, observation_dim, action_dim, params=None):
@@ -155,23 +146,13 @@ class RLJAXSAC(Agent):
     def train_on_batch(self, batch):
         obs = batch["observation"]
         act = batch["action"]
-        reward = squeeze(batch["reward"])
-        mask = squeeze(1 - batch["terminated"])
+        reward = batch["reward"]
+        mask = batch["terminated"]
         next_obs = batch["next_observation"]
         batch = (obs, act, reward, mask, next_obs)
         self.sac.buffer.set_next_batch(batch)
         self.sac.update()
         return None
-
-        # saclearner_batch = Batch(
-        #     observations=batch["observation"],
-        #     actions=batch["action"],
-        #     rewards=squeeze(batch["reward"]),
-        #     masks=squeeze(1 - batch["terminated"]),
-        #     next_observations=batch["next_observation"],
-        # )
-
-        # return self.sac.update(saclearner_batch)
 
     def save(self, directory):
         pass

@@ -39,10 +39,10 @@ class ActorCriticMixIn:
         return {"key": next(self.rng)} if self.use_key_actor else {}
 
     def select_action(self, state):
-        action = self._select_action(self.params_actor, state[None, ...])
-        # action = self._select_action(self.params_actor, state)
-        # return np.array(action)
-        return np.array(action[0])
+        # action = self._select_action(self.params_actor, state[None, ...])
+        # return np.array(action[0])
+        action = self._select_action(self.params_actor, state)
+        return action
 
     @abstractmethod
     def _select_action(self, params_actor, state):
@@ -114,10 +114,10 @@ class OffPolicyActorCritic(ActorCriticMixIn, OffPolicyAlgorithm):
             self.fake_args_actor = (fake_state(observation_dim),)
 
     def explore(self, state):
-        action = self._explore(self.params_actor, state[None, ...], next(self.rng))
-        # action = self._explore(self.params_actor, state, next(self.rng))
-        # return action
-        return np.array(action[0])
+        # action = self._explore(self.params_actor, state[None, ...], next(self.rng))
+        # return np.array(action[0])
+        action = self._explore(self.params_actor, state, next(self.rng))
+        return action
 
     @abstractmethod
     def _sample_action(self, params_actor, state, *args, **kwargs):
