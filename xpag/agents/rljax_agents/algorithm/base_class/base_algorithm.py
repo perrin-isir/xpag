@@ -113,28 +113,28 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         else:
             self._update_target = jax.jit(partial(soft_update, tau=tau))
 
-    # def is_update(self):
-    #     return (
-    #         self.agent_step % self.update_interval == 0
-    #         and self.agent_step >= self.start_steps
-    #     )
+    def is_update(self):
+        return (
+            self.agent_step % self.update_interval == 0
+            and self.agent_step >= self.start_steps
+        )
 
-    # def step(self, env, state):
-    #     self.agent_step += 1
-    #     self.episode_step += 1
-    #
-    #     if self.agent_step <= self.start_steps:
-    #         action = env.action_space.sample()
-    #     else:
-    #         action = self.explore(state)
-    #
-    #     next_state, reward, terminated, truncated, _ = env.step(action)
-    #     done = terminated or truncated
-    #     mask = self.get_mask(env, done)
-    #     self.buffer.append(state, action, reward, mask, next_state, done)
-    #
-    #     if done:
-    #         self.episode_step = 0
-    #         next_state, _ = env.reset()
-    #
-    #     return next_state
+    def step(self, env, state):
+        self.agent_step += 1
+        self.episode_step += 1
+
+        if self.agent_step <= self.start_steps:
+            action = env.action_space.sample()
+        else:
+            action = self.explore(state)
+
+        next_state, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
+        mask = self.get_mask(env, done)
+        self.buffer.append(state, action, reward, mask, next_state, done)
+
+        if done:
+            self.episode_step = 0
+            next_state, _ = env.reset()
+
+        return next_state
