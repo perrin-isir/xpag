@@ -1,18 +1,23 @@
 from functools import partial
 from typing import List, Tuple
 
+import os
 import haiku as hk
 import jax
 import jax.numpy as jnp
 import numpy as np
 import optax as optix
+import joblib
 
 from xpag.agents.rljax_agents.algorithm.base_class import OffPolicyActorCritic
 from xpag.agents.rljax_agents.network import (
     ContinuousQFunction,
     StateDependentGaussianPolicy,
 )
-from xpag.agents.rljax_agents.util import optimize, reparameterize_gaussian_and_tanh
+from xpag.agents.rljax_agents.util import (
+    optimize,
+    reparameterize_gaussian_and_tanh,
+)
 
 
 class SAC(OffPolicyActorCritic):
@@ -285,3 +290,31 @@ class SAC(OffPolicyActorCritic):
         mean_log_pi: jnp.ndarray,
     ) -> jnp.ndarray:
         return -log_alpha * (self.target_entropy + mean_log_pi), None
+
+    def save_params(self, save_dir):
+        os.makedirs(save_dir, exist_ok=True)
+        for filename in [
+            "params_critic",
+            "opt_state_critic",
+            "params_critic_target",
+            "params_actor",
+            "opt_state_actor",
+            "log_alpha",
+            "opt_state_alpha",
+        ]:
+            with open(os.path.join(save_dir, filename + ".joblib"), "wb") as f_:
+                joblib.dump(self.__dict__[filename], f_)
+
+    def load_params(self, save_dir):
+        for filename in [
+            "params_critic",
+            "opt_state_critic",
+            "params_critic_target",
+            "params_actor",
+            "opt_state_actor",
+            "log_alpha",
+            "opt_state_alpha",
+        ]:
+            self.__dict__[filename] = jax.tree_util.tree_map(
+                jnp.array, joblib.load(os.path.join(save_dir, filename + ".joblib"))
+            )

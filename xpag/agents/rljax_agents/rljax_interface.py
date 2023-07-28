@@ -2,28 +2,9 @@
 #
 # Licensed under the BSD 3-Clause License.
 
-# import os
 from xpag.agents.agent import Agent
 from xpag.agents.rljax_agents.algorithm import SAC
-
-# import functools
-# from typing import Callable, Any, Tuple
-# import flax
-# import jax
-# import jax.numpy as jnp
 import numpy as np
-
-
-# @functools.partial(jax.jit, static_argnames="critic_apply_fn")
-# def _qvalue(
-#     critic_apply_fn: Callable[..., Any],
-#     critic_params: flax.core.FrozenDict[str, Any],
-#     observations: jnp.ndarray,
-#     actions: jnp.ndarray,
-# ) -> Tuple[jnp.ndarray]:
-#     return jnp.minimum(
-#         *critic_apply_fn({"params": critic_params}, observations, actions)
-#     )
 
 
 class DummyBuffer:
@@ -128,19 +109,12 @@ class RLJAXSAC(Agent):
         self.sac.buffer = DummyBuffer()
 
     def value(self, observation, action):
-        return 0.0
-        # return jnp.asarray(
-        #     _qvalue(
-        #         self.sac.critic.apply_fn, self.sac.critic.params, observation, action
-        #     )
-        # )
+        return self.sac.calculate_value(self.sac.params_critic, observation, action)
 
     def select_action(self, observation, eval_mode=False):
-        # __import__("IPython").embed()
         if eval_mode:
             return self.sac.select_action(observation)
         else:
-            # __import__("IPython").embed()
             return self.sac.explore(observation)
 
     def train_on_batch(self, batch):
@@ -155,23 +129,10 @@ class RLJAXSAC(Agent):
         return None
 
     def save(self, directory):
-        pass
-        # os.makedirs(directory, exist_ok=True)
-        # jnp.save(os.path.join(directory, "step.npy"), self.sac.step)
-        # self.sac.actor.save(os.path.join(directory, "actor"))
-        # self.sac.critic.save(os.path.join(directory, "critic"))
-        # self.sac.target_critic.save(os.path.join(directory, "target_critic"))
-        # self.sac.temp.save(os.path.join(directory, "temp"))
+        self.sac.save_params(directory)
 
     def load(self, directory):
-        pass
-        # self.sac.step = jnp.load(os.path.join(directory, "step.npy")).item()
-        # self.sac.actor = self.sac.actor.load(os.path.join(directory, "actor"))
-        # self.sac.critic = self.sac.critic.load(os.path.join(directory, "critic"))
-        # self.sac.target_critic = self.sac.target_critic.load(
-        #     os.path.join(directory, "target_critic")
-        # )
-        # self.sac.temp = self.sac.temp.load(os.path.join(directory, "temp"))
+        self.sac.load_params(directory)
 
     def write_config(self, output_file: str):
         print(self._config_string, file=output_file)

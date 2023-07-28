@@ -143,6 +143,14 @@ class OffPolicyActorCritic(ActorCriticMixIn, OffPolicyAlgorithm):
             self._calculate_value_list(params_critic, state, action)
         ).min(axis=0)
 
+    def calculate_value(
+        self,
+        params_critic: hk.Params,
+        state: np.ndarray,
+        action: np.ndarray,
+    ) -> jnp.ndarray:
+        return self._calculate_value(params_critic, state, action)
+
     @abstractmethod
     def _calculate_target(
         self,
