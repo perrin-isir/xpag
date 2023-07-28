@@ -6,7 +6,7 @@
 from xpag.agents.agent import Agent
 from xpag.agents.rljax_agents.algorithm import SAC
 
-# from xpag.tools.utils import squeeze
+from xpag.tools.utils import squeeze
 
 # import functools
 # from typing import Callable, Any, Tuple
@@ -26,6 +26,17 @@ import numpy as np
 #     return jnp.minimum(
 #         *critic_apply_fn({"params": critic_params}, observations, actions)
 #     )
+
+
+class DummyBuffer:
+    def __init__(self):
+        self.next_batch = None
+
+    def set_next_batch(self, batch):
+        self.next_batch = batch
+
+    def sample(self, batch_size):
+        return 1.0, self.next_batch
 
 
 class RLJAXSAC(Agent):
@@ -83,15 +94,11 @@ class RLJAXSAC(Agent):
             "actor_lr": 3e-4,
             "critic_lr": 3e-3,
             "temp_lr": 3e-4,
-            "backup_entropy": True,
             "discount": 0.99,
             "hidden_dims": (256, 256),
             "init_temperature": 1.0,
-            "init_mean": None,
-            "target_entropy": None,
             "target_update_period": 1,
             "tau": 5e-2,
-            "policy_final_fc_init_scale": 1.0,
         }
 
         for key in self.sac_params:
@@ -99,34 +106,35 @@ class RLJAXSAC(Agent):
                 self.sac_params[key] = self.params[key]
 
         self.sac = SAC(
-            self,
             np.inf,
-            # observation_dim,
-            # action_space,
+            observation_dim,
+            action_dim,
             start_seed,
             max_grad_norm=None,
-            gamma=0.99,
+            gamma=self.sac_params["discount"],
             nstep=1,
             num_critics=2,
             buffer_size=None,
             use_per=False,
-            batch_size=256,
-            start_steps=10000,
-            update_interval=1,
-            tau=5e-3,
+            batch_size=None,
+            start_steps=None,
+            update_interval=self.sac_params["target_update_period"],
+            tau=self.sac_params["tau"],
             fn_actor=None,
             fn_critic=None,
-            lr_actor=3e-4,
-            lr_critic=3e-4,
-            lr_alpha=3e-4,
-            units_actor=(256, 256),
-            units_critic=(256, 256),
+            lr_actor=self.sac_params["actor_lr"],
+            lr_critic=self.sac_params["critic_lr"],
+            lr_alpha=self.sac_params["temp_lr"],
+            units_actor=self.sac_params["hidden_dims"],
+            units_critic=self.sac_params["hidden_dims"],
             log_std_min=-20.0,
             log_std_max=2.0,
             d2rl=False,
-            init_alpha=1.0,
+            init_alpha=self.sac_params["init_temperature"],
             adam_b1_alpha=0.9,
         )
+
+        self.sac.buffer = DummyBuffer()
 
     def value(self, observation, action):
         return 0.0
@@ -137,12 +145,24 @@ class RLJAXSAC(Agent):
         # )
 
     def select_action(self, observation, eval_mode=False):
-        return self.sac.sample_actions(
-            observation, distribution="det" if eval_mode else "log_prob"
-        )
+        # __import__("IPython").embed()
+        if eval_mode:
+            return self.sac.select_action(observation)
+        else:
+            # __import__("IPython").embed()
+            return self.sac.explore(observation)
 
     def train_on_batch(self, batch):
-        pass
+        obs = batch["observation"]
+        act = batch["action"]
+        reward = squeeze(batch["reward"])
+        mask = squeeze(1 - batch["terminated"])
+        next_obs = batch["next_observation"]
+        batch = (obs, act, reward, mask, next_obs)
+        self.sac.buffer.set_next_batch(batch)
+        self.sac.update()
+        return None
+
         # saclearner_batch = Batch(
         #     observations=batch["observation"],
         #     actions=batch["action"],

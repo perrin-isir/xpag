@@ -15,7 +15,7 @@ def huber(td: jnp.ndarray) -> jnp.ndarray:
 def quantile_loss(
     td: jnp.ndarray,
     cum_p: jnp.ndarray,
-    weight: jnp.ndarray,
+    weight: float or jnp.ndarray,
     loss_type: str,
 ) -> jnp.ndarray:
     """

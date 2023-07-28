@@ -22,7 +22,7 @@ class SAC(OffPolicyActorCritic):
         self,
         num_agent_steps,
         observation_dim,
-        action_space,
+        action_dim,
         seed,
         max_grad_norm=None,
         gamma=0.99,
@@ -57,7 +57,7 @@ class SAC(OffPolicyActorCritic):
         super(SAC, self).__init__(
             num_agent_steps=num_agent_steps,
             observation_dim=observation_dim,
-            action_space=action_space,
+            action_dim=action_dim,
             seed=seed,
             max_grad_norm=max_grad_norm,
             gamma=gamma,
@@ -88,7 +88,7 @@ class SAC(OffPolicyActorCritic):
 
             def fn_actor(s):
                 return StateDependentGaussianPolicy(
-                    action_space=action_space,
+                    action_dim=action_dim,
                     hidden_units=units_actor,
                     log_std_min=log_std_min,
                     log_std_max=log_std_max,
@@ -109,7 +109,7 @@ class SAC(OffPolicyActorCritic):
         self.opt_state_actor = opt_init(self.params_actor)
         # Entropy coefficient.
         if not hasattr(self, "target_entropy"):
-            self.target_entropy = -float(self.action_space.shape[0])
+            self.target_entropy = -float(self.action_dim)
         self.log_alpha = jnp.array(np.log(init_alpha), dtype=jnp.float32)
         opt_init, self.opt_alpha = optix.adam(lr_alpha, b1=adam_b1_alpha)
         self.opt_state_alpha = opt_init(self.log_alpha)
@@ -241,7 +241,7 @@ class SAC(OffPolicyActorCritic):
         reward: np.ndarray,
         done: np.ndarray,
         next_state: np.ndarray,
-        weight: np.ndarray or List[jnp.ndarray],
+        weight: float or np.ndarray or List[jnp.ndarray],
         *args,
         **kwargs,
     ) -> Tuple[jnp.ndarray, jnp.ndarray]:

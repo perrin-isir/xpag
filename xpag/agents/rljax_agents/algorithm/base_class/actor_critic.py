@@ -39,8 +39,10 @@ class ActorCriticMixIn:
         return {"key": next(self.rng)} if self.use_key_actor else {}
 
     def select_action(self, state):
-        action = self._select_action(self.params_actor, state[None, ...])
-        return np.array(action[0])
+        # action = self._select_action(self.params_actor, state[None, ...])
+        action = self._select_action(self.params_actor, state)
+        return np.array(action)
+        # return np.array(action[0])
 
     @abstractmethod
     def _select_action(self, params_actor, state):
@@ -68,7 +70,7 @@ class OffPolicyActorCritic(ActorCriticMixIn, OffPolicyAlgorithm):
         self,
         num_agent_steps,
         observation_dim,
-        action_space,
+        action_dim,
         seed,
         max_grad_norm,
         gamma,
@@ -87,7 +89,7 @@ class OffPolicyActorCritic(ActorCriticMixIn, OffPolicyAlgorithm):
             self,
             num_agent_steps=num_agent_steps,
             observation_dim=observation_dim,
-            action_space=action_space,
+            action_dim=action_dim,
             seed=seed,
             max_grad_norm=max_grad_norm,
             gamma=gamma,
@@ -105,15 +107,17 @@ class OffPolicyActorCritic(ActorCriticMixIn, OffPolicyAlgorithm):
         if not hasattr(self, "fake_args_critic"):
             self.fake_args_critic = (
                 fake_state(observation_dim),
-                fake_action(action_space),
+                fake_action(action_dim),
             )
         # Define fake input for actor.
         if not hasattr(self, "fake_args_actor"):
             self.fake_args_actor = (fake_state(observation_dim),)
 
     def explore(self, state):
-        action = self._explore(self.params_actor, state[None, ...], next(self.rng))
-        return np.array(action[0])
+        # action = self._explore(self.params_actor, state[None, ...], next(self.rng))
+        action = self._explore(self.params_actor, state, next(self.rng))
+        return action
+        # return np.array(action[0])
 
     @abstractmethod
     def _sample_action(self, params_actor, state, *args, **kwargs):
@@ -157,7 +161,7 @@ class OffPolicyActorCritic(ActorCriticMixIn, OffPolicyAlgorithm):
         self,
         value_list: List[jnp.ndarray],
         target: jnp.ndarray,
-        weight: np.ndarray,
+        weight: float or np.ndarray,
     ) -> jnp.ndarray:
         abs_td = jnp.abs(target - value_list[0])
         loss_critic = (jnp.square(abs_td) * weight).mean()

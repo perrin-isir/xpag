@@ -17,7 +17,7 @@ class TD3(DDPG):
         self,
         num_agent_steps,
         observation_dim,
-        action_space,
+        action_dim,
         seed,
         max_grad_norm=None,
         gamma=0.99,
@@ -47,7 +47,7 @@ class TD3(DDPG):
         super(TD3, self).__init__(
             num_agent_steps=num_agent_steps,
             observation_dim=observation_dim,
-            action_space=action_space,
+            action_dim=action_dim,
             seed=seed,
             max_grad_norm=max_grad_norm,
             gamma=gamma,

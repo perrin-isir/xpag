@@ -12,18 +12,18 @@ class DeterministicPolicy(hk.Module):
 
     def __init__(
         self,
-        action_space,
+        action_dim,
         hidden_units=(256, 256),
         d2rl=False,
     ):
         super(DeterministicPolicy, self).__init__()
-        self.action_space = action_space
+        self.action_dim = action_dim
         self.hidden_units = hidden_units
         self.d2rl = d2rl
 
     def __call__(self, x):
         return MLP(
-            self.action_space.shape[0],
+            self.action_dim,
             self.hidden_units,
             hidden_activation=nn.relu,
             output_activation=jnp.tanh,
@@ -38,7 +38,7 @@ class StateDependentGaussianPolicy(hk.Module):
 
     def __init__(
         self,
-        action_space,
+        action_dim,
         hidden_units=(256, 256),
         log_std_min=-20.0,
         log_std_max=2.0,
@@ -46,7 +46,7 @@ class StateDependentGaussianPolicy(hk.Module):
         d2rl=False,
     ):
         super(StateDependentGaussianPolicy, self).__init__()
-        self.action_space = action_space
+        self.action_dim = action_dim
         self.hidden_units = hidden_units
         self.log_std_min = log_std_min
         self.log_std_max = log_std_max
@@ -55,7 +55,7 @@ class StateDependentGaussianPolicy(hk.Module):
 
     def __call__(self, x):
         x = MLP(
-            2 * self.action_space.shape[0],
+            2 * self.action_dim,
             self.hidden_units,
             hidden_activation=nn.relu,
             d2rl=self.d2rl,
@@ -77,21 +77,19 @@ class StateIndependentGaussianPolicy(hk.Module):
 
     def __init__(
         self,
-        action_space,
+        action_dim,
         hidden_units=(64, 64),
     ):
         super(StateIndependentGaussianPolicy, self).__init__()
-        self.action_space = action_space
+        self.action_dim = action_dim
         self.hidden_units = hidden_units
 
     def __call__(self, x):
         mean = MLP(
-            self.action_space.shape[0],
+            self.action_dim,
             self.hidden_units,
             hidden_activation=jnp.tanh,
             output_scale=0.01,
         )(x)
-        log_std = hk.get_parameter(
-            "log_std", (1, self.action_space.shape[0]), init=jnp.zeros
-        )
+        log_std = hk.get_parameter("log_std", (1, self.action_dim), init=jnp.zeros)
         return mean, log_std

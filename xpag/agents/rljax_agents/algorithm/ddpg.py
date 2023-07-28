@@ -19,7 +19,7 @@ class DDPG(OffPolicyActorCritic):
         self,
         num_agent_steps,
         observation_dim,
-        action_space,
+        action_dim,
         seed,
         max_grad_norm=None,
         gamma=0.99,
@@ -44,7 +44,7 @@ class DDPG(OffPolicyActorCritic):
         super(DDPG, self).__init__(
             num_agent_steps=num_agent_steps,
             observation_dim=observation_dim,
-            action_space=action_space,
+            action_dim=action_dim,
             seed=seed,
             max_grad_norm=max_grad_norm,
             gamma=gamma,
@@ -73,7 +73,7 @@ class DDPG(OffPolicyActorCritic):
 
             def fn_actor(s):
                 return DeterministicPolicy(
-                    action_space=action_space,
+                    action_dim=action_dim,
                     hidden_units=units_actor,
                     d2rl=d2rl,
                 )(s)
@@ -197,7 +197,7 @@ class DDPG(OffPolicyActorCritic):
         reward: np.ndarray,
         done: np.ndarray,
         next_state: np.ndarray,
-        weight: np.ndarray,
+        weight: float or np.ndarray,
         *args,
         **kwargs,
     ) -> Tuple[jnp.ndarray, jnp.ndarray]:

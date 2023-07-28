@@ -21,7 +21,7 @@ class TQC(SAC):
         self,
         num_agent_steps,
         observation_dim,
-        action_space,
+        action_dim,
         seed,
         max_grad_norm=None,
         gamma=0.99,
@@ -63,7 +63,7 @@ class TQC(SAC):
 
             def fn_actor(s):
                 return StateDependentGaussianPolicy(
-                    action_space=action_space,
+                    action_dim=action_dim,
                     hidden_units=units_actor,
                     log_std_min=log_std_min,
                     log_std_max=log_std_max,
@@ -73,7 +73,7 @@ class TQC(SAC):
         super(TQC, self).__init__(
             num_agent_steps=num_agent_steps,
             observation_dim=observation_dim,
-            action_space=action_space,
+            action_dim=action_dim,
             seed=seed,
             max_grad_norm=max_grad_norm,
             gamma=gamma,
@@ -137,7 +137,7 @@ class TQC(SAC):
         self,
         quantile_list: List[jnp.ndarray],
         target: jnp.ndarray,
-        weight: np.ndarray,
+        weight: float or np.ndarray,
     ) -> jnp.ndarray:
         loss_critic = 0.0
         for quantile in quantile_list:

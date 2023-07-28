@@ -19,7 +19,7 @@ class BaseAlgorithm(ABC):
         self,
         num_agent_steps,
         observation_dim,
-        action_space,
+        action_dim,
         seed,
         max_grad_norm,
         gamma,
@@ -32,7 +32,7 @@ class BaseAlgorithm(ABC):
         self.learning_step = 0
         self.num_agent_steps = num_agent_steps
         self.observation_dim = observation_dim
-        self.action_space = action_space
+        self.action_dim = action_dim
         self.gamma = gamma
         self.max_grad_norm = max_grad_norm
         self.discrete_action = False
@@ -42,14 +42,6 @@ class BaseAlgorithm(ABC):
 
     def get_key_list(self, num_keys):
         return [next(self.rng) for _ in range(num_keys)]
-
-    @abstractmethod
-    def is_update(self):
-        pass
-
-    @abstractmethod
-    def step(self, env, state):
-        pass
 
     @abstractmethod
     def select_action(self, state):
@@ -84,7 +76,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         self,
         num_agent_steps,
         observation_dim,
-        action_space,
+        action_dim,
         seed,
         max_grad_norm,
         gamma,
@@ -101,7 +93,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         super(OffPolicyAlgorithm, self).__init__(
             num_agent_steps=num_agent_steps,
             observation_dim=observation_dim,
-            action_space=action_space,
+            action_dim=action_dim,
             seed=seed,
             max_grad_norm=max_grad_norm,
             gamma=gamma,
@@ -121,11 +113,11 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         else:
             self._update_target = jax.jit(partial(soft_update, tau=tau))
 
-    def is_update(self):
-        return (
-            self.agent_step % self.update_interval == 0
-            and self.agent_step >= self.start_steps
-        )
+    # def is_update(self):
+    #     return (
+    #         self.agent_step % self.update_interval == 0
+    #         and self.agent_step >= self.start_steps
+    #     )
 
     # def step(self, env, state):
     #     self.agent_step += 1
