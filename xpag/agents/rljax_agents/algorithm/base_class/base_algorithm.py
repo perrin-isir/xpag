@@ -3,7 +3,6 @@ from functools import partial
 
 import jax
 import numpy as np
-from gym.spaces import Box
 from haiku import PRNGSequence
 
 from xpag.agents.rljax_agents.util import soft_update
@@ -19,7 +18,7 @@ class BaseAlgorithm(ABC):
     def __init__(
         self,
         num_agent_steps,
-        state_space,
+        observation_dim,
         action_space,
         seed,
         max_grad_norm,
@@ -32,18 +31,14 @@ class BaseAlgorithm(ABC):
         self.episode_step = 0
         self.learning_step = 0
         self.num_agent_steps = num_agent_steps
-        self.state_space = state_space
+        self.observation_dim = observation_dim
         self.action_space = action_space
         self.gamma = gamma
         self.max_grad_norm = max_grad_norm
-        self.discrete_action = False if type(action_space) == Box else True
+        self.discrete_action = False
 
     def get_mask(self, env, done):
-        return (
-            done
-            if (self.episode_step != env._max_episode_steps or self.discrete_action)
-            else False
-        )
+        return done if (self.episode_step != env._max_episode_steps) else False
 
     def get_key_list(self, num_keys):
         return [next(self.rng) for _ in range(num_keys)]
@@ -88,7 +83,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
     def __init__(
         self,
         num_agent_steps,
-        state_space,
+        observation_dim,
         action_space,
         seed,
         max_grad_norm,
@@ -105,7 +100,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         assert update_interval_target or tau
         super(OffPolicyAlgorithm, self).__init__(
             num_agent_steps=num_agent_steps,
-            state_space=state_space,
+            observation_dim=observation_dim,
             action_space=action_space,
             seed=seed,
             max_grad_norm=max_grad_norm,
@@ -132,22 +127,22 @@ class OffPolicyAlgorithm(BaseAlgorithm):
             and self.agent_step >= self.start_steps
         )
 
-    def step(self, env, state):
-        self.agent_step += 1
-        self.episode_step += 1
-
-        if self.agent_step <= self.start_steps:
-            action = env.action_space.sample()
-        else:
-            action = self.explore(state)
-
-        next_state, reward, terminated, truncated, _ = env.step(action)
-        done = terminated or truncated
-        mask = self.get_mask(env, done)
-        self.buffer.append(state, action, reward, mask, next_state, done)
-
-        if done:
-            self.episode_step = 0
-            next_state, _ = env.reset()
-
-        return next_state
+    # def step(self, env, state):
+    #     self.agent_step += 1
+    #     self.episode_step += 1
+    #
+    #     if self.agent_step <= self.start_steps:
+    #         action = env.action_space.sample()
+    #     else:
+    #         action = self.explore(state)
+    #
+    #     next_state, reward, terminated, truncated, _ = env.step(action)
+    #     done = terminated or truncated
+    #     mask = self.get_mask(env, done)
+    #     self.buffer.append(state, action, reward, mask, next_state, done)
+    #
+    #     if done:
+    #         self.episode_step = 0
+    #         next_state, _ = env.reset()
+    #
+    #     return next_state

@@ -101,7 +101,7 @@ class RLJAXSAC(Agent):
         self.sac = SAC(
             self,
             np.inf,
-            # state_space,
+            # observation_dim,
             # action_space,
             start_seed,
             max_grad_norm=None,

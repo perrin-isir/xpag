@@ -3,7 +3,6 @@ import jax.numpy as jnp
 from jax import nn
 
 from xpag.agents.rljax_agents.network.base import MLP
-from xpag.agents.rljax_agents.network.conv import DQNBody
 
 
 class DeterministicPolicy(hk.Module):
@@ -96,31 +95,3 @@ class StateIndependentGaussianPolicy(hk.Module):
             "log_std", (1, self.action_space.shape[0]), init=jnp.zeros
         )
         return mean, log_std
-
-
-class CategoricalPolicy(hk.Module):
-    """
-    Policy for SAC-Discrete.
-    """
-
-    def __init__(
-        self,
-        action_space,
-        hidden_units=(512,),
-    ):
-        super(CategoricalPolicy, self).__init__()
-        self.action_space = action_space
-        self.hidden_units = hidden_units
-
-    def __call__(self, x):
-        if len(x.shape) == 4:
-            x = DQNBody()(x)
-        x = MLP(
-            self.action_space.n,
-            self.hidden_units,
-            hidden_activation=nn.relu,
-            output_scale=0.01,
-        )(x)
-        pi_s = nn.softmax(x, axis=1)
-        log_pi_s = jnp.log(pi_s + (pi_s == 0.0) * 1e-8)
-        return pi_s, log_pi_s

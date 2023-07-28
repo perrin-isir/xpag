@@ -67,7 +67,7 @@ class OffPolicyActorCritic(ActorCriticMixIn, OffPolicyAlgorithm):
     def __init__(
         self,
         num_agent_steps,
-        state_space,
+        observation_dim,
         action_space,
         seed,
         max_grad_norm,
@@ -86,7 +86,7 @@ class OffPolicyActorCritic(ActorCriticMixIn, OffPolicyAlgorithm):
         OffPolicyAlgorithm.__init__(
             self,
             num_agent_steps=num_agent_steps,
-            state_space=state_space,
+            observation_dim=observation_dim,
             action_space=action_space,
             seed=seed,
             max_grad_norm=max_grad_norm,
@@ -103,16 +103,13 @@ class OffPolicyActorCritic(ActorCriticMixIn, OffPolicyAlgorithm):
         self.num_critics = num_critics
         # Define fake input for critic.
         if not hasattr(self, "fake_args_critic"):
-            if self.discrete_action:
-                self.fake_args_critic = (fake_state(state_space),)
-            else:
-                self.fake_args_critic = (
-                    fake_state(state_space),
-                    fake_action(action_space),
-                )
+            self.fake_args_critic = (
+                fake_state(observation_dim),
+                fake_action(action_space),
+            )
         # Define fake input for actor.
         if not hasattr(self, "fake_args_actor"):
-            self.fake_args_actor = (fake_state(state_space),)
+            self.fake_args_actor = (fake_state(observation_dim),)
 
     def explore(self, state):
         action = self._explore(self.params_actor, state[None, ...], next(self.rng))

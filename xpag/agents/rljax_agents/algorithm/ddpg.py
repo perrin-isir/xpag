@@ -18,7 +18,7 @@ class DDPG(OffPolicyActorCritic):
     def __init__(
         self,
         num_agent_steps,
-        state_space,
+        observation_dim,
         action_space,
         seed,
         max_grad_norm=None,
@@ -43,7 +43,7 @@ class DDPG(OffPolicyActorCritic):
     ):
         super(DDPG, self).__init__(
             num_agent_steps=num_agent_steps,
-            state_space=state_space,
+            observation_dim=observation_dim,
             action_space=action_space,
             seed=seed,
             max_grad_norm=max_grad_norm,

@@ -1,5 +1,4 @@
 import numpy as np
-from gymnasium.spaces import Box
 
 
 def fake_state(state_space):
@@ -10,8 +9,5 @@ def fake_state(state_space):
 
 
 def fake_action(action_space):
-    if type(action_space) == Box:
-        action = action_space.sample().astype(np.float32)[None, ...]
-    else:
-        NotImplementedError
+    action = action_space.sample().astype(np.float32)[None, ...]
     return action
