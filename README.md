@@ -88,7 +88,7 @@ The *xpag-tutorials* repository contains a list of tutorials (colab notebooks) f
 
 -----
 ## Short documentation
-<details><summary><B><I>xpag</I>: a platform for goal-conditioned RL</B></summary>
+<details><summary><B><I>xpag</I>: a platform for RL, goal-conditioned RL, and more.</B></summary>
 
 *xpag* allows standard reinforcement learning, but it has been designed with
 goal-conditioned reinforcement learning (GCRL) in mind (check out the [train_gmazes.ipynb](https://colab.research.google.com/github/perrin-isir/xpag-tutorials/blob/main/train_gmazes.ipynb)
@@ -237,7 +237,8 @@ The figure below summarizes the RL loop and the interactions between the compone
   - Stéphane Caron (Inria)
   - Fabian Schramm (Inria)
 
-* The [SAC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/sac) is based on the implementation of SAC in [JAXRL](https://github.com/ikostrikov/jaxrl), and some elements of the [TQC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/tqc) come from the implementation of TQC in [RLJAX](https://github.com/ku2482/rljax).
+* There is an interface to agents from the [RLJAX](https://github.com/ku2482/rljax) library (see [rljax_interface.py](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/rljax_agents/rljax_interface.py)). This provides [haiku](https://github.com/deepmind/dm-haiku) versions of [DDPG](https://arxiv.org/abs/1509.02971), [TD3](https://arxiv.org/abs/1802.09477), [TQC](https://arxiv.org/abs/2005.04269), [SAC](https://arxiv.org/abs/1812.05905) and SAC with [DisCor](https://arxiv.org/abs/2003.07305).
+* The [flax](https://github.com/google/flax) version of the [SAC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/flax_agents/sac) is based on the implementation of SAC in [JAXRL](https://github.com/ikostrikov/jaxrl), and some elements of the flax version of the [TQC agent](https://github.com/perrin-isir/xpag/blob/main/xpag/agents/flax_agents/tqc) come from the implementation of TQC in [RLJAX](https://github.com/ku2482/rljax).
 
 -----
 ## Citing the project

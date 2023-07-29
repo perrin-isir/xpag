@@ -4,7 +4,7 @@
 
 import os
 from xpag.agents.agent import Agent
-from xpag.agents.sac.sac_from_jaxrl import Batch, SACLearner
+from xpag.agents.flax_agents.sac.sac_from_jaxrl import Batch, SACLearner
 from xpag.tools.utils import squeeze
 import functools
 from typing import Callable, Any, Tuple
@@ -26,7 +26,7 @@ def _qvalue(
     )
 
 
-class SAC(Agent):
+class FlaxSAC(Agent):
     """
     Interface to the SAC agent from JAXRL (https://github.com/ikostrikov/jaxrl)
 

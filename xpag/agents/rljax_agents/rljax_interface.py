@@ -18,7 +18,7 @@ class DummyBuffer:
         return 1.0, self.next_batch
 
 
-class RLJAXSAC(Agent):
+class RljaxSAC(Agent):
     """
     Interface to the SAC agent from RLJAX (https://github.com/toshikwa/rljax)
 

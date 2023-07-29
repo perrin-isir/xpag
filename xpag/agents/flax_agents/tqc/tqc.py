@@ -32,7 +32,7 @@ SOFTWARE.
 
 import os
 from xpag.agents.agent import Agent
-from xpag.agents.sac.sac_from_jaxrl import (
+from xpag.agents.flax_agents.sac.sac_from_jaxrl import (
     PRNGKey,
     InfoDict,
     Params,
@@ -335,7 +335,7 @@ class TQCLearner(SACLearner):
         return info
 
 
-class TQC(Agent):
+class FlaxTQC(Agent):
     def __init__(self, observation_dim, action_dim, params=None):
         """
         Interface to TQC agent

@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Tuple
-
+import os
+import joblib
 import haiku as hk
 import jax
 import jax.numpy as jnp
@@ -220,3 +221,27 @@ class DDPG(OffPolicyActorCritic):
         action = self.actor.apply(params_actor, state)
         mean_q = self.critic.apply(params_critic, state, action)[0].mean()
         return -mean_q, None
+
+    def save_params(self, save_dir):
+        os.makedirs(save_dir, exist_ok=True)
+        for filename in [
+            "params_critic",
+            "opt_state_critic",
+            "params_critic_target",
+            "params_actor",
+            "opt_state_actor",
+        ]:
+            with open(os.path.join(save_dir, filename + ".joblib"), "wb") as f_:
+                joblib.dump(self.__dict__[filename], f_)
+
+    def load_params(self, save_dir):
+        for filename in [
+            "params_critic",
+            "opt_state_critic",
+            "params_critic_target",
+            "params_actor",
+            "opt_state_actor",
+        ]:
+            self.__dict__[filename] = jax.tree_util.tree_map(
+                jnp.array, joblib.load(os.path.join(save_dir, filename + ".joblib"))
+            )

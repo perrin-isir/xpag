@@ -37,7 +37,7 @@ class TrainingState:
     steps: jnp.ndarray
 
 
-class SDQN(Agent):
+class FlaxSDQN(Agent):
     def __init__(
         self,
         observation_dim,
@@ -564,8 +564,8 @@ class SDQN(Agent):
         return metrics
 
 
-class SDQNSetter(Setter):
-    def __init__(self, sdqn_agent: SDQN):
+class FlaxSDQNSetter(Setter):
+    def __init__(self, sdqn_agent: FlaxSDQN):
         super().__init__("SDQNSetter")
         self.agent = sdqn_agent
 

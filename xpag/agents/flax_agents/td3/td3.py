@@ -38,7 +38,7 @@ class TrainingState:
     steps: jnp.ndarray
 
 
-class TD3(Agent):
+class FlaxTD3(Agent):
     def __init__(
         self,
         observation_dim,
