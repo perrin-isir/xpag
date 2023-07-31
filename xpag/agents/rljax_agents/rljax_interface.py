@@ -121,7 +121,7 @@ class RljaxSAC(Agent):
         obs = batch["observation"]
         act = batch["action"]
         reward = batch["reward"]
-        mask = batch["terminated"]
+        mask = batch["terminated"] * (1 - batch["truncated"])
         next_obs = batch["next_observation"]
         batch = (obs, act, reward, mask, next_obs)
         self.sac.buffer.set_next_batch(batch)
