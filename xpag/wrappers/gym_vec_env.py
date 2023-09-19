@@ -37,7 +37,7 @@ def check_goalenv(env) -> bool:
     return True
 
 
-def gym_vec_env_(env_name, num_envs, wrap_function=None):
+def gym_vec_env_(env_name, num_envs, wrap_function=None, **gym_kwargs):
     if wrap_function is None:
 
         def wrap_function(x):
@@ -55,7 +55,7 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
 
         env = wrap_function(
             gym.make(
-                env_name, num_envs=num_envs
+                env_name, num_envs=num_envs, **gym_kwargs
             ).unwrapped  # removing gymnasium wrappers
         )
 
@@ -74,10 +74,9 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
             "Trying to create a batch environment. env.max_episode_steps must exist, "
             "and env.spec.max_episode_steps must not (or be None)."
         )
-        max_episode_steps = env.max_episode_steps
         env_type = "Gym"
     else:
-        dummy_env = gym.make(env_name)
+        dummy_env = gym.make(env_name, **gym_kwargs)
         # We force the env to either have a standard gymnasium time limit (with the
         # max number of steps defined in .spec.max_episode_steps), or the max number of
         # steps defined in .max_episode_steps (and in this case we trust the environment
@@ -118,9 +117,11 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None):
             ResetDoneVecWrapper(
                 AsyncVectorEnv(
                     [
-                        (lambda: gym.make(env_name))
+                        (lambda: gym.make(env_name, **gym_kwargs))
                         if hasattr(dummy_env, "reset_done")
-                        else (lambda: ResetDoneWrapper(gym.make(env_name)))
+                        else (
+                            lambda: ResetDoneWrapper(gym.make(env_name, **gym_kwargs))
+                        )
                     ]
                     * num_envs,
                     worker=_worker_shared_memory_no_auto_reset,

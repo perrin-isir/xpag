@@ -9,7 +9,7 @@ from xpag.agents.rljax_agents.rljax_interface import RljaxSAC
 def agent_factory(name, haiku_agent_class, flax_agent_class):
     class AgentClass(Agent):
         def __init__(
-            self, observation_dim, action_dim, params=None, haiku_or_flax="haiku"
+            self, observation_dim, action_dim, params=None, haiku_or_flax="flax"
         ):
             super().__init__(name, observation_dim, action_dim, params)
             assert haiku_or_flax in ["haiku", "flax"], (
