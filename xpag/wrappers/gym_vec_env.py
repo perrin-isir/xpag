@@ -144,9 +144,9 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None, **gym_kwargs):
     return env, env_info
 
 
-def gym_vec_env(env_name: str, num_envs: int, wrap_function: Callable = None):
-    env, env_info = gym_vec_env_(env_name, num_envs, wrap_function)
-    eval_env, _ = gym_vec_env_(env_name, 1, wrap_function)
+def gym_vec_env(env_name: str, num_envs: int, wrap_function: Callable = None, **kwargs):
+    env, env_info = gym_vec_env_(env_name, num_envs, wrap_function, **kwargs)
+    eval_env, _ = gym_vec_env_(env_name, 1, wrap_function, **kwargs)
     return env, eval_env, env_info
 
 
