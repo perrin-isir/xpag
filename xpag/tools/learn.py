@@ -137,7 +137,6 @@ def learn(
                 if (
                     not save_agent_every_x_steps % evaluate_every_x_steps
                 ) and last_eval_score > max_eval_score:
-                    print(last_eval_score)
                     max_eval_score = last_eval_score
                     agent.save(os.path.join(os.path.expanduser(save_dir), "best_agent"))
                     setter.save(
