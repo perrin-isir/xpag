@@ -18,7 +18,7 @@ dependencies:
     - gymnasium>=0.28.1
     - optax>=0.1.2
     - brax>=0.9.1
-    - flax>=0.6.3
+    - flax>=0.7.2
     - dm-haiku>=0.0.10
 
 

@@ -62,10 +62,14 @@ def learn(
             agent (remark: if there n rollouts in parallel, one call to
             env.step() counts as n steps). With the default value, np.inf, there is no
             evaluation.
-        save_agent_every_x_steps (int): it defines how often the agent is saved to
-            the disk (remark: if there n rollouts in parallel, one call to
-            env.step() counts as n steps). With the default value, np.inf, the agent
-            is never saved.
+        save_agent_every_x_steps (int): it defines how often the agent and setter are
+            saved to the disk (remark: if there n rollouts in parallel, one call to
+            env.step() counts as n steps). With the default value, np.inf, they are
+            never saved. The agent is saved in the folder <save_dir>/agent, and
+            the setter in the folder <save_dir>/setter. When save_agent_every_x_steps
+            is a multiple of evaluate_every_x_steps, the agent and setter that obtain
+            a new best evaluation score are saved in the folders <save_dir>/best_agent
+            and <save_dir>/best_setter.
         save_dir (str): the directory in which the config, agent, plots, evaluation
             episodes and logs are saved.
         save_episode (bool): if True, the evaluation episodes are saved.
@@ -104,9 +108,14 @@ def learn(
     else:
         rollout_eval = custom_eval_function
 
+    last_eval_score = -np.inf
+    max_eval_score = last_eval_score
     for i in range(max_steps // env_info["num_envs"]):
-        if not i % max(evaluate_every_x_steps // env_info["num_envs"], 1):
-            rollout_eval(
+
+        if (i * env_info["num_envs"]) // evaluate_every_x_steps != (
+            (i - 1) * env_info["num_envs"]
+        ) // evaluate_every_x_steps:
+            last_eval_score = rollout_eval(
                 i * env_info["num_envs"],
                 eval_env,
                 env_info,
@@ -119,10 +128,21 @@ def learn(
                 seed=master_rng.randint(1e9),
             )
 
-        if not i % max(save_agent_every_x_steps // env_info["num_envs"], 1):
+        if (i * env_info["num_envs"]) // save_agent_every_x_steps != (
+            (i - 1) * env_info["num_envs"]
+        ) // save_agent_every_x_steps:
             if save_dir is not None:
                 agent.save(os.path.join(os.path.expanduser(save_dir), "agent"))
                 setter.save(os.path.join(os.path.expanduser(save_dir), "setter"))
+                if (
+                    not save_agent_every_x_steps % evaluate_every_x_steps
+                ) and last_eval_score > max_eval_score:
+                    print(last_eval_score)
+                    max_eval_score = last_eval_score
+                    agent.save(os.path.join(os.path.expanduser(save_dir), "best_agent"))
+                    setter.save(
+                        os.path.join(os.path.expanduser(save_dir), "best_setter")
+                    )
 
         action_info = {}
         if i * env_info["num_envs"] < start_training_after_x_steps:

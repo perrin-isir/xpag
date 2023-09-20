@@ -102,7 +102,7 @@ class Model:
     ) -> "Model":
         variables = model_def.init(*inputs)
 
-        _, params = variables.pop("params")
+        params = variables.pop("params")
 
         if tx is not None:
             opt_state = tx.init(params)

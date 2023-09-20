@@ -75,7 +75,7 @@ def single_rollout_eval(
     save_episode: bool = False,
     env_datatype: Optional[DataType] = None,
     seed: Optional[int] = None,
-):
+) -> float:
     """Evaluation performed on a single run"""
     master_rng = np.random.RandomState(
         seed if seed is not None else np.random.randint(1e9)
@@ -152,3 +152,4 @@ def single_rollout_eval(
     if save_episode and save_dir is not None:
         save_ep.save(0, os.path.expanduser(save_dir))
     timing()
+    return cumulated_reward
