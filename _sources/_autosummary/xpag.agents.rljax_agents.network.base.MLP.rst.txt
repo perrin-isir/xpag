@@ -1,0 +1,26 @@
+xpag.agents.rljax\_agents.network.base.MLP
+==========================================
+
+.. currentmodule:: xpag.agents.rljax_agents.network.base
+
+.. autoclass:: MLP
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~MLP.params_dict
+      ~MLP.state_dict
+   
+   
+
+   
+   
+   

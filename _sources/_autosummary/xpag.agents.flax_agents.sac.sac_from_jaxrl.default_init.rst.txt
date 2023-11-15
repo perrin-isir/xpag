@@ -1,0 +1,6 @@
+xpag.agents.flax\_agents.sac.sac\_from\_jaxrl.default\_init
+===========================================================
+
+.. currentmodule:: xpag.agents.flax_agents.sac.sac_from_jaxrl
+
+.. autofunction:: default_init

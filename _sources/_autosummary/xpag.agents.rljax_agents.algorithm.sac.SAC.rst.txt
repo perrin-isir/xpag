@@ -1,0 +1,42 @@
+xpag.agents.rljax\_agents.algorithm.sac.SAC
+===========================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.sac
+
+.. autoclass:: SAC
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~SAC.calculate_value
+      ~SAC.explore
+      ~SAC.get_key_list
+      ~SAC.get_mask
+      ~SAC.is_update
+      ~SAC.load_params
+      ~SAC.save_params
+      ~SAC.select_action
+      ~SAC.step
+      ~SAC.update
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SAC.kwargs_actor
+      ~SAC.kwargs_critic
+      ~SAC.name
+   
+   

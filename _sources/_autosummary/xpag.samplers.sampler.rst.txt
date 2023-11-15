@@ -1,0 +1,34 @@
+xpag.samplers.sampler
+=====================
+
+.. automodule:: xpag.samplers.sampler
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      DefaultEpisodicSampler
+      DefaultSampler
+      Sampler
+   
+   
+
+   
+   
+   
+
+
+

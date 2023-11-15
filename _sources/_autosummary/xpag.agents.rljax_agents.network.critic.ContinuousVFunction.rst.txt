@@ -1,0 +1,26 @@
+xpag.agents.rljax\_agents.network.critic.ContinuousVFunction
+============================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.network.critic
+
+.. autoclass:: ContinuousVFunction
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ContinuousVFunction.params_dict
+      ~ContinuousVFunction.state_dict
+   
+   
+
+   
+   
+   

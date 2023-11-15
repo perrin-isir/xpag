@@ -1,0 +1,39 @@
+xpag.agents.rljax\_agents.algorithm.base\_class.base\_algorithm.OffPolicyAlgorithm
+==================================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.base_class.base_algorithm
+
+.. autoclass:: OffPolicyAlgorithm
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~OffPolicyAlgorithm.explore
+      ~OffPolicyAlgorithm.get_key_list
+      ~OffPolicyAlgorithm.get_mask
+      ~OffPolicyAlgorithm.is_update
+      ~OffPolicyAlgorithm.load_params
+      ~OffPolicyAlgorithm.save_params
+      ~OffPolicyAlgorithm.select_action
+      ~OffPolicyAlgorithm.step
+      ~OffPolicyAlgorithm.update
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~OffPolicyAlgorithm.name
+   
+   

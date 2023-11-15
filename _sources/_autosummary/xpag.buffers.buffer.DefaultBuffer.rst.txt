@@ -1,0 +1,30 @@
+xpag.buffers.buffer.DefaultBuffer
+=================================
+
+.. currentmodule:: xpag.buffers.buffer
+
+.. autoclass:: DefaultBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DefaultBuffer.init_buffer
+      ~DefaultBuffer.insert
+      ~DefaultBuffer.load
+      ~DefaultBuffer.pre_sample
+      ~DefaultBuffer.sample
+      ~DefaultBuffer.save
+   
+   
+
+   
+   
+   

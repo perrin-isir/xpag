@@ -1,0 +1,29 @@
+xpag.buffers.rljax\_buffer.NStepBuffer
+======================================
+
+.. currentmodule:: xpag.buffers.rljax_buffer
+
+.. autoclass:: NStepBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~NStepBuffer.append
+      ~NStepBuffer.get
+      ~NStepBuffer.is_empty
+      ~NStepBuffer.is_full
+      ~NStepBuffer.nstep_reward
+   
+   
+
+   
+   
+   

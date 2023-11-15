@@ -1,0 +1,33 @@
+xpag.agents.rljax\_agents.algorithm.base\_class.base\_algorithm
+===============================================================
+
+.. automodule:: xpag.agents.rljax_agents.algorithm.base_class.base_algorithm
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      BaseAlgorithm
+      OffPolicyAlgorithm
+   
+   
+
+   
+   
+   
+
+
+

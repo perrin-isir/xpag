@@ -1,0 +1,26 @@
+xpag.buffers.rljax\_buffer.ReplayBuffer
+=======================================
+
+.. currentmodule:: xpag.buffers.rljax_buffer
+
+.. autoclass:: ReplayBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ReplayBuffer.append
+      ~ReplayBuffer.sample
+   
+   
+
+   
+   
+   

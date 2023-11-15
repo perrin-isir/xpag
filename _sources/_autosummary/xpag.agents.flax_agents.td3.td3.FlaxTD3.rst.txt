@@ -1,0 +1,30 @@
+xpag.agents.flax\_agents.td3.td3.FlaxTD3
+========================================
+
+.. currentmodule:: xpag.agents.flax_agents.td3.td3
+
+.. autoclass:: FlaxTD3
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~FlaxTD3.load
+      ~FlaxTD3.save
+      ~FlaxTD3.select_action
+      ~FlaxTD3.train_on_batch
+      ~FlaxTD3.value
+      ~FlaxTD3.write_config
+   
+   
+
+   
+   
+   

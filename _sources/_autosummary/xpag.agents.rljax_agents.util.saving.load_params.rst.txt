@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.saving.load\_params
+==================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.saving
+
+.. autofunction:: load_params

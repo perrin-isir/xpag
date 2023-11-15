@@ -1,0 +1,26 @@
+xpag.agents.flax\_agents.tqc.tqc.TQCLearner
+===========================================
+
+.. currentmodule:: xpag.agents.flax_agents.tqc.tqc
+
+.. autoclass:: TQCLearner
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~TQCLearner.sample_actions
+      ~TQCLearner.update
+   
+   
+
+   
+   
+   

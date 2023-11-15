@@ -1,0 +1,57 @@
+xpag.agents.flax\_agents.tqc.tqc.QuantileCritic
+===============================================
+
+.. currentmodule:: xpag.agents.flax_agents.tqc.tqc
+
+.. autoclass:: QuantileCritic
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~QuantileCritic.apply
+      ~QuantileCritic.bind
+      ~QuantileCritic.clone
+      ~QuantileCritic.get_variable
+      ~QuantileCritic.has_rng
+      ~QuantileCritic.has_variable
+      ~QuantileCritic.init
+      ~QuantileCritic.init_with_output
+      ~QuantileCritic.is_initializing
+      ~QuantileCritic.is_mutable_collection
+      ~QuantileCritic.lazy_init
+      ~QuantileCritic.make_rng
+      ~QuantileCritic.param
+      ~QuantileCritic.perturb
+      ~QuantileCritic.put_variable
+      ~QuantileCritic.setup
+      ~QuantileCritic.sow
+      ~QuantileCritic.tabulate
+      ~QuantileCritic.unbind
+      ~QuantileCritic.variable
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~QuantileCritic.name
+      ~QuantileCritic.parent
+      ~QuantileCritic.path
+      ~QuantileCritic.scope
+      ~QuantileCritic.variables
+      ~QuantileCritic.hidden_dims
+      ~QuantileCritic.activations
+      ~QuantileCritic.num_quantiles
+   
+   

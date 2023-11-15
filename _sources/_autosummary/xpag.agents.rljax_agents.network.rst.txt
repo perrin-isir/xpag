@@ -1,0 +1,33 @@
+xpag.agents.rljax\_agents.network
+=================================
+
+.. automodule:: xpag.agents.rljax_agents.network
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.agents.rljax_agents.network.actor
+   xpag.agents.rljax_agents.network.base
+   xpag.agents.rljax_agents.network.critic
+   xpag.agents.rljax_agents.network.initializer
+

@@ -1,0 +1,35 @@
+xpag.agents.rljax\_agents.util.optim
+====================================
+
+.. automodule:: xpag.agents.rljax_agents.util.optim
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      clip_gradient
+      clip_gradient_norm
+      optimize
+      soft_update
+      weight_decay
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,41 @@
+xpag.tools.logging
+==================
+
+.. automodule:: xpag.tools.logging
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      eval_log
+      eval_log_reset
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      LevelFilter
+   
+   
+
+   
+   
+   
+
+
+

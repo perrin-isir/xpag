@@ -1,0 +1,42 @@
+xpag.agents.rljax\_agents.algorithm.tqc.TQC
+===========================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.tqc
+
+.. autoclass:: TQC
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~TQC.calculate_value
+      ~TQC.explore
+      ~TQC.get_key_list
+      ~TQC.get_mask
+      ~TQC.is_update
+      ~TQC.load_params
+      ~TQC.save_params
+      ~TQC.select_action
+      ~TQC.step
+      ~TQC.update
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TQC.kwargs_actor
+      ~TQC.kwargs_critic
+      ~TQC.name
+   
+   

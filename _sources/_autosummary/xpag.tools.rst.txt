@@ -1,0 +1,35 @@
+﻿xpag.tools
+==========
+
+.. automodule:: xpag.tools
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.tools.eval
+   xpag.tools.learn
+   xpag.tools.logging
+   xpag.tools.replay
+   xpag.tools.timing
+   xpag.tools.utils
+

@@ -1,0 +1,32 @@
+xpag.agents.rljax\_agents.algorithm.tqc
+=======================================
+
+.. automodule:: xpag.agents.rljax_agents.algorithm.tqc
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      TQC
+   
+   
+
+   
+   
+   
+
+
+

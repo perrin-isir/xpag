@@ -1,0 +1,42 @@
+xpag.agents.rljax\_agents.algorithm.sac\_discor.SACDisCor
+=========================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.sac_discor
+
+.. autoclass:: SACDisCor
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~SACDisCor.calculate_value
+      ~SACDisCor.explore
+      ~SACDisCor.get_key_list
+      ~SACDisCor.get_mask
+      ~SACDisCor.is_update
+      ~SACDisCor.load_params
+      ~SACDisCor.save_params
+      ~SACDisCor.select_action
+      ~SACDisCor.step
+      ~SACDisCor.update
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SACDisCor.kwargs_actor
+      ~SACDisCor.kwargs_critic
+      ~SACDisCor.name
+   
+   

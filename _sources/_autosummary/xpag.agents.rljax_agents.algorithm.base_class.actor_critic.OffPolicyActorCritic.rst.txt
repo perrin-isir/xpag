@@ -1,0 +1,42 @@
+xpag.agents.rljax\_agents.algorithm.base\_class.actor\_critic.OffPolicyActorCritic
+==================================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.base_class.actor_critic
+
+.. autoclass:: OffPolicyActorCritic
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~OffPolicyActorCritic.calculate_value
+      ~OffPolicyActorCritic.explore
+      ~OffPolicyActorCritic.get_key_list
+      ~OffPolicyActorCritic.get_mask
+      ~OffPolicyActorCritic.is_update
+      ~OffPolicyActorCritic.load_params
+      ~OffPolicyActorCritic.save_params
+      ~OffPolicyActorCritic.select_action
+      ~OffPolicyActorCritic.step
+      ~OffPolicyActorCritic.update
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~OffPolicyActorCritic.kwargs_actor
+      ~OffPolicyActorCritic.kwargs_critic
+      ~OffPolicyActorCritic.name
+   
+   

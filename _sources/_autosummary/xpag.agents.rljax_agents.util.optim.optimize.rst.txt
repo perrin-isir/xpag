@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.optim.optimize
+=============================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.optim
+
+.. autofunction:: optimize

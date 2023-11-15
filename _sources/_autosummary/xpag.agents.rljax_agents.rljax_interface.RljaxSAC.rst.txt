@@ -1,0 +1,30 @@
+xpag.agents.rljax\_agents.rljax\_interface.RljaxSAC
+===================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.rljax_interface
+
+.. autoclass:: RljaxSAC
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~RljaxSAC.load
+      ~RljaxSAC.save
+      ~RljaxSAC.select_action
+      ~RljaxSAC.train_on_batch
+      ~RljaxSAC.value
+      ~RljaxSAC.write_config
+   
+   
+
+   
+   
+   

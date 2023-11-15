@@ -1,0 +1,36 @@
+xpag.agents.rljax\_agents.algorithm
+===================================
+
+.. automodule:: xpag.agents.rljax_agents.algorithm
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.agents.rljax_agents.algorithm.base_class
+   xpag.agents.rljax_agents.algorithm.ddpg
+   xpag.agents.rljax_agents.algorithm.misc
+   xpag.agents.rljax_agents.algorithm.sac
+   xpag.agents.rljax_agents.algorithm.sac_discor
+   xpag.agents.rljax_agents.algorithm.td3
+   xpag.agents.rljax_agents.algorithm.tqc
+

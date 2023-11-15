@@ -1,0 +1,26 @@
+xpag.tools.eval.SaveEpisode
+===========================
+
+.. currentmodule:: xpag.tools.eval
+
+.. autoclass:: SaveEpisode
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~SaveEpisode.save
+      ~SaveEpisode.update
+   
+   
+
+   
+   
+   

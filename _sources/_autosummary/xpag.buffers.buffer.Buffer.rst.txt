@@ -1,0 +1,26 @@
+xpag.buffers.buffer.Buffer
+==========================
+
+.. currentmodule:: xpag.buffers.buffer
+
+.. autoclass:: Buffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Buffer.insert
+      ~Buffer.sample
+   
+   
+
+   
+   
+   

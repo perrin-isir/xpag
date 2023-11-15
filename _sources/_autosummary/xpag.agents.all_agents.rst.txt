@@ -1,0 +1,40 @@
+xpag.agents.all\_agents
+=======================
+
+.. automodule:: xpag.agents.all_agents
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      agent_factory
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      SAC
+   
+   
+
+   
+   
+   
+
+
+

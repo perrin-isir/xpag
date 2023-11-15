@@ -1,0 +1,34 @@
+xpag.agents.rljax\_agents.network.actor
+=======================================
+
+.. automodule:: xpag.agents.rljax_agents.network.actor
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      DeterministicPolicy
+      StateDependentGaussianPolicy
+      StateIndependentGaussianPolicy
+   
+   
+
+   
+   
+   
+
+
+

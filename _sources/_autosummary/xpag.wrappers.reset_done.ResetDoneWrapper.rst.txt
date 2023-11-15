@@ -1,0 +1,45 @@
+xpag.wrappers.reset\_done.ResetDoneWrapper
+==========================================
+
+.. currentmodule:: xpag.wrappers.reset_done
+
+.. autoclass:: ResetDoneWrapper
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ResetDoneWrapper.class_name
+      ~ResetDoneWrapper.close
+      ~ResetDoneWrapper.get_wrapper_attr
+      ~ResetDoneWrapper.render
+      ~ResetDoneWrapper.reset
+      ~ResetDoneWrapper.reset_done
+      ~ResetDoneWrapper.step
+      ~ResetDoneWrapper.wrapper_spec
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ResetDoneWrapper.action_space
+      ~ResetDoneWrapper.metadata
+      ~ResetDoneWrapper.np_random
+      ~ResetDoneWrapper.observation_space
+      ~ResetDoneWrapper.render_mode
+      ~ResetDoneWrapper.reward_range
+      ~ResetDoneWrapper.spec
+      ~ResetDoneWrapper.unwrapped
+   
+   

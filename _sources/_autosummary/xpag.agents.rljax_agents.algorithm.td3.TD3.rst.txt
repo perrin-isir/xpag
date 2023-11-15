@@ -1,0 +1,42 @@
+xpag.agents.rljax\_agents.algorithm.td3.TD3
+===========================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.td3
+
+.. autoclass:: TD3
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~TD3.calculate_value
+      ~TD3.explore
+      ~TD3.get_key_list
+      ~TD3.get_mask
+      ~TD3.is_update
+      ~TD3.load_params
+      ~TD3.save_params
+      ~TD3.select_action
+      ~TD3.step
+      ~TD3.update
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TD3.kwargs_actor
+      ~TD3.kwargs_critic
+      ~TD3.name
+   
+   

@@ -1,0 +1,38 @@
+xpag.agents.flax\_agents.sdqn.sdqn.TrainingState
+================================================
+
+.. currentmodule:: xpag.agents.flax_agents.sdqn.sdqn
+
+.. autoclass:: TrainingState
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~TrainingState.replace
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TrainingState.critic_up_optimizer_state
+      ~TrainingState.critic_up_params
+      ~TrainingState.target_critic_up_params
+      ~TrainingState.critic_low_optimizer_state
+      ~TrainingState.critic_low_params
+      ~TrainingState.target_critic_low_params
+      ~TrainingState.key
+      ~TrainingState.steps
+   
+   

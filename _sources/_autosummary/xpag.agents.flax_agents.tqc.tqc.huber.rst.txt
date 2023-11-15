@@ -1,0 +1,6 @@
+xpag.agents.flax\_agents.tqc.tqc.huber
+======================================
+
+.. currentmodule:: xpag.agents.flax_agents.tqc.tqc
+
+.. autofunction:: huber

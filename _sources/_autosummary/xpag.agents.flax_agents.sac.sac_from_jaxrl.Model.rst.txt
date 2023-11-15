@@ -1,0 +1,39 @@
+xpag.agents.flax\_agents.sac.sac\_from\_jaxrl.Model
+===================================================
+
+.. currentmodule:: xpag.agents.flax_agents.sac.sac_from_jaxrl
+
+.. autoclass:: Model
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Model.apply_gradient
+      ~Model.create
+      ~Model.load
+      ~Model.replace
+      ~Model.save
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Model.opt_state
+      ~Model.step
+      ~Model.apply_fn
+      ~Model.params
+      ~Model.tx
+   
+   

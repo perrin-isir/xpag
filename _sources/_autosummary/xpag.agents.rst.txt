@@ -1,0 +1,33 @@
+﻿xpag.agents
+===========
+
+.. automodule:: xpag.agents
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.agents.agent
+   xpag.agents.all_agents
+   xpag.agents.flax_agents
+   xpag.agents.rljax_agents
+

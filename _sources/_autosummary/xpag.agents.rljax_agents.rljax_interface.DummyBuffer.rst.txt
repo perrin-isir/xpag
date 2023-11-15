@@ -1,0 +1,26 @@
+xpag.agents.rljax\_agents.rljax\_interface.DummyBuffer
+======================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.rljax_interface
+
+.. autoclass:: DummyBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DummyBuffer.sample
+      ~DummyBuffer.set_next_batch
+   
+   
+
+   
+   
+   

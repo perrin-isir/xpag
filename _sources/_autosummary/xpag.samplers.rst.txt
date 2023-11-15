@@ -1,0 +1,32 @@
+﻿xpag.samplers
+=============
+
+.. automodule:: xpag.samplers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.samplers.HER
+   xpag.samplers.jax_sampler
+   xpag.samplers.sampler
+

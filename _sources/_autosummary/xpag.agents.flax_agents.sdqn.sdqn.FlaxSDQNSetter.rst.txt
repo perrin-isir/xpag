@@ -1,0 +1,30 @@
+xpag.agents.flax\_agents.sdqn.sdqn.FlaxSDQNSetter
+=================================================
+
+.. currentmodule:: xpag.agents.flax_agents.sdqn.sdqn
+
+.. autoclass:: FlaxSDQNSetter
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~FlaxSDQNSetter.load
+      ~FlaxSDQNSetter.reset
+      ~FlaxSDQNSetter.reset_done
+      ~FlaxSDQNSetter.save
+      ~FlaxSDQNSetter.step
+      ~FlaxSDQNSetter.write_config
+   
+   
+
+   
+   
+   

@@ -1,0 +1,6 @@
+xpag.tools.eval.single\_rollout\_eval
+=====================================
+
+.. currentmodule:: xpag.tools.eval
+
+.. autofunction:: single_rollout_eval

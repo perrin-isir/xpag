@@ -1,0 +1,33 @@
+xpag.wrappers.goalenv\_wrapper
+==============================
+
+.. automodule:: xpag.wrappers.goalenv_wrapper
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      CumulRewardWrapper
+      GoalEnvWrapper
+   
+   
+
+   
+   
+   
+
+
+

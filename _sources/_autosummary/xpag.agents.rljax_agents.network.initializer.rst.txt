@@ -1,0 +1,32 @@
+xpag.agents.rljax\_agents.network.initializer
+=============================================
+
+.. automodule:: xpag.agents.rljax_agents.network.initializer
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      DeltaOrthogonal
+   
+   
+
+   
+   
+   
+
+
+

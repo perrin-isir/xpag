@@ -1,0 +1,46 @@
+xpag.agents.flax\_agents.tqc.tqc
+================================
+
+.. automodule:: xpag.agents.flax_agents.tqc.tqc
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      huber
+      quantile_loss
+      update_actor
+      update_critic
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      FlaxTQC
+      MultiQuantileCritic
+      QuantileCritic
+      TQCLearner
+   
+   
+
+   
+   
+   
+
+
+

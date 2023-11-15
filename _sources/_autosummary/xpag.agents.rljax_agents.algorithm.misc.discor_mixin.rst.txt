@@ -1,0 +1,32 @@
+xpag.agents.rljax\_agents.algorithm.misc.discor\_mixin
+======================================================
+
+.. automodule:: xpag.agents.rljax_agents.algorithm.misc.discor_mixin
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      DisCorMixIn
+   
+   
+
+   
+   
+   
+
+
+

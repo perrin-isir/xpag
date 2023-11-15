@@ -1,0 +1,54 @@
+xpag.wrappers.goalenv\_wrapper.GoalEnvWrapper
+=============================================
+
+.. currentmodule:: xpag.wrappers.goalenv_wrapper
+
+.. autoclass:: GoalEnvWrapper
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~GoalEnvWrapper.call
+      ~GoalEnvWrapper.call_async
+      ~GoalEnvWrapper.call_wait
+      ~GoalEnvWrapper.close
+      ~GoalEnvWrapper.close_extras
+      ~GoalEnvWrapper.get_attr
+      ~GoalEnvWrapper.get_wrapper_attr
+      ~GoalEnvWrapper.render
+      ~GoalEnvWrapper.reset
+      ~GoalEnvWrapper.reset_async
+      ~GoalEnvWrapper.reset_done
+      ~GoalEnvWrapper.reset_wait
+      ~GoalEnvWrapper.set_attr
+      ~GoalEnvWrapper.set_goal
+      ~GoalEnvWrapper.step
+      ~GoalEnvWrapper.step_async
+      ~GoalEnvWrapper.step_wait
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~GoalEnvWrapper.metadata
+      ~GoalEnvWrapper.np_random
+      ~GoalEnvWrapper.render_mode
+      ~GoalEnvWrapper.reward_range
+      ~GoalEnvWrapper.spec
+      ~GoalEnvWrapper.unwrapped
+      ~GoalEnvWrapper.action_space
+      ~GoalEnvWrapper.observation_space
+   
+   

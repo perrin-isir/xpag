@@ -1,0 +1,27 @@
+xpag.buffers.jax\_buffer.RBQueue
+================================
+
+.. currentmodule:: xpag.buffers.jax_buffer
+
+.. autoclass:: RBQueue
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~RBQueue.init
+      ~RBQueue.insert
+      ~RBQueue.size
+   
+   
+
+   
+   
+   

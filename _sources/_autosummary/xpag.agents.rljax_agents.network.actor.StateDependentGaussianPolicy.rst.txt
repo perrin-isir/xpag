@@ -1,0 +1,26 @@
+xpag.agents.rljax\_agents.network.actor.StateDependentGaussianPolicy
+====================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.network.actor
+
+.. autoclass:: StateDependentGaussianPolicy
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~StateDependentGaussianPolicy.params_dict
+      ~StateDependentGaussianPolicy.state_dict
+   
+   
+
+   
+   
+   

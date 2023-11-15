@@ -1,0 +1,35 @@
+xpag.agents.flax\_agents.sdqn.sdqn
+==================================
+
+.. automodule:: xpag.agents.flax_agents.sdqn.sdqn
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      FeedForwardModel
+      FlaxSDQN
+      FlaxSDQNSetter
+      TrainingState
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,27 @@
+xpag.buffers.jax\_buffer.JaxBuffer
+==================================
+
+.. currentmodule:: xpag.buffers.jax_buffer
+
+.. autoclass:: JaxBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~JaxBuffer.init_rp_buffer
+      ~JaxBuffer.insert
+      ~JaxBuffer.sample
+   
+   
+
+   
+   
+   

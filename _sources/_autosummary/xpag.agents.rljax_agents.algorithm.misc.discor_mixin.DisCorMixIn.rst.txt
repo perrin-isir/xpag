@@ -1,0 +1,26 @@
+xpag.agents.rljax\_agents.algorithm.misc.discor\_mixin.DisCorMixIn
+==================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.misc.discor_mixin
+
+.. autoclass:: DisCorMixIn
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DisCorMixIn.load_params
+      ~DisCorMixIn.save_params
+   
+   
+
+   
+   
+   

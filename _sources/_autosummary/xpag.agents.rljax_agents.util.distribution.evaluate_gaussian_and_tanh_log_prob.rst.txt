@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.distribution.evaluate\_gaussian\_and\_tanh\_log\_prob
+====================================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.distribution
+
+.. autofunction:: evaluate_gaussian_and_tanh_log_prob

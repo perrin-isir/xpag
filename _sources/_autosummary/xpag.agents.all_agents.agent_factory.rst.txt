@@ -1,0 +1,6 @@
+xpag.agents.all\_agents.agent\_factory
+======================================
+
+.. currentmodule:: xpag.agents.all_agents
+
+.. autofunction:: agent_factory

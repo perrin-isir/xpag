@@ -1,0 +1,37 @@
+xpag.agents.rljax\_agents.algorithm.base\_class.base\_algorithm.BaseAlgorithm
+=============================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.base_class.base_algorithm
+
+.. autoclass:: BaseAlgorithm
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~BaseAlgorithm.explore
+      ~BaseAlgorithm.get_key_list
+      ~BaseAlgorithm.get_mask
+      ~BaseAlgorithm.load_params
+      ~BaseAlgorithm.save_params
+      ~BaseAlgorithm.select_action
+      ~BaseAlgorithm.update
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BaseAlgorithm.name
+   
+   

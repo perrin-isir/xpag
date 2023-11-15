@@ -1,0 +1,6 @@
+xpag.tools.replay.mujoco\_notebook\_replay
+==========================================
+
+.. currentmodule:: xpag.tools.replay
+
+.. autofunction:: mujoco_notebook_replay

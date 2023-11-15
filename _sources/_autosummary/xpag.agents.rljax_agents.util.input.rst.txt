@@ -1,0 +1,32 @@
+xpag.agents.rljax\_agents.util.input
+====================================
+
+.. automodule:: xpag.agents.rljax_agents.util.input
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      fake_action
+      fake_state
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

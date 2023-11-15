@@ -1,0 +1,1546 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.Model" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.Model.html" /><link rel="prev" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.DoubleCritic" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.DoubleCritic.html" />
+
+    <!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+        <title>xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP - xpag 0.2.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">xpag 0.2.9 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">xpag 0.2.9 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../api-reference.html">API reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API reference</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="xpag.agents.html">xpag.agents</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of xpag.agents</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.agents.agent.html">xpag.agents.agent</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of xpag.agents.agent</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.agents.agent.Agent.html">xpag.agents.agent.Agent</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.agents.all_agents.html">xpag.agents.all_agents</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of xpag.agents.all_agents</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.agents.all_agents.agent_factory.html">xpag.agents.all_agents.agent_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.agents.all_agents.SAC.html">xpag.agents.all_agents.SAC</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="xpag.agents.flax_agents.html">xpag.agents.flax_agents</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l4 current has-children"><a class="reference internal" href="xpag.agents.flax_agents.sac.html">xpag.agents.flax_agents.sac</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents.sac</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac.html">xpag.agents.flax_agents.sac.sac</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents.sac.sac</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac.FlaxSAC.html">xpag.agents.flax_agents.sac.sac.FlaxSAC</a></li>
+</ul>
+</li>
+<li class="toctree-l5 current has-children"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.html">xpag.agents.flax_agents.sac.sac_from_jaxrl</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents.sac.sac_from_jaxrl</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.default_init.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.default_init</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.sample_actions.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.sample_actions</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.target_update.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.target_update</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.update_actor.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.update_actor</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.update_critic.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.update_critic</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.update_temperature.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.update_temperature</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.Batch.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.Batch</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.Critic.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.Critic</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.DoubleCritic.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.DoubleCritic</a></li>
+<li class="toctree-l6 current current-page"><a class="current reference internal" href="#">xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.Model.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.Model</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.SACLearner.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.SACLearner</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.Temperature.html">xpag.agents.flax_agents.sac.sac_from_jaxrl.Temperature</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="xpag.agents.flax_agents.sdqn.html">xpag.agents.flax_agents.sdqn</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents.sdqn</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.flax_agents.sdqn.sdqn.html">xpag.agents.flax_agents.sdqn.sdqn</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents.sdqn.sdqn</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sdqn.sdqn.FeedForwardModel.html">xpag.agents.flax_agents.sdqn.sdqn.FeedForwardModel</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sdqn.sdqn.FlaxSDQN.html">xpag.agents.flax_agents.sdqn.sdqn.FlaxSDQN</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sdqn.sdqn.FlaxSDQNSetter.html">xpag.agents.flax_agents.sdqn.sdqn.FlaxSDQNSetter</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.sdqn.sdqn.TrainingState.html">xpag.agents.flax_agents.sdqn.sdqn.TrainingState</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="xpag.agents.flax_agents.td3.html">xpag.agents.flax_agents.td3</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents.td3</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.flax_agents.td3.td3.html">xpag.agents.flax_agents.td3.td3</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents.td3.td3</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.td3.td3.FeedForwardModel.html">xpag.agents.flax_agents.td3.td3.FeedForwardModel</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.td3.td3.FlaxTD3.html">xpag.agents.flax_agents.td3.td3.FlaxTD3</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.td3.td3.TrainingState.html">xpag.agents.flax_agents.td3.td3.TrainingState</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="xpag.agents.flax_agents.tqc.html">xpag.agents.flax_agents.tqc</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents.tqc</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.flax_agents.tqc.tqc.html">xpag.agents.flax_agents.tqc.tqc</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of xpag.agents.flax_agents.tqc.tqc</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.tqc.tqc.huber.html">xpag.agents.flax_agents.tqc.tqc.huber</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.tqc.tqc.quantile_loss.html">xpag.agents.flax_agents.tqc.tqc.quantile_loss</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.tqc.tqc.update_actor.html">xpag.agents.flax_agents.tqc.tqc.update_actor</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.tqc.tqc.update_critic.html">xpag.agents.flax_agents.tqc.tqc.update_critic</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.tqc.tqc.FlaxTQC.html">xpag.agents.flax_agents.tqc.tqc.FlaxTQC</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.tqc.tqc.MultiQuantileCritic.html">xpag.agents.flax_agents.tqc.tqc.MultiQuantileCritic</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.tqc.tqc.QuantileCritic.html">xpag.agents.flax_agents.tqc.tqc.QuantileCritic</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.flax_agents.tqc.tqc.TQCLearner.html">xpag.agents.flax_agents.tqc.tqc.TQCLearner</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.html">xpag.agents.rljax_agents</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.html">xpag.agents.rljax_agents.algorithm</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.base_class.html">xpag.agents.rljax_agents.algorithm.base_class</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.base_class</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.base_class.actor_critic.html">xpag.agents.rljax_agents.algorithm.base_class.actor_critic</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.base_class.actor_critic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.base_class.actor_critic.ActorCriticMixIn.html">xpag.agents.rljax_agents.algorithm.base_class.actor_critic.ActorCriticMixIn</a></li>
+<li class="toctree-l7"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.base_class.actor_critic.OffPolicyActorCritic.html">xpag.agents.rljax_agents.algorithm.base_class.actor_critic.OffPolicyActorCritic</a></li>
+</ul>
+</li>
+<li class="toctree-l6 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.base_class.base_algorithm.html">xpag.agents.rljax_agents.algorithm.base_class.base_algorithm</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" role="switch" type="checkbox"/><label for="toctree-checkbox-19"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.base_class.base_algorithm</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.base_class.base_algorithm.BaseAlgorithm.html">xpag.agents.rljax_agents.algorithm.base_class.base_algorithm.BaseAlgorithm</a></li>
+<li class="toctree-l7"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.base_class.base_algorithm.OffPolicyAlgorithm.html">xpag.agents.rljax_agents.algorithm.base_class.base_algorithm.OffPolicyAlgorithm</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.ddpg.html">xpag.agents.rljax_agents.algorithm.ddpg</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.ddpg</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.ddpg.DDPG.html">xpag.agents.rljax_agents.algorithm.ddpg.DDPG</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.misc.html">xpag.agents.rljax_agents.algorithm.misc</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" role="switch" type="checkbox"/><label for="toctree-checkbox-21"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.misc</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.misc.discor_mixin.html">xpag.agents.rljax_agents.algorithm.misc.discor_mixin</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" role="switch" type="checkbox"/><label for="toctree-checkbox-22"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.misc.discor_mixin</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.misc.discor_mixin.DisCorMixIn.html">xpag.agents.rljax_agents.algorithm.misc.discor_mixin.DisCorMixIn</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.sac.html">xpag.agents.rljax_agents.algorithm.sac</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.sac</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.sac.SAC.html">xpag.agents.rljax_agents.algorithm.sac.SAC</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.sac_discor.html">xpag.agents.rljax_agents.algorithm.sac_discor</a><input class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.sac_discor</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.sac_discor.SACDisCor.html">xpag.agents.rljax_agents.algorithm.sac_discor.SACDisCor</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.td3.html">xpag.agents.rljax_agents.algorithm.td3</a><input class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" role="switch" type="checkbox"/><label for="toctree-checkbox-25"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.td3</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.td3.TD3.html">xpag.agents.rljax_agents.algorithm.td3.TD3</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.tqc.html">xpag.agents.rljax_agents.algorithm.tqc</a><input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" role="switch" type="checkbox"/><label for="toctree-checkbox-26"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.algorithm.tqc</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.algorithm.tqc.TQC.html">xpag.agents.rljax_agents.algorithm.tqc.TQC</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.network.html">xpag.agents.rljax_agents.network</a><input class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.network</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.network.actor.html">xpag.agents.rljax_agents.network.actor</a><input class="toctree-checkbox" id="toctree-checkbox-28" name="toctree-checkbox-28" role="switch" type="checkbox"/><label for="toctree-checkbox-28"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.network.actor</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.network.actor.DeterministicPolicy.html">xpag.agents.rljax_agents.network.actor.DeterministicPolicy</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.network.actor.StateDependentGaussianPolicy.html">xpag.agents.rljax_agents.network.actor.StateDependentGaussianPolicy</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.network.actor.StateIndependentGaussianPolicy.html">xpag.agents.rljax_agents.network.actor.StateIndependentGaussianPolicy</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.network.base.html">xpag.agents.rljax_agents.network.base</a><input class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.network.base</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.network.base.MLP.html">xpag.agents.rljax_agents.network.base.MLP</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.network.critic.html">xpag.agents.rljax_agents.network.critic</a><input class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.network.critic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.network.critic.ContinuousQFunction.html">xpag.agents.rljax_agents.network.critic.ContinuousQFunction</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.network.critic.ContinuousQuantileFunction.html">xpag.agents.rljax_agents.network.critic.ContinuousQuantileFunction</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.network.critic.ContinuousVFunction.html">xpag.agents.rljax_agents.network.critic.ContinuousVFunction</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.network.initializer.html">xpag.agents.rljax_agents.network.initializer</a><input class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.network.initializer</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.network.initializer.DeltaOrthogonal.html">xpag.agents.rljax_agents.network.initializer.DeltaOrthogonal</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.rljax_interface.html">xpag.agents.rljax_agents.rljax_interface</a><input class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.rljax_interface</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="xpag.agents.rljax_agents.rljax_interface.DummyBuffer.html">xpag.agents.rljax_agents.rljax_interface.DummyBuffer</a></li>
+<li class="toctree-l5"><a class="reference internal" href="xpag.agents.rljax_agents.rljax_interface.RljaxSAC.html">xpag.agents.rljax_agents.rljax_interface.RljaxSAC</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.util.html">xpag.agents.rljax_agents.util</a><input class="toctree-checkbox" id="toctree-checkbox-33" name="toctree-checkbox-33" role="switch" type="checkbox"/><label for="toctree-checkbox-33"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.util</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.util.distribution.html">xpag.agents.rljax_agents.util.distribution</a><input class="toctree-checkbox" id="toctree-checkbox-34" name="toctree-checkbox-34" role="switch" type="checkbox"/><label for="toctree-checkbox-34"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.util.distribution</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.distribution.calculate_kl_divergence.html">xpag.agents.rljax_agents.util.distribution.calculate_kl_divergence</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.distribution.evaluate_gaussian_and_tanh_log_prob.html">xpag.agents.rljax_agents.util.distribution.evaluate_gaussian_and_tanh_log_prob</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.distribution.gaussian_and_tanh_log_prob.html">xpag.agents.rljax_agents.util.distribution.gaussian_and_tanh_log_prob</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.distribution.gaussian_log_prob.html">xpag.agents.rljax_agents.util.distribution.gaussian_log_prob</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.distribution.reparameterize_gaussian.html">xpag.agents.rljax_agents.util.distribution.reparameterize_gaussian</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.distribution.reparameterize_gaussian_and_tanh.html">xpag.agents.rljax_agents.util.distribution.reparameterize_gaussian_and_tanh</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.util.input.html">xpag.agents.rljax_agents.util.input</a><input class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.util.input</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.input.fake_action.html">xpag.agents.rljax_agents.util.input.fake_action</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.input.fake_state.html">xpag.agents.rljax_agents.util.input.fake_state</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.util.loss.html">xpag.agents.rljax_agents.util.loss</a><input class="toctree-checkbox" id="toctree-checkbox-36" name="toctree-checkbox-36" role="switch" type="checkbox"/><label for="toctree-checkbox-36"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.util.loss</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.loss.huber.html">xpag.agents.rljax_agents.util.loss.huber</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.loss.quantile_loss.html">xpag.agents.rljax_agents.util.loss.quantile_loss</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.util.optim.html">xpag.agents.rljax_agents.util.optim</a><input class="toctree-checkbox" id="toctree-checkbox-37" name="toctree-checkbox-37" role="switch" type="checkbox"/><label for="toctree-checkbox-37"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.util.optim</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.optim.clip_gradient.html">xpag.agents.rljax_agents.util.optim.clip_gradient</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.optim.clip_gradient_norm.html">xpag.agents.rljax_agents.util.optim.clip_gradient_norm</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.optim.optimize.html">xpag.agents.rljax_agents.util.optim.optimize</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.optim.soft_update.html">xpag.agents.rljax_agents.util.optim.soft_update</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.optim.weight_decay.html">xpag.agents.rljax_agents.util.optim.weight_decay</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.util.preprocess.html">xpag.agents.rljax_agents.util.preprocess</a><input class="toctree-checkbox" id="toctree-checkbox-38" name="toctree-checkbox-38" role="switch" type="checkbox"/><label for="toctree-checkbox-38"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.util.preprocess</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.preprocess.add_noise.html">xpag.agents.rljax_agents.util.preprocess.add_noise</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.preprocess.get_q_at_action.html">xpag.agents.rljax_agents.util.preprocess.get_q_at_action</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.preprocess.get_quantile_at_action.html">xpag.agents.rljax_agents.util.preprocess.get_quantile_at_action</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.preprocess.preprocess_state.html">xpag.agents.rljax_agents.util.preprocess.preprocess_state</a></li>
+</ul>
+</li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="xpag.agents.rljax_agents.util.saving.html">xpag.agents.rljax_agents.util.saving</a><input class="toctree-checkbox" id="toctree-checkbox-39" name="toctree-checkbox-39" role="switch" type="checkbox"/><label for="toctree-checkbox-39"><div class="visually-hidden">Toggle navigation of xpag.agents.rljax_agents.util.saving</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.saving.load_params.html">xpag.agents.rljax_agents.util.saving.load_params</a></li>
+<li class="toctree-l6"><a class="reference internal" href="xpag.agents.rljax_agents.util.saving.save_params.html">xpag.agents.rljax_agents.util.saving.save_params</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xpag.buffers.html">xpag.buffers</a><input class="toctree-checkbox" id="toctree-checkbox-40" name="toctree-checkbox-40" role="switch" type="checkbox"/><label for="toctree-checkbox-40"><div class="visually-hidden">Toggle navigation of xpag.buffers</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.buffers.buffer.html">xpag.buffers.buffer</a><input class="toctree-checkbox" id="toctree-checkbox-41" name="toctree-checkbox-41" role="switch" type="checkbox"/><label for="toctree-checkbox-41"><div class="visually-hidden">Toggle navigation of xpag.buffers.buffer</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.buffers.buffer.Buffer.html">xpag.buffers.buffer.Buffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.buffers.buffer.DefaultBuffer.html">xpag.buffers.buffer.DefaultBuffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.buffers.buffer.DefaultEpisodicBuffer.html">xpag.buffers.buffer.DefaultEpisodicBuffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.buffers.buffer.EpisodicBuffer.html">xpag.buffers.buffer.EpisodicBuffer</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.buffers.jax_buffer.html">xpag.buffers.jax_buffer</a><input class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><div class="visually-hidden">Toggle navigation of xpag.buffers.jax_buffer</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.buffers.jax_buffer.JaxBuffer.html">xpag.buffers.jax_buffer.JaxBuffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.buffers.jax_buffer.RBQueue.html">xpag.buffers.jax_buffer.RBQueue</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.buffers.rljax_buffer.html">xpag.buffers.rljax_buffer</a><input class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><div class="visually-hidden">Toggle navigation of xpag.buffers.rljax_buffer</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.buffers.rljax_buffer.NStepBuffer.html">xpag.buffers.rljax_buffer.NStepBuffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.buffers.rljax_buffer.ReplayBuffer.html">xpag.buffers.rljax_buffer.ReplayBuffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.buffers.rljax_buffer.RljaxBuffer.html">xpag.buffers.rljax_buffer.RljaxBuffer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xpag.plotting.html">xpag.plotting</a><input class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><div class="visually-hidden">Toggle navigation of xpag.plotting</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.plotting.plotting.html">xpag.plotting.plotting</a><input class="toctree-checkbox" id="toctree-checkbox-45" name="toctree-checkbox-45" role="switch" type="checkbox"/><label for="toctree-checkbox-45"><div class="visually-hidden">Toggle navigation of xpag.plotting.plotting</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.plotting.plotting.single_episode_plot.html">xpag.plotting.plotting.single_episode_plot</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xpag.samplers.html">xpag.samplers</a><input class="toctree-checkbox" id="toctree-checkbox-46" name="toctree-checkbox-46" role="switch" type="checkbox"/><label for="toctree-checkbox-46"><div class="visually-hidden">Toggle navigation of xpag.samplers</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="xpag.samplers.HER.html">xpag.samplers.HER</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.samplers.jax_sampler.html">xpag.samplers.jax_sampler</a><input class="toctree-checkbox" id="toctree-checkbox-47" name="toctree-checkbox-47" role="switch" type="checkbox"/><label for="toctree-checkbox-47"><div class="visually-hidden">Toggle navigation of xpag.samplers.jax_sampler</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.samplers.jax_sampler.JaxSampler.html">xpag.samplers.jax_sampler.JaxSampler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.samplers.jax_sampler.RBUniformSampling.html">xpag.samplers.jax_sampler.RBUniformSampling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.samplers.jax_sampler.ReplayBufferState.html">xpag.samplers.jax_sampler.ReplayBufferState</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.samplers.sampler.html">xpag.samplers.sampler</a><input class="toctree-checkbox" id="toctree-checkbox-48" name="toctree-checkbox-48" role="switch" type="checkbox"/><label for="toctree-checkbox-48"><div class="visually-hidden">Toggle navigation of xpag.samplers.sampler</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.samplers.sampler.DefaultEpisodicSampler.html">xpag.samplers.sampler.DefaultEpisodicSampler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.samplers.sampler.DefaultSampler.html">xpag.samplers.sampler.DefaultSampler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.samplers.sampler.Sampler.html">xpag.samplers.sampler.Sampler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xpag.setters.html">xpag.setters</a><input class="toctree-checkbox" id="toctree-checkbox-49" name="toctree-checkbox-49" role="switch" type="checkbox"/><label for="toctree-checkbox-49"><div class="visually-hidden">Toggle navigation of xpag.setters</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.setters.setter.html">xpag.setters.setter</a><input class="toctree-checkbox" id="toctree-checkbox-50" name="toctree-checkbox-50" role="switch" type="checkbox"/><label for="toctree-checkbox-50"><div class="visually-hidden">Toggle navigation of xpag.setters.setter</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.setters.setter.CompositeSetter.html">xpag.setters.setter.CompositeSetter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.setters.setter.DefaultSetter.html">xpag.setters.setter.DefaultSetter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.setters.setter.Setter.html">xpag.setters.setter.Setter</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xpag.tools.html">xpag.tools</a><input class="toctree-checkbox" id="toctree-checkbox-51" name="toctree-checkbox-51" role="switch" type="checkbox"/><label for="toctree-checkbox-51"><div class="visually-hidden">Toggle navigation of xpag.tools</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.tools.eval.html">xpag.tools.eval</a><input class="toctree-checkbox" id="toctree-checkbox-52" name="toctree-checkbox-52" role="switch" type="checkbox"/><label for="toctree-checkbox-52"><div class="visually-hidden">Toggle navigation of xpag.tools.eval</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.eval.single_rollout_eval.html">xpag.tools.eval.single_rollout_eval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.eval.SaveEpisode.html">xpag.tools.eval.SaveEpisode</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="xpag.tools.learn.html">xpag.tools.learn</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.tools.logging.html">xpag.tools.logging</a><input class="toctree-checkbox" id="toctree-checkbox-53" name="toctree-checkbox-53" role="switch" type="checkbox"/><label for="toctree-checkbox-53"><div class="visually-hidden">Toggle navigation of xpag.tools.logging</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.logging.eval_log.html">xpag.tools.logging.eval_log</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.logging.eval_log_reset.html">xpag.tools.logging.eval_log_reset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.logging.LevelFilter.html">xpag.tools.logging.LevelFilter</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.tools.replay.html">xpag.tools.replay</a><input class="toctree-checkbox" id="toctree-checkbox-54" name="toctree-checkbox-54" role="switch" type="checkbox"/><label for="toctree-checkbox-54"><div class="visually-hidden">Toggle navigation of xpag.tools.replay</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.replay.brax_notebook_replay.html">xpag.tools.replay.brax_notebook_replay</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.replay.mujoco_notebook_replay.html">xpag.tools.replay.mujoco_notebook_replay</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="xpag.tools.timing.html">xpag.tools.timing</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.tools.utils.html">xpag.tools.utils</a><input class="toctree-checkbox" id="toctree-checkbox-55" name="toctree-checkbox-55" role="switch" type="checkbox"/><label for="toctree-checkbox-55"><div class="visually-hidden">Toggle navigation of xpag.tools.utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.datatype_convert.html">xpag.tools.utils.datatype_convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.get_datatype.html">xpag.tools.utils.get_datatype</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.get_env_dimensions.html">xpag.tools.utils.get_env_dimensions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.hstack.html">xpag.tools.utils.hstack</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.logical_or.html">xpag.tools.utils.logical_or</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.maximum.html">xpag.tools.utils.maximum</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.reshape.html">xpag.tools.utils.reshape</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.squeeze.html">xpag.tools.utils.squeeze</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.tree_sum.html">xpag.tools.utils.tree_sum</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.where.html">xpag.tools.utils.where</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.tools.utils.DataType.html">xpag.tools.utils.DataType</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xpag.wrappers.html">xpag.wrappers</a><input class="toctree-checkbox" id="toctree-checkbox-56" name="toctree-checkbox-56" role="switch" type="checkbox"/><label for="toctree-checkbox-56"><div class="visually-hidden">Toggle navigation of xpag.wrappers</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="xpag.wrappers.brax_vec_env.html">xpag.wrappers.brax_vec_env</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.wrappers.goalenv_wrapper.html">xpag.wrappers.goalenv_wrapper</a><input class="toctree-checkbox" id="toctree-checkbox-57" name="toctree-checkbox-57" role="switch" type="checkbox"/><label for="toctree-checkbox-57"><div class="visually-hidden">Toggle navigation of xpag.wrappers.goalenv_wrapper</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.wrappers.goalenv_wrapper.CumulRewardWrapper.html">xpag.wrappers.goalenv_wrapper.CumulRewardWrapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xpag.wrappers.goalenv_wrapper.GoalEnvWrapper.html">xpag.wrappers.goalenv_wrapper.GoalEnvWrapper</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="xpag.wrappers.gym_vec_env.html">xpag.wrappers.gym_vec_env</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="xpag.wrappers.reset_done.html">xpag.wrappers.reset_done</a><input class="toctree-checkbox" id="toctree-checkbox-58" name="toctree-checkbox-58" role="switch" type="checkbox"/><label for="toctree-checkbox-58"><div class="visually-hidden">Toggle navigation of xpag.wrappers.reset_done</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="xpag.wrappers.reset_done.ResetDoneWrapper.html">xpag.wrappers.reset_done.ResetDoneWrapper</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="xpag-agents-flax-agents-sac-sac-from-jaxrl-mlp">
+<h1>xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP<a class="headerlink" href="#xpag-agents-flax-agents-sac-sac-from-jaxrl-mlp" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MLP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hidden_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activations=&lt;jax._src.custom_derivatives.custom_jvp</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activate_final=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rate=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent=&lt;flax.linen.module._Sentinel</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p class="rubric">Methods</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.apply" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.apply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code></a></p></td>
+<td><p>Applies a module method to variables and returns output and modified variables.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.bind" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.bind"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bind</span></code></a></p></td>
+<td><p>Creates an interactive Module instance by binding variables and RNGs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.clone" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.clone"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clone</span></code></a></p></td>
+<td><p>Creates a clone of this Module, with optionally updated arguments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.get_variable" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.get_variable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_variable</span></code></a></p></td>
+<td><p>Retrieves the value of a Variable.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_rng" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_rng"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_rng</span></code></a></p></td>
+<td><p>Returns true if a PRNGSequence with name <cite>name</cite> exists.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_variable" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_variable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_variable</span></code></a></p></td>
+<td><p>Checks if a variable of given collection and name exists in this Module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a></p></td>
+<td><p>Initializes a module method with variables and returns modified variables.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init_with_output" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init_with_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_with_output</span></code></a></p></td>
+<td><p>Initializes a module method with variables and returns output and modified variables.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_initializing" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_initializing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_initializing</span></code></a></p></td>
+<td><p>Returns True if running under self.init(...) or nn.init(...)().</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_mutable_collection" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_mutable_collection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_mutable_collection</span></code></a></p></td>
+<td><p>Returns true if the collection <cite>col</cite> is mutable.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.lazy_init" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.lazy_init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lazy_init</span></code></a></p></td>
+<td><p>Initializes a module without computing on an actual input.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.make_rng" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.make_rng"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_rng</span></code></a></p></td>
+<td><p>Returns a new RNG key from a given RNG sequence for this Module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.param" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.param"><code class="xref py py-obj docutils literal notranslate"><span class="pre">param</span></code></a></p></td>
+<td><p>Declares and returns a parameter in this Module.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.perturb" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.perturb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">perturb</span></code></a></p></td>
+<td><p>Add an zero-value variable ('perturbation') to the intermediate value.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.put_variable" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.put_variable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">put_variable</span></code></a></p></td>
+<td><p>Updates the value of the given variable if it is mutable, or an error otherwise.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.setup" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.setup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup</span></code></a></p></td>
+<td><p>Initializes a Module lazily (similar to a lazy <code class="docutils literal notranslate"><span class="pre">__init__</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.sow" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.sow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sow</span></code></a></p></td>
+<td><p>Stores a value in a collection.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.tabulate" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.tabulate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tabulate</span></code></a></p></td>
+<td><p>Creates a summary of the Module represented as a table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.unbind" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.unbind"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unbind</span></code></a></p></td>
+<td><p>Returns an unbound copy of a Module and its variables.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variable" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">variable</span></code></a></p></td>
+<td><p>Declares and returns a variable in this Module.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Attributes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">activate_final</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.activations" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.activations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">activations</span></code></a>(x)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dropout_rate</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">parent</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">path</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">scope</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variables" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">variables</span></code></a></p></td>
+<td><p>Returns the variables in this module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hidden_dims</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Call self as a function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.activations">
+<span class="sig-name descname"><span class="pre">activations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code><span class="pre">[[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code><span class="pre">],</span> <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;jax._src.custom_derivatives.custom_jvp</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.activations" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.apply">
+<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rngs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capture_intermediates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.apply" title="Link to this definition">#</a></dt>
+<dd><p>Applies a module method to variables and returns output and modified variables.</p>
+<p>Note that <cite>method</cite> should be set if one would like to call <cite>apply</cite> on a
+different class method than <code class="docutils literal notranslate"><span class="pre">__call__</span></code>. For instance, suppose a
+Transformer modules has a method called <cite>encode</cite>, then the following calls
+<cite>apply</cite> on that method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">Transformer</span><span class="p">()</span>
+<span class="n">encoded</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">({</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">},</span> <span class="n">x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">Transformer</span><span class="o">.</span><span class="n">encode</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If a function instance is provided, the unbound function is used. For
+instance, the example below is equivalent to the one above:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">encoded</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">({</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">},</span> <span class="n">x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">encode</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also pass a string to a callable attribute of the module. For
+example, the previous can be written as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">encoded</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">({</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">},</span> <span class="n">x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;encode&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note <code class="docutils literal notranslate"><span class="pre">method</span></code> can also be a function that is not defined in
+<code class="docutils literal notranslate"><span class="pre">Transformer</span></code>. In that case, the function should have at least one
+argument representing an instance of the Module class:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">other_fn</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+  <span class="n">instance</span><span class="o">.</span><span class="n">some_module_attr</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+  <span class="o">...</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">({</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">},</span> <span class="n">x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">other_fn</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – A dictionary containing variables keyed by variable
+collections. See <code class="xref py py-mod docutils literal notranslate"><span class="pre">flax.core.variables</span></code> for more details about
+variables.</p></li>
+<li><p><strong>*args</strong> – Named arguments passed to the specified apply method.</p></li>
+<li><p><strong>rngs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – a dict of PRNGKeys to initialize the PRNG sequences. The “params”
+PRNG sequence is used to initialize parameters.</p></li>
+<li><p><strong>method</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]</span>) – A function to call apply on. This is generally a function in the
+module. If provided, applies this method. If not provided, applies the
+<code class="docutils literal notranslate"><span class="pre">__call__</span></code> method of the module. A string can also be provided to
+specify a method by name.</p></li>
+<li><p><strong>mutable</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">DenyList</span></code>]</span>) – Can be bool, str, or list. Specifies which collections should be
+treated as mutable: <code class="docutils literal notranslate"><span class="pre">bool</span></code>: all/no collections are mutable. <code class="docutils literal notranslate"><span class="pre">str</span></code>:
+The name of a single mutable collection. <code class="docutils literal notranslate"><span class="pre">list</span></code>: A list of names of
+mutable collections.</p></li>
+<li><p><strong>capture_intermediates</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]]</span>) – If <cite>True</cite>, captures intermediate return values of
+all Modules inside the “intermediates” collection. By default, only the
+return values of all <code class="docutils literal notranslate"><span class="pre">__call__</span></code> methods are stored. A function can be
+passed to change the filter behavior. The filter function takes the
+Module instance and method name and returns a bool indicating whether
+the output of that method invocation should be stored.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments passed to the specified apply method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">FrozenDict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If <code class="docutils literal notranslate"><span class="pre">mutable</span></code> is False, returns output. If any collections are
+mutable, returns <code class="docutils literal notranslate"><span class="pre">(output,</span> <span class="pre">vars)</span></code>, where <code class="docutils literal notranslate"><span class="pre">vars</span></code> are is a dict
+of the modified collections.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.bind">
+<span class="sig-name descname"><span class="pre">bind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rngs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.bind" title="Link to this definition">#</a></dt>
+<dd><p>Creates an interactive Module instance by binding variables and RNGs.</p>
+<p><code class="docutils literal notranslate"><span class="pre">bind</span></code> provides an “interactive” instance of a Module directly without
+transforming a function with <code class="docutils literal notranslate"><span class="pre">apply</span></code>. This is particularly useful for
+debugging and interactive use cases like notebooks where a function would
+limit the ability to split up code into different cells.</p>
+<p>Once the variables (and optionally RNGs) are bound to a <code class="docutils literal notranslate"><span class="pre">Module</span></code> it
+becomes a stateful object. Note that idiomatic JAX is functional and
+therefore an interactive instance does not mix well with vanilla JAX APIs.
+<code class="docutils literal notranslate"><span class="pre">bind()</span></code> should only be used for interactive experimentation, and in all
+other cases we strongly encourage users to use <code class="docutils literal notranslate"><span class="pre">apply()</span></code> instead.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">flax.linen</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="k">class</span> <span class="nc">AutoEncoder</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">16</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+<span class="n">ae</span> <span class="o">=</span> <span class="n">AutoEncoder</span><span class="p">()</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">x_reconstructed</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – A dictionary containing variables keyed by variable
+collections. See <code class="xref py py-mod docutils literal notranslate"><span class="pre">flax.core.variables</span></code> for more details about
+variables.</p></li>
+<li><p><strong>*args</strong> – Named arguments (not used).</p></li>
+<li><p><strong>rngs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – a dict of PRNGKeys to initialize the PRNG sequences.</p></li>
+<li><p><strong>mutable</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">DenyList</span></code>]</span>) – Can be bool, str, or list. Specifies which collections should be
+treated as mutable: <code class="docutils literal notranslate"><span class="pre">bool</span></code>: all/no collections are mutable. <code class="docutils literal notranslate"><span class="pre">str</span></code>:
+The name of a single mutable collection. <code class="docutils literal notranslate"><span class="pre">list</span></code>: A list of names of
+mutable collections.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">M</span></code>, bound= Module)</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A copy of this instance with bound variables and RNGs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.clone">
+<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_deep_clone</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_reset_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">updates</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.clone" title="Link to this definition">#</a></dt>
+<dd><p>Creates a clone of this Module, with optionally updated arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parent</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Scope</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]</span>) – The parent of the clone. The clone will have no parent if no
+explicit parent is specified.</p></li>
+<li><p><strong>_deep_clone</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">WeakValueDictionary</span></code>]</span>) – A boolean or a weak value dictionary to control deep cloning
+of submodules. If True, submodules will be cloned recursively. If a weak
+value dictionary is passed, it will be used to cache cloned submodules.
+This flag is used by init/apply/bind to avoid scope leakage.</p></li>
+<li><p><strong>_reset_names</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – If True, <cite>name=None</cite> is also passed to submodules when
+cloning. Resetting names in submodules is necessary when calling <cite>.unbind</cite>.</p></li>
+<li><p><strong>**updates</strong> – Attribute updates.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">M</span></code>, bound= Module)</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A clone of the this Module with the updated attributes and parent.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.get_variable">
+<span class="sig-name descname"><span class="pre">get_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.get_variable" title="Link to this definition">#</a></dt>
+<dd><p>Retrieves the value of a Variable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>col</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – the variable collection.</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – the name of the variable.</p></li>
+<li><p><strong>default</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]</span>) – the default value to return if the variable does not exist in
+this scope.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value of the input variable, of the default value if the variable
+doesn’t exist in this scope.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_rng">
+<span class="sig-name descname"><span class="pre">has_rng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_rng" title="Link to this definition">#</a></dt>
+<dd><p>Returns true if a PRNGSequence with name <cite>name</cite> exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_variable">
+<span class="sig-name descname"><span class="pre">has_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_variable" title="Link to this definition">#</a></dt>
+<dd><p>Checks if a variable of given collection and name exists in this Module.</p>
+<p>See <code class="xref py py-mod docutils literal notranslate"><span class="pre">flax.core.variables</span></code> for more explanation on variables and
+collections.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>col</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The variable collection name.</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The name of the variable.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the variable exists.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rngs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DenyList(deny='intermediates')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capture_intermediates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init" title="Link to this definition">#</a></dt>
+<dd><p>Initializes a module method with variables and returns modified variables.</p>
+<p><code class="docutils literal notranslate"><span class="pre">init</span></code> takes as first argument either a single <code class="docutils literal notranslate"><span class="pre">PRNGKey</span></code>, or a
+dictionary mapping variable collections names to their <code class="docutils literal notranslate"><span class="pre">PRNGKeys</span></code>, and
+will call <code class="docutils literal notranslate"><span class="pre">method</span></code> (which is the module’s <code class="docutils literal notranslate"><span class="pre">__call__</span></code> function by
+default) passing <code class="docutils literal notranslate"><span class="pre">*args</span></code> and <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>, and returns
+a dictionary of initialized variables.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">flax.linen</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="gp">... </span>  <span class="nd">@nn</span><span class="o">.</span><span class="n">compact</span>
+<span class="gp">... </span>  <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">train</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">16</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm</span><span class="p">(</span><span class="n">use_running_average</span><span class="o">=</span><span class="ow">not</span> <span class="n">train</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">module</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">variables</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)),</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you pass a single <code class="docutils literal notranslate"><span class="pre">PRNGKey</span></code>, Flax will use it to feed the <code class="docutils literal notranslate"><span class="pre">'params'</span></code>
+RNG stream.  If you want to use a different RNG stream or need to use
+multiple streams, you must pass a dictionary mapping each RNG stream name
+to its corresponding <code class="docutils literal notranslate"><span class="pre">PRNGKey</span></code> to <code class="docutils literal notranslate"><span class="pre">init</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="gp">... </span>  <span class="nd">@nn</span><span class="o">.</span><span class="n">compact</span>
+<span class="gp">... </span>  <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">train</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">16</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm</span><span class="p">(</span><span class="n">use_running_average</span><span class="o">=</span><span class="ow">not</span> <span class="n">train</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="c1"># Add gaussian noise</span>
+<span class="gp">... </span>    <span class="n">noise_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_rng</span><span class="p">(</span><span class="s1">&#39;noise&#39;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">noise_key</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">module</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rngs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">1</span><span class="p">)}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">variables</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">rngs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)),</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Jitting <cite>init</cite> initializes a model lazily using only the shapes of the
+provided arguments, and avoids computing the forward pass with actual
+values. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">module</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">init_jit</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">variables</span> <span class="o">=</span> <span class="n">init_jit</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">init</span></code> is a light wrapper over <code class="docutils literal notranslate"><span class="pre">apply</span></code>, so other <code class="docutils literal notranslate"><span class="pre">apply</span></code> arguments
+like <code class="docutils literal notranslate"><span class="pre">method</span></code>, <code class="docutils literal notranslate"><span class="pre">mutable</span></code>, and <code class="docutils literal notranslate"><span class="pre">capture_intermediates</span></code> are also
+available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rngs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – The rngs for the variable collections.</p></li>
+<li><p><strong>*args</strong> – Named arguments passed to the init function.</p></li>
+<li><p><strong>method</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]</span>) – An optional method. If provided, applies this method. If not
+provided, applies the <code class="docutils literal notranslate"><span class="pre">__call__</span></code> method. A string can also be provided
+to specify a method by name.</p></li>
+<li><p><strong>mutable</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">DenyList</span></code>]</span>) – Can be bool, str, or list. Specifies which collections should be
+treated as mutable: <code class="docutils literal notranslate"><span class="pre">bool</span></code>: all/no collections are mutable. <code class="docutils literal notranslate"><span class="pre">str</span></code>:
+The name of a single mutable collection. <code class="docutils literal notranslate"><span class="pre">list</span></code>: A list of names of
+mutable collections. By default all collections except “intermediates”
+are mutable.</p></li>
+<li><p><strong>capture_intermediates</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]]</span>) – If <cite>True</cite>, captures intermediate return values of
+all Modules inside the “intermediates” collection. By default only the
+return values of all <code class="docutils literal notranslate"><span class="pre">__call__</span></code> methods are stored. A function can be
+passed to change the filter behavior. The filter function takes the
+Module instance and method name and returns a bool indicating whether
+the output of that method invocation should be stored.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments passed to the init function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">FrozenDict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The initialized variable dict.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init_with_output">
+<span class="sig-name descname"><span class="pre">init_with_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rngs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DenyList(deny='intermediates')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capture_intermediates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init_with_output" title="Link to this definition">#</a></dt>
+<dd><p>Initializes a module method with variables and returns output and modified variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rngs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – The rngs for the variable collections.</p></li>
+<li><p><strong>*args</strong> – Named arguments passed to the init function.</p></li>
+<li><p><strong>method</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]</span>) – An optional method. If provided, applies this method. If not
+provided, applies the <code class="docutils literal notranslate"><span class="pre">__call__</span></code> method. A string can also be
+provided to specify a method by name.</p></li>
+<li><p><strong>mutable</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">DenyList</span></code>]</span>) – Can be bool, str, or list. Specifies which collections should be
+treated as mutable: <code class="docutils literal notranslate"><span class="pre">bool</span></code>: all/no collections are mutable. <code class="docutils literal notranslate"><span class="pre">str</span></code>:
+The name of a single mutable collection. <code class="docutils literal notranslate"><span class="pre">list</span></code>: A list of names of
+mutable collections. By default, all collections except “intermediates”
+are mutable.</p></li>
+<li><p><strong>capture_intermediates</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]]</span>) – If <cite>True</cite>, captures intermediate return values of
+all Modules inside the “intermediates” collection. By default only the
+return values of all <code class="docutils literal notranslate"><span class="pre">__call__</span></code> methods are stored. A function can be
+passed to change the filter behavior. The filter function takes the
+Module instance and method name and returns a bool indicating whether
+the output of that method invocation should be stored.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments passed to the init function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">FrozenDict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>(output, vars)`</cite>, where <code class="docutils literal notranslate"><span class="pre">vars</span></code> are is a dict of the modified
+collections.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_initializing">
+<span class="sig-name descname"><span class="pre">is_initializing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_initializing" title="Link to this definition">#</a></dt>
+<dd><p>Returns True if running under self.init(…) or nn.init(…)().</p>
+<p>This is a helper method to handle the common case of simple initialization
+where we wish to have setup logic occur when only called under
+<code class="docutils literal notranslate"><span class="pre">module.init</span></code> or <code class="docutils literal notranslate"><span class="pre">nn.init</span></code>.  For more complicated multi-phase
+initialization scenarios it is better to test for the mutability of
+particular variable collections or for the presence of particular
+variables that potentially need to be initialized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_mutable_collection">
+<span class="sig-name descname"><span class="pre">is_mutable_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_mutable_collection" title="Link to this definition">#</a></dt>
+<dd><p>Returns true if the collection <cite>col</cite> is mutable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.lazy_init">
+<span class="sig-name descname"><span class="pre">lazy_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rngs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DenyList(deny='intermediates')</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.lazy_init" title="Link to this definition">#</a></dt>
+<dd><p>Initializes a module without computing on an actual input.</p>
+<p>lazy_init will initialize the variables without doing unnecessary compute.
+The input data should be passed as a <code class="docutils literal notranslate"><span class="pre">jax.ShapeDtypeStruct</span></code> which
+specifies the shape and dtype of the input but no concrete data.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">lazy_init</span><span class="p">(</span>
+    <span class="n">rng</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">ShapeDtypeStruct</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The args and kwargs args passed to <code class="docutils literal notranslate"><span class="pre">lazy_init</span></code> can be a mix of
+concrete (jax arrays, scalars, bools) and abstract (ShapeDtypeStruct)
+values. Concrete values are only necessary for arguments that affect
+the initialization of variables. For example, the model might expect
+a keyword arg that enables/disables a subpart of the model.
+In this case, an explicit value (True/Flase) should be passed otherwise
+<code class="docutils literal notranslate"><span class="pre">lazy_init</span></code> cannot infer which variables should be initialized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rngs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – The rngs for the variable collections.</p></li>
+<li><p><strong>*args</strong> – arguments passed to the init function.</p></li>
+<li><p><strong>method</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – An optional method. If provided, applies this method. If not
+provided, applies the <code class="docutils literal notranslate"><span class="pre">__call__</span></code> method.</p></li>
+<li><p><strong>mutable</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">DenyList</span></code>]</span>) – Can be bool, str, or list. Specifies which collections should be
+treated as mutable: <code class="docutils literal notranslate"><span class="pre">bool</span></code>: all/no collections are mutable. <code class="docutils literal notranslate"><span class="pre">str</span></code>:
+The name of a single mutable collection. <code class="docutils literal notranslate"><span class="pre">list</span></code>: A list of names of
+mutable collections. By default all collections except “intermediates”
+are mutable.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments passed to the init function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrozenDict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The initialized variable dict.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.make_rng">
+<span class="sig-name descname"><span class="pre">make_rng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.make_rng" title="Link to this definition">#</a></dt>
+<dd><p>Returns a new RNG key from a given RNG sequence for this Module.</p>
+<p>The new RNG key is split from the previous one. Thus, every call to
+<cite>make_rng</cite> returns a new RNG key, while still guaranteeing full
+reproducibility.</p>
+<p>TODO: Link to Flax RNG design note.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The RNG sequence name.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The newly generated RNG key.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.param">
+<span class="sig-name descname"><span class="pre">param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_fn</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">init_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.param" title="Link to this definition">#</a></dt>
+<dd><p>Declares and returns a parameter in this Module.</p>
+<p>Parameters are read-only variables in the collection named “params”. See
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">flax.core.variables</span></code> for more details on variables.</p>
+<p>The first argument of <cite>init_fn</cite> is assumed to be a PRNG key, which is
+provided automatically and does not have to be passed using <cite>init_args</cite>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">lecun_normal</span><span class="p">(),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In the example above, the function <cite>lecun_normal</cite> expects two arguments:
+<cite>key</cite> and <cite>shape</cite>, but only <cite>shape</cite> has to be provided explicitly; <cite>key</cite>
+is set automatically using the PRNG for <cite>params</cite> that is passed when
+initializing the module using <a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init"><code class="xref py py-meth docutils literal notranslate"><span class="pre">init()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The parameter name.</p></li>
+<li><p><strong>init_fn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]</span>) – The function that will be called to compute the initial value of
+this variable. This function will only be called the first time this
+parameter is used in this module.</p></li>
+<li><p><strong>*init_args</strong> – The arguments to pass to init_fn.</p></li>
+<li><p><strong>unbox</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – If True, <code class="docutils literal notranslate"><span class="pre">AxisMetadata</span></code> instances are replaced by their unboxed
+value, see <code class="docutils literal notranslate"><span class="pre">flax.nn.meta.unbox</span></code> (default: True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>), <code class="xref py py-class docutils literal notranslate"><span class="pre">AxisMetadata</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value of the initialized parameter. Throws an error if the parameter
+exists already.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.perturb">
+<span class="sig-name descname"><span class="pre">perturb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'perturbations'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.perturb" title="Link to this definition">#</a></dt>
+<dd><p>Add an zero-value variable (‘perturbation’) to the intermediate value.</p>
+<p>The gradient of <cite>value</cite> would be the same as the gradient of this
+perturbation variable. Therefore, if you define your loss function with
+both params and perturbations as standalone arguments, you can get the
+intermediate gradients of <cite>value</cite> by running <cite>jax.grad</cite> on the perturbation
+argument.</p>
+<p>Note: this is an experimental API and may be tweaked later for better
+performance and usability.
+At its current stage, it creates extra dummy variables that occupies extra
+memory space. Use it only to debug gradients in training.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">flax.linen</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="nd">@nn</span><span class="o">.</span><span class="n">compact</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">3</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">perturb</span><span class="p">(</span><span class="s1">&#39;dense3&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">loss</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">perturbations</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+  <span class="n">variables</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">,</span> <span class="s1">&#39;perturbations&#39;</span><span class="p">:</span> <span class="n">perturbations</span><span class="p">}</span>
+  <span class="n">preds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">preds</span> <span class="o">-</span> <span class="n">targets</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">()</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">intm_grads</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">argnums</span><span class="o">=</span><span class="mi">1</span><span class="p">)(</span>
+    <span class="n">variables</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">],</span> <span class="n">variables</span><span class="p">[</span><span class="s1">&#39;perturbations&#39;</span><span class="p">],</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">intm_grads</span><span class="p">[</span><span class="s1">&#39;dense3&#39;</span><span class="p">])</span> <span class="c1"># ==&gt; [[-1.456924   -0.44332537  0.02422847]</span>
+                            <span class="c1">#      [-1.456924   -0.44332537  0.02422847]]</span>
+</pre></div>
+</div>
+<p>If perturbations are not passed to <cite>apply</cite>, <cite>perturb</cite> behaves like a no-op
+so you can easily disable the behavior when not needed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+    <span class="p">{</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">,</span> <span class="s1">&#39;perturbations&#39;</span><span class="p">:</span> <span class="n">perturbations</span><span class="p">},</span>
+    <span class="n">x</span><span class="p">)</span> <span class="c1"># works as expected</span>
+<span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">({</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">},</span> <span class="n">x</span><span class="p">)</span> <span class="c1"># behaves like a no-op</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.put_variable">
+<span class="sig-name descname"><span class="pre">put_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.put_variable" title="Link to this definition">#</a></dt>
+<dd><p>Updates the value of the given variable if it is mutable, or an error otherwise.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>col</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – the variable collection.</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – the name of the variable.</p></li>
+<li><p><strong>value</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>) – the new value of the variable.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.setup">
+<span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.setup" title="Link to this definition">#</a></dt>
+<dd><p>Initializes a Module lazily (similar to a lazy <code class="docutils literal notranslate"><span class="pre">__init__</span></code>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">setup</span></code> is called once lazily on a module instance when a module
+is bound, immediately before any other methods like <code class="docutils literal notranslate"><span class="pre">__call__</span></code> are
+invoked, or before a <code class="docutils literal notranslate"><span class="pre">setup</span></code>-defined attribute on <cite>self</cite> is accessed.</p>
+<p>This can happen in three cases:
+:rtype: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+<blockquote>
+<div><ol class="arabic">
+<li><p>Immediately when invoking <a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.apply" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apply()</span></code></a>, <a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init"><code class="xref py py-meth docutils literal notranslate"><span class="pre">init()</span></code></a> or
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">init_and_output()</span></code>.</p></li>
+<li><p>Once the module is given a name by being assigned to an attribute of
+another module inside the other module’s <code class="docutils literal notranslate"><span class="pre">setup</span></code> method
+(see <code class="xref py py-meth docutils literal notranslate"><span class="pre">__setattr__()</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyModule</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">submodule</span> <span class="o">=</span> <span class="n">Conv</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+    <span class="c1"># Accessing `submodule` attributes does not yet work here.</span>
+
+    <span class="c1"># The following line invokes `self.__setattr__`, which gives</span>
+    <span class="c1"># `submodule` the name &quot;conv1&quot;.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">submodule</span>
+
+    <span class="c1"># Accessing `submodule` attributes or methods is now safe and</span>
+    <span class="c1"># either causes setup() to be called once.</span>
+</pre></div>
+</div>
+</li>
+<li><p>Once a module is constructed inside a method wrapped with
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">compact()</span></code>, immediately before another method is called or
+<code class="docutils literal notranslate"><span class="pre">setup</span></code> defined attribute is accessed.</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.sow">
+<span class="sig-name descname"><span class="pre">sow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_fn=&lt;function</span> <span class="pre">&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_fn=&lt;function</span> <span class="pre">&lt;lambda&gt;&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.sow" title="Link to this definition">#</a></dt>
+<dd><p>Stores a value in a collection.</p>
+<p>Collections can be used to collect intermediate values without
+the overhead of explicitly passing a container through each Module call.</p>
+<p>If the target collection is not mutable <cite>sow</cite> behaves like a no-op
+and returns <cite>False</cite>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">flax.linen</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+  <span class="nd">@nn</span><span class="o">.</span><span class="n">compact</span>
+  <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">4</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sow</span><span class="p">(</span><span class="s1">&#39;intermediates&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">)(</span><span class="n">h</span><span class="p">)</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">16</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">()</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">y</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">mutable</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;intermediates&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;intermediates&#39;</span><span class="p">])</span>  <span class="c1"># {&#39;h&#39;: (...,)}</span>
+</pre></div>
+</div>
+<p>By default the values are stored in a tuple and each stored value
+is appended at the end. This way all intermediates can be tracked when
+the same module is called multiple times. Alternatively, a custom
+init/reduce function can be passed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Foo2</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+  <span class="nd">@nn</span><span class="o">.</span><span class="n">compact</span>
+  <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="n">init_fn</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span>
+    <span class="n">reduce_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sow</span><span class="p">(</span><span class="s1">&#39;intermediates&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span>
+             <span class="n">init_fn</span><span class="o">=</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="n">reduce_fn</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sow</span><span class="p">(</span><span class="s1">&#39;intermediates&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
+             <span class="n">init_fn</span><span class="o">=</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="n">reduce_fn</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Foo2</span><span class="p">()</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">y</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+    <span class="n">variables</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">mutable</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;intermediates&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;intermediates&#39;</span><span class="p">])</span>  <span class="c1"># ==&gt; {&#39;h&#39;: [[3.]]}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>col</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The name of the variable collection.</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The name of the variable.</p></li>
+<li><p><strong>value</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)</span>) – The value of the variable.</p></li>
+<li><p><strong>reduce_fn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">K</span></code>), <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)], <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">K</span></code>)]</span>) – The function used to combine the existing value with the new
+value. The default is to append the value to a tuple.</p></li>
+<li><p><strong>init_fn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[], <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">K</span></code>)]</span>) – For the first value stored, <cite>reduce_fn</cite> will be passed the result
+of <cite>init_fn</cite> together with the value to be stored. The default is an
+empty tuple.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>True</cite> if the value has been stored successfully, <cite>False</cite> otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.tabulate">
+<span class="sig-name descname"><span class="pre">tabulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rngs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_repeated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DenyList(deny='intermediates')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">console_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">mappingproxy({})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">mappingproxy({})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_flops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_vjp_flops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.tabulate" title="Link to this definition">#</a></dt>
+<dd><p>Creates a summary of the Module represented as a table.</p>
+<p>This method has the same signature and internally calls <cite>Module.init</cite>,
+but instead of returning the variables, it returns the string summarizing
+the Module in a table. <cite>tabulate</cite> uses <cite>jax.eval_shape</cite> to run the forward
+computation without consuming any FLOPs or allocating memory.</p>
+<p>Additional arguments can be passed into the <cite>console_kwargs</cite> argument, for
+example, <cite>{‘width’: 120}</cite>. For a full list of <cite>console_kwargs</cite> arguments,
+see:
+<a class="reference external" href="https://rich.readthedocs.io/en/stable/reference/console.html#rich.console.Console">https://rich.readthedocs.io/en/stable/reference/console.html#rich.console.Console</a></p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">flax.linen</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="nd">@nn</span><span class="o">.</span><span class="n">compact</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">4</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">)(</span><span class="n">h</span><span class="p">)</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">16</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">Foo</span><span class="p">()</span><span class="o">.</span><span class="n">tabulate</span><span class="p">(</span>
+    <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">compute_flops</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compute_vjp_flops</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This gives the following output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Foo</span> <span class="n">Summary</span>
+</pre></div>
+</div>
+<p>┏━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ path    ┃ module ┃ inputs        ┃ outputs       ┃ flops ┃ vjp_flops ┃ params          ┃
+┡━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│         │ Foo    │ float32[16,9] │ float32[16,2] │ 1504  │ 4460      │                 │
+├─────────┼────────┼───────────────┼───────────────┼───────┼───────────┼─────────────────┤
+│ Dense_0 │ Dense  │ float32[16,9] │ float32[16,4] │ 1216  │ 3620      │ bias:           │
+│         │        │               │               │       │           │ float32[4]      │
+│         │        │               │               │       │           │ kernel:         │
+│         │        │               │               │       │           │ float32[9,4]    │
+│         │        │               │               │       │           │                 │
+│         │        │               │               │       │           │ 40 (160 B)      │
+├─────────┼────────┼───────────────┼───────────────┼───────┼───────────┼─────────────────┤
+│ Dense_1 │ Dense  │ float32[16,4] │ float32[16,2] │ 288   │ 840       │ bias:           │
+│         │        │               │               │       │           │ float32[2]      │
+│         │        │               │               │       │           │ kernel:         │
+│         │        │               │               │       │           │ float32[4,2]    │
+│         │        │               │               │       │           │                 │
+│         │        │               │               │       │           │ 10 (40 B)       │
+├─────────┼────────┼───────────────┼───────────────┼───────┼───────────┼─────────────────┤
+│         │        │               │               │       │     Total │ 50 (200 B)      │
+└─────────┴────────┴───────────────┴───────────────┴───────┴───────────┴─────────────────┘</p>
+<blockquote>
+<div><p>Total Parameters: 50 (200 B)</p>
+</div></blockquote>
+<p><strong>Note</strong>: rows order in the table does not represent execution order,
+instead it aligns with the order of keys in <cite>variables</cite> which are sorted
+alphabetically.</p>
+<p><strong>Note</strong>: <cite>vjp_flops</cite> returns <cite>0</cite> if the module is not differentiable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rngs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]]</span>) – The rngs for the variable collections as passed to <cite>Module.init</cite>.</p></li>
+<li><p><strong>*args</strong> – The arguments to the forward computation.</p></li>
+<li><p><strong>depth</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – controls how many submodule deep the summary can go. By default,
+its <cite>None</cite> which means no limit. If a submodule is not shown because of
+the depth limit, its parameter count and bytes will be added to the row
+of its first shown ancestor such that the sum of all rows always adds
+up to the total number of parameters of the Module.</p></li>
+<li><p><strong>show_repeated</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – If <cite>True</cite>, repeated calls to the same module will be shown
+in the table, otherwise only the first call will be shown. Default is
+<cite>False</cite>.</p></li>
+<li><p><strong>mutable</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">DenyList</span></code>]</span>) – Can be bool, str, or list. Specifies which collections should be
+treated as mutable: <code class="docutils literal notranslate"><span class="pre">bool</span></code>: all/no collections are mutable. <code class="docutils literal notranslate"><span class="pre">str</span></code>:
+The name of a single mutable collection. <code class="docutils literal notranslate"><span class="pre">list</span></code>: A list of names of
+mutable collections. By default, all collections except ‘intermediates’
+are mutable.</p></li>
+<li><p><strong>console_kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – An optional dictionary with additional keyword arguments
+that are passed to <cite>rich.console.Console</cite> when rendering the table.
+Default arguments are <cite>{‘force_terminal’: True, ‘force_jupyter’:
+False}</cite>.</p></li>
+<li><p><strong>table_kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span>) – An optional dictionary with additional keyword arguments
+that are passed to <cite>rich.table.Table</cite> constructor.</p></li>
+<li><p><strong>column_kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span>) – An optional dictionary with additional keyword arguments
+that are passed to <cite>rich.table.Table.add_column</cite> when adding columns to
+the table.</p></li>
+<li><p><strong>compute_flops</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – whether to include a <cite>flops</cite> column in the table listing
+the estimated FLOPs cost of each module forward pass. Does incur actual
+on-device computation / compilation / memory allocation, but still
+introduces overhead for large modules (e.g. extra 20 seconds for a
+Stable Diffusion’s UNet, whereas otherwise tabulation would finish in 5
+seconds).</p></li>
+<li><p><strong>compute_vjp_flops</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – whether to include a <cite>vjp_flops</cite> column in the table
+listing the estimated FLOPs cost of each module backward pass.
+Introduces a compute overhead of about 2-3X of <cite>compute_flops</cite>.</p></li>
+<li><p><strong>**kwargs</strong> – keyword arguments to pass to the forward computation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A string summarizing the Module.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.unbind">
+<span class="sig-name descname"><span class="pre">unbind</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.unbind" title="Link to this definition">#</a></dt>
+<dd><p>Returns an unbound copy of a Module and its variables.</p>
+<p><code class="docutils literal notranslate"><span class="pre">unbind</span></code> helps create a stateless version of a bound Module.</p>
+<p>An example of a common use case: to extract a sub-Module defined inside
+<code class="docutils literal notranslate"><span class="pre">setup()</span></code> and its corresponding variables: 1) temporarily <code class="docutils literal notranslate"><span class="pre">bind</span></code> the
+parent Module; and then 2) <code class="docutils literal notranslate"><span class="pre">unbind</span></code> the desired sub-Module. (Recall that
+<code class="docutils literal notranslate"><span class="pre">setup()</span></code> is only called when the Module is bound.):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">AutoEncoder</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">Decoder</span><span class="p">()</span>
+
+  <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+<span class="n">module</span> <span class="o">=</span> <span class="n">AutoEncoder</span><span class="p">()</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">784</span><span class="p">)))</span>
+<span class="o">...</span>
+<span class="c1"># Extract the Encoder sub-Module and its variables</span>
+<span class="n">encoder</span><span class="p">,</span> <span class="n">encoder_vars</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">unbind</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">M</span></code>, bound= Module), <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]]</span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple with an unbound copy of this Module and its variables.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variable">
+<span class="sig-name descname"><span class="pre">variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">init_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variable" title="Link to this definition">#</a></dt>
+<dd><p>Declares and returns a variable in this Module.</p>
+<p>See <code class="xref py py-mod docutils literal notranslate"><span class="pre">flax.core.variables</span></code> for more information. See also <a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.param" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.param"><code class="xref py py-meth docutils literal notranslate"><span class="pre">param()</span></code></a>
+for a shorthand way to define read-only variables in the “params”
+collection.</p>
+<p>Contrary to <a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.param" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.param"><code class="xref py py-meth docutils literal notranslate"><span class="pre">param()</span></code></a>, all arguments passing using <cite>init_fn</cite> should be
+passed on explicitly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_rng</span><span class="p">(</span><span class="s1">&#39;stats&#39;</span><span class="p">)</span>
+<span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable</span><span class="p">(</span><span class="s1">&#39;stats&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">lecun_normal</span><span class="p">(),</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In the example above, the function <cite>lecun_normal</cite> expects two arguments:
+<cite>key</cite> and <cite>shape</cite>, and both have to be passed on. The PRNG for <cite>stats</cite> has
+to be provided explicitly when calling <a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init"><code class="xref py py-meth docutils literal notranslate"><span class="pre">init()</span></code></a> and <a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.apply" title="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apply()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>col</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The variable collection name.</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The variable name.</p></li>
+<li><p><strong>init_fn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]]</span>) – The function that will be called to compute the initial value of
+this variable. This function will only be called the first time this
+variable is used in this module. If None, the variable must already be
+initialized otherwise an error is raised.</p></li>
+<li><p><strong>*init_args</strong> – The arguments to pass to init_fn.</p></li>
+<li><p><strong>unbox</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – If True, <code class="docutils literal notranslate"><span class="pre">AxisMetadata</span></code> instances are replaced by their unboxed
+value, see <code class="docutils literal notranslate"><span class="pre">flax.nn.meta.unbox</span></code> (default: True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Variable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)], <code class="xref py py-class docutils literal notranslate"><span class="pre">Variable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">AxisMetadata</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">flax.core.variables.Variable</span></code> that can be read or set via
+“.value” attribute. Throws an error if the variable exists already.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variables">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variables" title="Link to this definition">#</a></dt>
+<dd><p>Returns the variables in this module.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.Model.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">xpag.agents.flax_agents.sac.sac_from_jaxrl.Model</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="xpag.agents.flax_agents.sac.sac_from_jaxrl.DoubleCritic.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">xpag.agents.flax_agents.sac.sac_from_jaxrl.DoubleCritic</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022-2023 CNRS
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP</a><ul>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP"><code class="docutils literal notranslate"><span class="pre">MLP</span></code></a><ul>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.__call__"><code class="docutils literal notranslate"><span class="pre">MLP.__call__()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.activations"><code class="docutils literal notranslate"><span class="pre">MLP.activations</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.apply"><code class="docutils literal notranslate"><span class="pre">MLP.apply()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.bind"><code class="docutils literal notranslate"><span class="pre">MLP.bind()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.clone"><code class="docutils literal notranslate"><span class="pre">MLP.clone()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.get_variable"><code class="docutils literal notranslate"><span class="pre">MLP.get_variable()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_rng"><code class="docutils literal notranslate"><span class="pre">MLP.has_rng()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.has_variable"><code class="docutils literal notranslate"><span class="pre">MLP.has_variable()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init"><code class="docutils literal notranslate"><span class="pre">MLP.init()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.init_with_output"><code class="docutils literal notranslate"><span class="pre">MLP.init_with_output()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_initializing"><code class="docutils literal notranslate"><span class="pre">MLP.is_initializing()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.is_mutable_collection"><code class="docutils literal notranslate"><span class="pre">MLP.is_mutable_collection()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.lazy_init"><code class="docutils literal notranslate"><span class="pre">MLP.lazy_init()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.make_rng"><code class="docutils literal notranslate"><span class="pre">MLP.make_rng()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.param"><code class="docutils literal notranslate"><span class="pre">MLP.param()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.perturb"><code class="docutils literal notranslate"><span class="pre">MLP.perturb()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.put_variable"><code class="docutils literal notranslate"><span class="pre">MLP.put_variable()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.setup"><code class="docutils literal notranslate"><span class="pre">MLP.setup()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.sow"><code class="docutils literal notranslate"><span class="pre">MLP.sow()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.tabulate"><code class="docutils literal notranslate"><span class="pre">MLP.tabulate()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.unbind"><code class="docutils literal notranslate"><span class="pre">MLP.unbind()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variable"><code class="docutils literal notranslate"><span class="pre">MLP.variable()</span></code></a></li>
+<li><a class="reference internal" href="#xpag.agents.flax_agents.sac.sac_from_jaxrl.MLP.variables"><code class="docutils literal notranslate"><span class="pre">MLP.variables</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=14672bda"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
+    </body>
+</html>

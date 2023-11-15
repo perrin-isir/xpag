@@ -1,0 +1,56 @@
+xpag.agents.flax\_agents.sac.sac\_from\_jaxrl.Critic
+====================================================
+
+.. currentmodule:: xpag.agents.flax_agents.sac.sac_from_jaxrl
+
+.. autoclass:: Critic
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Critic.apply
+      ~Critic.bind
+      ~Critic.clone
+      ~Critic.get_variable
+      ~Critic.has_rng
+      ~Critic.has_variable
+      ~Critic.init
+      ~Critic.init_with_output
+      ~Critic.is_initializing
+      ~Critic.is_mutable_collection
+      ~Critic.lazy_init
+      ~Critic.make_rng
+      ~Critic.param
+      ~Critic.perturb
+      ~Critic.put_variable
+      ~Critic.setup
+      ~Critic.sow
+      ~Critic.tabulate
+      ~Critic.unbind
+      ~Critic.variable
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Critic.activations
+      ~Critic.name
+      ~Critic.parent
+      ~Critic.path
+      ~Critic.scope
+      ~Critic.variables
+      ~Critic.hidden_dims
+   
+   

@@ -1,0 +1,26 @@
+xpag.agents.rljax\_agents.network.critic.ContinuousQFunction
+============================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.network.critic
+
+.. autoclass:: ContinuousQFunction
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ContinuousQFunction.params_dict
+      ~ContinuousQFunction.state_dict
+   
+   
+
+   
+   
+   

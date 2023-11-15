@@ -1,0 +1,6 @@
+xpag.tools.logging.eval\_log\_reset
+===================================
+
+.. currentmodule:: xpag.tools.logging
+
+.. autofunction:: eval_log_reset

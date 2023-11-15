@@ -1,0 +1,31 @@
+xpag.agents.flax\_agents.sac
+============================
+
+.. automodule:: xpag.agents.flax_agents.sac
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.agents.flax_agents.sac.sac
+   xpag.agents.flax_agents.sac.sac_from_jaxrl
+

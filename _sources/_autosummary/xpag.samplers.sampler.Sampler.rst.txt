@@ -1,0 +1,25 @@
+xpag.samplers.sampler.Sampler
+=============================
+
+.. currentmodule:: xpag.samplers.sampler
+
+.. autoclass:: Sampler
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Sampler.sample
+   
+   
+
+   
+   
+   

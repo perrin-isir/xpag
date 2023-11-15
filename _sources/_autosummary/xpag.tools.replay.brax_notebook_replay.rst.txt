@@ -1,0 +1,6 @@
+xpag.tools.replay.brax\_notebook\_replay
+========================================
+
+.. currentmodule:: xpag.tools.replay
+
+.. autofunction:: brax_notebook_replay

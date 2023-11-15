@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.preprocess.get\_quantile\_at\_action
+===================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.preprocess
+
+.. autofunction:: get_quantile_at_action

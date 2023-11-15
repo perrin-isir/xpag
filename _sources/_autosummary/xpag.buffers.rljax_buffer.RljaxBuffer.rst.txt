@@ -1,0 +1,26 @@
+xpag.buffers.rljax\_buffer.RljaxBuffer
+======================================
+
+.. currentmodule:: xpag.buffers.rljax_buffer
+
+.. autoclass:: RljaxBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~RljaxBuffer.insert
+      ~RljaxBuffer.sample
+   
+   
+
+   
+   
+   

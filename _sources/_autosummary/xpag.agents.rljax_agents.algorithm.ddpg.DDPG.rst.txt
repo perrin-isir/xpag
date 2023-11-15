@@ -1,0 +1,42 @@
+xpag.agents.rljax\_agents.algorithm.ddpg.DDPG
+=============================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.ddpg
+
+.. autoclass:: DDPG
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DDPG.calculate_value
+      ~DDPG.explore
+      ~DDPG.get_key_list
+      ~DDPG.get_mask
+      ~DDPG.is_update
+      ~DDPG.load_params
+      ~DDPG.save_params
+      ~DDPG.select_action
+      ~DDPG.step
+      ~DDPG.update
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DDPG.kwargs_actor
+      ~DDPG.kwargs_critic
+      ~DDPG.name
+   
+   

@@ -1,0 +1,31 @@
+xpag.agents.flax\_agents.td3.td3.FeedForwardModel
+=================================================
+
+.. currentmodule:: xpag.agents.flax_agents.td3.td3
+
+.. autoclass:: FeedForwardModel
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~FeedForwardModel.init
+      ~FeedForwardModel.apply
+   
+   

@@ -1,0 +1,36 @@
+xpag.agents.rljax\_agents.util.distribution
+===========================================
+
+.. automodule:: xpag.agents.rljax_agents.util.distribution
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      calculate_kl_divergence
+      evaluate_gaussian_and_tanh_log_prob
+      gaussian_and_tanh_log_prob
+      gaussian_log_prob
+      reparameterize_gaussian
+      reparameterize_gaussian_and_tanh
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.distribution.reparameterize\_gaussian\_and\_tanh
+===============================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.distribution
+
+.. autofunction:: reparameterize_gaussian_and_tanh

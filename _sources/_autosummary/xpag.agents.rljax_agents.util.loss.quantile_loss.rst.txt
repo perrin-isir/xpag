@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.loss.quantile\_loss
+==================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.loss
+
+.. autofunction:: quantile_loss

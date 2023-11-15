@@ -1,0 +1,40 @@
+xpag.tools.eval
+===============
+
+.. automodule:: xpag.tools.eval
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      single_rollout_eval
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      SaveEpisode
+   
+   
+
+   
+   
+   
+
+
+

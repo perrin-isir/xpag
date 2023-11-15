@@ -1,0 +1,30 @@
+xpag.agents.flax\_agents.sac.sac.FlaxSAC
+========================================
+
+.. currentmodule:: xpag.agents.flax_agents.sac.sac
+
+.. autoclass:: FlaxSAC
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~FlaxSAC.load
+      ~FlaxSAC.save
+      ~FlaxSAC.select_action
+      ~FlaxSAC.train_on_batch
+      ~FlaxSAC.value
+      ~FlaxSAC.write_config
+   
+   
+
+   
+   
+   

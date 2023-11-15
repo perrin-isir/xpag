@@ -1,0 +1,32 @@
+xpag.agents.agent
+=================
+
+.. automodule:: xpag.agents.agent
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      Agent
+   
+   
+
+   
+   
+   
+
+
+

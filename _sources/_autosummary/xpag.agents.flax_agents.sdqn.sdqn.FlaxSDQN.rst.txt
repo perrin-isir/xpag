@@ -1,0 +1,29 @@
+xpag.agents.flax\_agents.sdqn.sdqn.FlaxSDQN
+===========================================
+
+.. currentmodule:: xpag.agents.flax_agents.sdqn.sdqn
+
+.. autoclass:: FlaxSDQN
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~FlaxSDQN.load
+      ~FlaxSDQN.save
+      ~FlaxSDQN.select_action
+      ~FlaxSDQN.train_on_batch
+      ~FlaxSDQN.write_config
+   
+   
+
+   
+   
+   

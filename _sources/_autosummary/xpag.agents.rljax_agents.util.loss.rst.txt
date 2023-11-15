@@ -1,0 +1,32 @@
+xpag.agents.rljax\_agents.util.loss
+===================================
+
+.. automodule:: xpag.agents.rljax_agents.util.loss
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      huber
+      quantile_loss
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

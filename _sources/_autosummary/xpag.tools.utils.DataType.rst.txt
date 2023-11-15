@@ -1,0 +1,25 @@
+xpag.tools.utils.DataType
+=========================
+
+.. currentmodule:: xpag.tools.utils
+
+.. autoclass:: DataType
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DataType.NUMPY
+      ~DataType.JAX
+   
+   

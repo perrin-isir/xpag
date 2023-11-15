@@ -1,0 +1,25 @@
+xpag.tools.logging.LevelFilter
+==============================
+
+.. currentmodule:: xpag.tools.logging
+
+.. autoclass:: LevelFilter
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~LevelFilter.filter
+   
+   
+
+   
+   
+   

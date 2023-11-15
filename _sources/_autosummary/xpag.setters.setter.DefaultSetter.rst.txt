@@ -1,0 +1,30 @@
+xpag.setters.setter.DefaultSetter
+=================================
+
+.. currentmodule:: xpag.setters.setter
+
+.. autoclass:: DefaultSetter
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DefaultSetter.load
+      ~DefaultSetter.reset
+      ~DefaultSetter.reset_done
+      ~DefaultSetter.save
+      ~DefaultSetter.step
+      ~DefaultSetter.write_config
+   
+   
+
+   
+   
+   

@@ -1,0 +1,30 @@
+xpag.setters.setter.CompositeSetter
+===================================
+
+.. currentmodule:: xpag.setters.setter
+
+.. autoclass:: CompositeSetter
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~CompositeSetter.load
+      ~CompositeSetter.reset
+      ~CompositeSetter.reset_done
+      ~CompositeSetter.save
+      ~CompositeSetter.step
+      ~CompositeSetter.write_config
+   
+   
+
+   
+   
+   

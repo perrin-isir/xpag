@@ -1,0 +1,26 @@
+xpag.agents.flax\_agents.sac.sac\_from\_jaxrl.SACLearner
+========================================================
+
+.. currentmodule:: xpag.agents.flax_agents.sac.sac_from_jaxrl
+
+.. autoclass:: SACLearner
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~SACLearner.sample_actions
+      ~SACLearner.update
+   
+   
+
+   
+   
+   

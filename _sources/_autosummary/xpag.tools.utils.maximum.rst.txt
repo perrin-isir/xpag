@@ -1,0 +1,6 @@
+xpag.tools.utils.maximum
+========================
+
+.. currentmodule:: xpag.tools.utils
+
+.. autofunction:: maximum

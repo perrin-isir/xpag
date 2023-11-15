@@ -1,0 +1,33 @@
+xpag.agents.rljax\_agents.algorithm.base\_class.actor\_critic
+=============================================================
+
+.. automodule:: xpag.agents.rljax_agents.algorithm.base_class.actor_critic
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      ActorCriticMixIn
+      OffPolicyActorCritic
+   
+   
+
+   
+   
+   
+
+
+

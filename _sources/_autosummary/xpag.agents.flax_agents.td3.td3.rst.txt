@@ -1,0 +1,34 @@
+xpag.agents.flax\_agents.td3.td3
+================================
+
+.. automodule:: xpag.agents.flax_agents.td3.td3
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      FeedForwardModel
+      FlaxTD3
+      TrainingState
+   
+   
+
+   
+   
+   
+
+
+

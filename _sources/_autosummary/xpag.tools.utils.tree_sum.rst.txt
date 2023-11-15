@@ -1,0 +1,6 @@
+xpag.tools.utils.tree\_sum
+==========================
+
+.. currentmodule:: xpag.tools.utils
+
+.. autofunction:: tree_sum

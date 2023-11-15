@@ -1,0 +1,34 @@
+xpag.agents.rljax\_agents.algorithm.base\_class.actor\_critic.ActorCriticMixIn
+==============================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.algorithm.base_class.actor_critic
+
+.. autoclass:: ActorCriticMixIn
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ActorCriticMixIn.load_params
+      ~ActorCriticMixIn.save_params
+      ~ActorCriticMixIn.select_action
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorCriticMixIn.kwargs_actor
+      ~ActorCriticMixIn.kwargs_critic
+   
+   

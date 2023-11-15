@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.input.fake\_action
+=================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.input
+
+.. autofunction:: fake_action

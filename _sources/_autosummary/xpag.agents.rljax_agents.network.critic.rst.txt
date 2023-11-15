@@ -1,0 +1,34 @@
+xpag.agents.rljax\_agents.network.critic
+========================================
+
+.. automodule:: xpag.agents.rljax_agents.network.critic
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      ContinuousQFunction
+      ContinuousQuantileFunction
+      ContinuousVFunction
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,32 @@
+﻿xpag.buffers
+============
+
+.. automodule:: xpag.buffers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.buffers.buffer
+   xpag.buffers.jax_buffer
+   xpag.buffers.rljax_buffer
+

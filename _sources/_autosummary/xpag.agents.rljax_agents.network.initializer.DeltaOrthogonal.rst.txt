@@ -1,0 +1,24 @@
+xpag.agents.rljax\_agents.network.initializer.DeltaOrthogonal
+=============================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.network.initializer
+
+.. autoclass:: DeltaOrthogonal
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+   
+   
+
+   
+   
+   

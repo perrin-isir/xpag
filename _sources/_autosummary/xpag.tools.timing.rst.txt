@@ -1,0 +1,23 @@
+xpag.tools.timing
+=================
+
+.. automodule:: xpag.tools.timing
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

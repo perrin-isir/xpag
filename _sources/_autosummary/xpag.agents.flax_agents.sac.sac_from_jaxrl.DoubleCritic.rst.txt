@@ -1,0 +1,57 @@
+xpag.agents.flax\_agents.sac.sac\_from\_jaxrl.DoubleCritic
+==========================================================
+
+.. currentmodule:: xpag.agents.flax_agents.sac.sac_from_jaxrl
+
+.. autoclass:: DoubleCritic
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DoubleCritic.apply
+      ~DoubleCritic.bind
+      ~DoubleCritic.clone
+      ~DoubleCritic.get_variable
+      ~DoubleCritic.has_rng
+      ~DoubleCritic.has_variable
+      ~DoubleCritic.init
+      ~DoubleCritic.init_with_output
+      ~DoubleCritic.is_initializing
+      ~DoubleCritic.is_mutable_collection
+      ~DoubleCritic.lazy_init
+      ~DoubleCritic.make_rng
+      ~DoubleCritic.param
+      ~DoubleCritic.perturb
+      ~DoubleCritic.put_variable
+      ~DoubleCritic.setup
+      ~DoubleCritic.sow
+      ~DoubleCritic.tabulate
+      ~DoubleCritic.unbind
+      ~DoubleCritic.variable
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DoubleCritic.activations
+      ~DoubleCritic.name
+      ~DoubleCritic.num_qs
+      ~DoubleCritic.parent
+      ~DoubleCritic.path
+      ~DoubleCritic.scope
+      ~DoubleCritic.variables
+      ~DoubleCritic.hidden_dims
+   
+   

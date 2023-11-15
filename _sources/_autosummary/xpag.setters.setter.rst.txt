@@ -1,0 +1,34 @@
+xpag.setters.setter
+===================
+
+.. automodule:: xpag.setters.setter
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      CompositeSetter
+      DefaultSetter
+      Setter
+   
+   
+
+   
+   
+   
+
+
+

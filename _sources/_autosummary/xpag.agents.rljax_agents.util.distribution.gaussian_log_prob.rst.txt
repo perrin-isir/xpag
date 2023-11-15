@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.distribution.gaussian\_log\_prob
+===============================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.distribution
+
+.. autofunction:: gaussian_log_prob

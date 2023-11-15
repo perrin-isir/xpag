@@ -1,0 +1,6 @@
+xpag.agents.flax\_agents.tqc.tqc.update\_actor
+==============================================
+
+.. currentmodule:: xpag.agents.flax_agents.tqc.tqc
+
+.. autofunction:: update_actor

@@ -1,0 +1,55 @@
+xpag.agents.flax\_agents.sac.sac\_from\_jaxrl.Temperature
+=========================================================
+
+.. currentmodule:: xpag.agents.flax_agents.sac.sac_from_jaxrl
+
+.. autoclass:: Temperature
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Temperature.apply
+      ~Temperature.bind
+      ~Temperature.clone
+      ~Temperature.get_variable
+      ~Temperature.has_rng
+      ~Temperature.has_variable
+      ~Temperature.init
+      ~Temperature.init_with_output
+      ~Temperature.is_initializing
+      ~Temperature.is_mutable_collection
+      ~Temperature.lazy_init
+      ~Temperature.make_rng
+      ~Temperature.param
+      ~Temperature.perturb
+      ~Temperature.put_variable
+      ~Temperature.setup
+      ~Temperature.sow
+      ~Temperature.tabulate
+      ~Temperature.unbind
+      ~Temperature.variable
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Temperature.initial_temperature
+      ~Temperature.name
+      ~Temperature.parent
+      ~Temperature.path
+      ~Temperature.scope
+      ~Temperature.variables
+   
+   

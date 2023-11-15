@@ -1,0 +1,32 @@
+xpag.agents.rljax\_agents.algorithm.sac\_discor
+===============================================
+
+.. automodule:: xpag.agents.rljax_agents.algorithm.sac_discor
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      SACDisCor
+   
+   
+
+   
+   
+   
+
+
+

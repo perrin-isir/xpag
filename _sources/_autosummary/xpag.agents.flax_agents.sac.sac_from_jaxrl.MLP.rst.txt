@@ -1,0 +1,58 @@
+xpag.agents.flax\_agents.sac.sac\_from\_jaxrl.MLP
+=================================================
+
+.. currentmodule:: xpag.agents.flax_agents.sac.sac_from_jaxrl
+
+.. autoclass:: MLP
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~MLP.apply
+      ~MLP.bind
+      ~MLP.clone
+      ~MLP.get_variable
+      ~MLP.has_rng
+      ~MLP.has_variable
+      ~MLP.init
+      ~MLP.init_with_output
+      ~MLP.is_initializing
+      ~MLP.is_mutable_collection
+      ~MLP.lazy_init
+      ~MLP.make_rng
+      ~MLP.param
+      ~MLP.perturb
+      ~MLP.put_variable
+      ~MLP.setup
+      ~MLP.sow
+      ~MLP.tabulate
+      ~MLP.unbind
+      ~MLP.variable
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MLP.activate_final
+      ~MLP.activations
+      ~MLP.dropout_rate
+      ~MLP.name
+      ~MLP.parent
+      ~MLP.path
+      ~MLP.scope
+      ~MLP.variables
+      ~MLP.hidden_dims
+   
+   

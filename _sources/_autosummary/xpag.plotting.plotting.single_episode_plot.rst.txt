@@ -1,0 +1,6 @@
+xpag.plotting.plotting.single\_episode\_plot
+============================================
+
+.. currentmodule:: xpag.plotting.plotting
+
+.. autofunction:: single_episode_plot

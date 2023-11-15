@@ -1,0 +1,31 @@
+xpag.buffers.buffer.DefaultEpisodicBuffer
+=========================================
+
+.. currentmodule:: xpag.buffers.buffer
+
+.. autoclass:: DefaultEpisodicBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DefaultEpisodicBuffer.init_buffer
+      ~DefaultEpisodicBuffer.insert
+      ~DefaultEpisodicBuffer.load
+      ~DefaultEpisodicBuffer.pre_sample
+      ~DefaultEpisodicBuffer.sample
+      ~DefaultEpisodicBuffer.save
+      ~DefaultEpisodicBuffer.store_done
+   
+   
+
+   
+   
+   

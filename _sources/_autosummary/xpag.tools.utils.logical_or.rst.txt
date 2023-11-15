@@ -1,0 +1,6 @@
+xpag.tools.utils.logical\_or
+============================
+
+.. currentmodule:: xpag.tools.utils
+
+.. autofunction:: logical_or

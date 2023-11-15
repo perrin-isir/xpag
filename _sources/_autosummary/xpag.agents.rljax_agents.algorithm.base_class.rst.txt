@@ -1,0 +1,31 @@
+xpag.agents.rljax\_agents.algorithm.base\_class
+===============================================
+
+.. automodule:: xpag.agents.rljax_agents.algorithm.base_class
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.agents.rljax_agents.algorithm.base_class.actor_critic
+   xpag.agents.rljax_agents.algorithm.base_class.base_algorithm
+

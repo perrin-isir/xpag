@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.preprocess.add\_noise
+====================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.preprocess
+
+.. autofunction:: add_noise

@@ -1,0 +1,58 @@
+xpag.agents.flax\_agents.tqc.tqc.MultiQuantileCritic
+====================================================
+
+.. currentmodule:: xpag.agents.flax_agents.tqc.tqc
+
+.. autoclass:: MultiQuantileCritic
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~MultiQuantileCritic.apply
+      ~MultiQuantileCritic.bind
+      ~MultiQuantileCritic.clone
+      ~MultiQuantileCritic.get_variable
+      ~MultiQuantileCritic.has_rng
+      ~MultiQuantileCritic.has_variable
+      ~MultiQuantileCritic.init
+      ~MultiQuantileCritic.init_with_output
+      ~MultiQuantileCritic.is_initializing
+      ~MultiQuantileCritic.is_mutable_collection
+      ~MultiQuantileCritic.lazy_init
+      ~MultiQuantileCritic.make_rng
+      ~MultiQuantileCritic.param
+      ~MultiQuantileCritic.perturb
+      ~MultiQuantileCritic.put_variable
+      ~MultiQuantileCritic.setup
+      ~MultiQuantileCritic.sow
+      ~MultiQuantileCritic.tabulate
+      ~MultiQuantileCritic.unbind
+      ~MultiQuantileCritic.variable
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MultiQuantileCritic.name
+      ~MultiQuantileCritic.parent
+      ~MultiQuantileCritic.path
+      ~MultiQuantileCritic.scope
+      ~MultiQuantileCritic.variables
+      ~MultiQuantileCritic.hidden_dims
+      ~MultiQuantileCritic.activations
+      ~MultiQuantileCritic.num_qs
+      ~MultiQuantileCritic.num_quantiles
+   
+   

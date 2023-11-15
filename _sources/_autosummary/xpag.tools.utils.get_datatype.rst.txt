@@ -1,0 +1,6 @@
+xpag.tools.utils.get\_datatype
+==============================
+
+.. currentmodule:: xpag.tools.utils
+
+.. autofunction:: get_datatype

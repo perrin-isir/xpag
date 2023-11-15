@@ -1,0 +1,6 @@
+xpag.tools.utils.reshape
+========================
+
+.. currentmodule:: xpag.tools.utils
+
+.. autofunction:: reshape

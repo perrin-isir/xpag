@@ -1,0 +1,38 @@
+xpag.agents.flax\_agents.td3.td3.TrainingState
+==============================================
+
+.. currentmodule:: xpag.agents.flax_agents.td3.td3
+
+.. autoclass:: TrainingState
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~TrainingState.replace
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TrainingState.policy_optimizer_state
+      ~TrainingState.policy_params
+      ~TrainingState.target_policy_params
+      ~TrainingState.q_optimizer_state
+      ~TrainingState.q_params
+      ~TrainingState.target_q_params
+      ~TrainingState.key
+      ~TrainingState.steps
+   
+   

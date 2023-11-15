@@ -1,0 +1,26 @@
+xpag.agents.rljax\_agents.network.actor.DeterministicPolicy
+===========================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.network.actor
+
+.. autoclass:: DeterministicPolicy
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DeterministicPolicy.params_dict
+      ~DeterministicPolicy.state_dict
+   
+   
+
+   
+   
+   

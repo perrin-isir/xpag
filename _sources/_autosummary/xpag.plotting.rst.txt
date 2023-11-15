@@ -1,0 +1,30 @@
+﻿xpag.plotting
+=============
+
+.. automodule:: xpag.plotting
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.plotting.plotting
+

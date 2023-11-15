@@ -1,0 +1,33 @@
+﻿xpag.wrappers
+=============
+
+.. automodule:: xpag.wrappers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.wrappers.brax_vec_env
+   xpag.wrappers.goalenv_wrapper
+   xpag.wrappers.gym_vec_env
+   xpag.wrappers.reset_done
+

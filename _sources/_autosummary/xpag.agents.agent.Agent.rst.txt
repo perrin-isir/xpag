@@ -1,0 +1,29 @@
+xpag.agents.agent.Agent
+=======================
+
+.. currentmodule:: xpag.agents.agent
+
+.. autoclass:: Agent
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Agent.load
+      ~Agent.save
+      ~Agent.select_action
+      ~Agent.train_on_batch
+      ~Agent.write_config
+   
+   
+
+   
+   
+   

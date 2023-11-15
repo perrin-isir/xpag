@@ -1,0 +1,51 @@
+xpag.agents.flax\_agents.sac.sac\_from\_jaxrl
+=============================================
+
+.. automodule:: xpag.agents.flax_agents.sac.sac_from_jaxrl
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      default_init
+      sample_actions
+      target_update
+      update_actor
+      update_critic
+      update_temperature
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      Batch
+      Critic
+      DoubleCritic
+      MLP
+      Model
+      SACLearner
+      Temperature
+   
+   
+
+   
+   
+   
+
+
+

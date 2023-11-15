@@ -1,0 +1,32 @@
+xpag.wrappers.reset\_done
+=========================
+
+.. automodule:: xpag.wrappers.reset_done
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      ResetDoneWrapper
+   
+   
+
+   
+   
+   
+
+
+

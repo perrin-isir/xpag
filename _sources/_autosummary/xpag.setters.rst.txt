@@ -1,0 +1,30 @@
+﻿xpag.setters
+============
+
+.. automodule:: xpag.setters
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.setters.setter
+

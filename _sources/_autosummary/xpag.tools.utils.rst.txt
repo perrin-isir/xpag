@@ -1,0 +1,49 @@
+xpag.tools.utils
+================
+
+.. automodule:: xpag.tools.utils
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      datatype_convert
+      get_datatype
+      get_env_dimensions
+      hstack
+      logical_or
+      maximum
+      reshape
+      squeeze
+      tree_sum
+      where
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      DataType
+   
+   
+
+   
+   
+   
+
+
+

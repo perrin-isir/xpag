@@ -1,0 +1,27 @@
+xpag.buffers.buffer.EpisodicBuffer
+==================================
+
+.. currentmodule:: xpag.buffers.buffer
+
+.. autoclass:: EpisodicBuffer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~EpisodicBuffer.insert
+      ~EpisodicBuffer.sample
+      ~EpisodicBuffer.store_done
+   
+   
+
+   
+   
+   

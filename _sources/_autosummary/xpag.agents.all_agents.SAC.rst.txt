@@ -1,0 +1,30 @@
+xpag.agents.all\_agents.SAC
+===========================
+
+.. currentmodule:: xpag.agents.all_agents
+
+.. autoclass:: SAC
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~SAC.load
+      ~SAC.save
+      ~SAC.select_action
+      ~SAC.train_on_batch
+      ~SAC.value
+      ~SAC.write_config
+   
+   
+
+   
+   
+   

@@ -1,0 +1,32 @@
+xpag.agents.rljax\_agents.algorithm.ddpg
+========================================
+
+.. automodule:: xpag.agents.rljax_agents.algorithm.ddpg
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      DDPG
+   
+   
+
+   
+   
+   
+
+
+

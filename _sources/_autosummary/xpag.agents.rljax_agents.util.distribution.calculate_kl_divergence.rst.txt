@@ -1,0 +1,6 @@
+xpag.agents.rljax\_agents.util.distribution.calculate\_kl\_divergence
+=====================================================================
+
+.. currentmodule:: xpag.agents.rljax_agents.util.distribution
+
+.. autofunction:: calculate_kl_divergence

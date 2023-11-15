@@ -1,0 +1,32 @@
+xpag.agents.flax\_agents.sac.sac
+================================
+
+.. automodule:: xpag.agents.flax_agents.sac.sac
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      FlaxSAC
+   
+   
+
+   
+   
+   
+
+
+

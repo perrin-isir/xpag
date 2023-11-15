@@ -1,0 +1,6 @@
+xpag.tools.utils.hstack
+=======================
+
+.. currentmodule:: xpag.tools.utils
+
+.. autofunction:: hstack

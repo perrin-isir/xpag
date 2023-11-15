@@ -1,0 +1,23 @@
+xpag.samplers.HER
+=================
+
+.. automodule:: xpag.samplers.HER
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

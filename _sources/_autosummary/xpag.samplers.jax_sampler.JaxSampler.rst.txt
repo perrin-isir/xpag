@@ -1,0 +1,26 @@
+xpag.samplers.jax\_sampler.JaxSampler
+=====================================
+
+.. currentmodule:: xpag.samplers.jax_sampler
+
+.. autoclass:: JaxSampler
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~JaxSampler.init
+      ~JaxSampler.sample
+   
+   
+
+   
+   
+   

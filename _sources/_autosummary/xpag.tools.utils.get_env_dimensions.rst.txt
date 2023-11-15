@@ -1,0 +1,6 @@
+xpag.tools.utils.get\_env\_dimensions
+=====================================
+
+.. currentmodule:: xpag.tools.utils
+
+.. autofunction:: get_env_dimensions

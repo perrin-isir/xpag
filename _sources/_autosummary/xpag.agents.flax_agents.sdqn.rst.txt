@@ -1,0 +1,30 @@
+xpag.agents.flax\_agents.sdqn
+=============================
+
+.. automodule:: xpag.agents.flax_agents.sdqn
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.agents.flax_agents.sdqn.sdqn
+

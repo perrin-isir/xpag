@@ -1,0 +1,30 @@
+xpag.agents.flax\_agents.tqc.tqc.FlaxTQC
+========================================
+
+.. currentmodule:: xpag.agents.flax_agents.tqc.tqc
+
+.. autoclass:: FlaxTQC
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~FlaxTQC.load
+      ~FlaxTQC.save
+      ~FlaxTQC.select_action
+      ~FlaxTQC.train_on_batch
+      ~FlaxTQC.value
+      ~FlaxTQC.write_config
+   
+   
+
+   
+   
+   

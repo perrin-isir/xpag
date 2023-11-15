@@ -1,0 +1,30 @@
+xpag.agents.rljax\_agents.algorithm.misc
+========================================
+
+.. automodule:: xpag.agents.rljax_agents.algorithm.misc
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   xpag.agents.rljax_agents.algorithm.misc.discor_mixin
+

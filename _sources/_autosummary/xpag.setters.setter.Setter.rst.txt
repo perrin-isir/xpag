@@ -1,0 +1,30 @@
+xpag.setters.setter.Setter
+==========================
+
+.. currentmodule:: xpag.setters.setter
+
+.. autoclass:: Setter
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Setter.load
+      ~Setter.reset
+      ~Setter.reset_done
+      ~Setter.save
+      ~Setter.step
+      ~Setter.write_config
+   
+   
+
+   
+   
+   

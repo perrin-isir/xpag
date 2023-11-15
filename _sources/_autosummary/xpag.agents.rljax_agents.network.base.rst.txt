@@ -1,0 +1,32 @@
+xpag.agents.rljax\_agents.network.base
+======================================
+
+.. automodule:: xpag.agents.rljax_agents.network.base
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      MLP
+   
+   
+
+   
+   
+   
+
+
+
