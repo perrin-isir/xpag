@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw
 import ipywidgets
 
 
-def mujoco_notebook_replay(load_dir: str):
+def mujoco_notebook_replay(load_dir: str, width=480, height=480):
     """
     Episode replay for mujoco environments.
     """
@@ -39,7 +39,7 @@ def mujoco_notebook_replay(load_dir: str):
     env_name = str(
         np.loadtxt(os.path.join(load_dir, "episode", "env_name.txt"), dtype="str")
     )
-    env_replay = gym.make(env_name, render_mode="rgb_array")
+    env_replay = gym.make(env_name, render_mode="rgb_array", width=width, height=height)
     env_replay.reset()
     qpos = np.load(os.path.join(load_dir, "episode", "qpos.npy"))
     qvel = np.load(os.path.join(load_dir, "episode", "qvel.npy"))
@@ -56,7 +56,7 @@ def mujoco_notebook_replay(load_dir: str):
     )
 
     def compute_image(step):
-        env_replay.set_state(qpos[step], qvel[step])
+        env_replay.unwrapped.set_state(qpos[step], qvel[step])
         img_ = Image.fromarray(env_replay.render())
         ImageDraw.Draw(img_).text((0, 0), f"step: {step}", (255, 255, 255))
         return img_
@@ -101,7 +101,6 @@ def mujoco_notebook_replay(load_dir: str):
             duration=env_replay.model.opt.timestep * env_replay.frame_skip * len(qpos),
             loop=0,
         )
-        return os.path.join(load_dir, "episode", "episode.gif")
 
     def create_mp4(button):
         latest_percent = 0
@@ -112,12 +111,14 @@ def mujoco_notebook_replay(load_dir: str):
                 button.description = f"{latest_percent}%"
             if step not in img_dict:
                 img_dict[step] = compute_image(step)
-        button.description = "generating mp4..."
+        button.description = "saving mp4..."
         imgs = []
         for i in range(len(qpos)):
             imgs.append(np.array(img_dict[i]))
-        media.show_video(
-            imgs, fps=1.0 / (env_replay.model.opt.timestep * env_replay.frame_skip)
+        media.write_video(
+            os.path.join(load_dir, "episode", "episode.mp4"),
+            imgs,
+            fps=1.0 / (env_replay.model.opt.timestep * env_replay.frame_skip),
         )
 
     display.display(
