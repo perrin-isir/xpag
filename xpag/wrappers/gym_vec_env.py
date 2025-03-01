@@ -4,7 +4,10 @@
 
 import sys
 import inspect
-from typing import Callable
+import multiprocessing
+from multiprocessing import Queue
+from multiprocessing.connection import Connection
+from typing import Any, Callable
 import numpy as np
 import gymnasium as gym
 from gymnasium.vector.utils import (
@@ -12,7 +15,9 @@ from gymnasium.vector.utils import (
     concatenate,
     create_empty_array,
 )
-from gymnasium.vector import VectorEnv, AsyncVectorEnv, VectorEnvWrapper
+from gymnasium.spaces.utils import is_space_dtype_shape_equiv
+import traceback
+from gymnasium.vector import VectorEnv, AsyncVectorEnv, VectorWrapper
 from xpag.wrappers.reset_done import ResetDoneWrapper
 from xpag.tools.utils import get_env_dimensions
 
@@ -113,6 +118,13 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None, **gym_kwargs):
         )
         # The 'init_qpos' and 'state_vector' attributes are the one required to
         # save mujoco episodes (cf. class SaveEpisode in xpag/tools/eval.py).
+        argz = [
+                        (lambda: gym.make(env_name, **gym_kwargs))
+                        if hasattr(dummy_env, "reset_done")
+                        else (
+                            lambda: ResetDoneWrapper(gym.make(env_name, **gym_kwargs))
+                        )
+                    ] * num_envs
         env = wrap_function(
             ResetDoneVecWrapper(
                 AsyncVectorEnv(
@@ -125,6 +137,7 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None, **gym_kwargs):
                     ]
                     * num_envs,
                     worker=_worker_shared_memory_no_auto_reset,
+                    observation_mode="same"
                 ),
                 max_episode_steps,
             )
@@ -150,7 +163,7 @@ def gym_vec_env(env_name: str, num_envs: int, wrap_function: Callable = None, **
     return env, eval_env, env_info
 
 
-class ResetDoneVecWrapper(VectorEnvWrapper):
+class ResetDoneVecWrapper(VectorWrapper):
     def __init__(self, env: VectorEnv, max_episode_steps: int):
         super().__init__(env)
         self.max_episode_steps = max_episode_steps
@@ -186,21 +199,26 @@ class ResetDoneVecWrapper(VectorEnvWrapper):
             info_,
         )
 
-
 def _worker_shared_memory_no_auto_reset(
     index, env_fn, pipe, parent_pipe, shared_memory, error_queue
 ):
     """
-    This function is derived from _worker_shared_memory() in gymnasium. See:
+    This function is derived from _async_worker() in gymnasium. See:
     https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/vector/async_vector_env.py
     """
-    assert shared_memory is not None
+    assert(shared_memory is not None)
+
     env = env_fn()
     observation_space = env.observation_space
+    action_space = env.action_space
+    observation = None
+
     parent_pipe.close()
+
     try:
         while True:
             command, data = pipe.recv()
+
             if command == "reset":
                 observation, info = env.reset(**data)
                 write_to_shared_memory(
@@ -218,9 +236,6 @@ def _worker_shared_memory_no_auto_reset(
                     observation_space, index, observation, shared_memory
                 )
                 pipe.send(((None, reward, terminated, truncated, info), True))
-            # elif command == "seed":
-            #     env.seed(data)
-            #     pipe.send((None, True))
             elif command == "close":
                 pipe.send((None, True))
                 break
@@ -231,7 +246,8 @@ def _worker_shared_memory_no_auto_reset(
                         f"Trying to call function `{name}` with "
                         f"`_call`. Use `{name}` directly instead."
                     )
-                function = getattr(env, name)
+                function = env.get_wrapper_attr(name)
+                # function = getattr(env, name)
                 if name == "reset_done":
                     pipe.send((function(index, *args, **kwargs), True))
                 else:
@@ -241,12 +257,30 @@ def _worker_shared_memory_no_auto_reset(
                         pipe.send((function, True))
             elif command == "_setattr":
                 name, value = data
-                setattr(env, name, value)
+                env.set_wrapper_attr(name, value)
+                # setattr(env, name, value)
                 pipe.send((None, True))
             elif command == "_check_spaces":
+                obs_mode, single_obs_space, single_action_space = data
+
                 pipe.send(
-                    ((data[0] == observation_space, data[1] == env.action_space), True)
+                    (
+                        (
+                            (
+                                single_obs_space == observation_space
+                                if obs_mode == "same"
+                                else is_space_dtype_shape_equiv(
+                                    single_obs_space, observation_space
+                                )
+                            ),
+                            single_action_space == action_space,
+                        ),
+                        True,
+                    )
                 )
+                # pipe.send(
+                #     ((data[0] == observation_space, data[1] == env.action_space), True)
+                # )
             else:
                 raise RuntimeError(
                     f"Received unknown command `{command}`. Must "
@@ -254,7 +288,10 @@ def _worker_shared_memory_no_auto_reset(
                     "`_setattr`, `_check_spaces`}."
                 )
     except (KeyboardInterrupt, Exception):
-        error_queue.put((index,) + sys.exc_info()[:2])
+        error_type, error_message, _ = sys.exc_info()
+        trace = traceback.format_exc()
+
+        error_queue.put((index, error_type, error_message, trace))
         pipe.send((None, False))
     finally:
         env.close()

@@ -4,12 +4,13 @@ from xpag.agents.flax_agents.td3.td3 import FlaxTD3
 from xpag.agents.flax_agents.tqc.tqc import FlaxTQC
 from xpag.agents.flax_agents.sdqn.sdqn import FlaxSDQN, FlaxSDQNSetter
 from xpag.agents.rljax_agents.rljax_interface import RljaxSAC
+import jax.numpy as jnp
 
 
 def agent_factory(name, haiku_agent_class, flax_agent_class):
     class AgentClass(Agent):
         def __init__(
-            self, observation_dim, action_dim, params=None, haiku_or_flax="flax"
+            self, observation_dim, action_dim, params=None, haiku_or_flax="haiku"
         ):
             super().__init__(name, observation_dim, action_dim, params)
             assert haiku_or_flax in ["haiku", "flax"], (

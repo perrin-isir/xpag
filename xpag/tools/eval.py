@@ -29,8 +29,8 @@ class SaveEpisode:
             self.states.append(self.env.unwrapped._state)
         elif self.env_info["env_type"] == "Mujoco":
             posvel = np.split(
-                np.array(self.env.call("state_vector")),
-                [self.env.call("init_qpos")[0].shape[-1]],
+                np.array(self.env.unwrapped.call("state_vector")),
+                [self.env.unwrapped.call("init_qpos")[0].shape[-1]],
                 axis=1,
             )
             self.qpos.append(posvel[0])
