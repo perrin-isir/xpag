@@ -200,7 +200,7 @@ class ResetDoneVecWrapper(VectorWrapper):
         )
 
 def _worker_shared_memory_no_auto_reset(
-    index, env_fn, pipe, parent_pipe, shared_memory, error_queue
+    index, env_fn, pipe, parent_pipe, shared_memory, error_queue, autoreset_mode=None
 ):
     """
     This function is derived from _async_worker() in gymnasium. See:
