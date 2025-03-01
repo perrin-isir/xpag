@@ -9,7 +9,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="xpag",
-    version="0.3.1",  # -version-
+    version="0.3.2",  # -version-
     author="Nicolas Perrin-Gilbert",
     description="xpag: Exploring Agents",
     long_description=long_description,
@@ -30,7 +30,6 @@ setup(
         "dm-haiku>=0.0.10",
         "brax>=0.9.1",
         "tensorflow-probability>=0.15.0",
-        "mediapy>=1.1.4",
     ],
     license="LICENSE",
 )

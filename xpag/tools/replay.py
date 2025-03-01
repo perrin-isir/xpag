@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import gymnasium as gym
-import mediapy as media
 from typing import Callable
 import joblib
 import jax
@@ -85,7 +84,10 @@ def mujoco_notebook_replay(load_dir: str, width=480, height=480):
 
     def create_gif(button):
         latest_percent = 0
-        for step in range(len(qpos)):
+        gif_length = 50
+        steprange = np.asarray(
+            np.arange(0,len(qpos),len(qpos)/gif_length+0.0001), dtype=int)
+        for step in steprange:
             new_percent = min(int(step / len(qpos) * 100.0), 99)
             if new_percent > latest_percent:
                 latest_percent = new_percent
@@ -96,38 +98,16 @@ def mujoco_notebook_replay(load_dir: str, width=480, height=480):
         img_dict[0].save(
             os.path.join(load_dir, "episode", "episode.gif"),
             format="gif",
-            append_images=[img_dict[k] for k in range(1, len(qpos))],
+            append_images=[img_dict[k] for k in steprange[1:]],
             save_all=True,
-            duration=env_replay.model.opt.timestep * env_replay.frame_skip * len(qpos),
+            duration=env_replay.unwrapped.model.opt.timestep \
+                * env_replay.unwrapped.frame_skip * gif_length,
             loop=0,
         )
-
-    def create_mp4(button):
-        latest_percent = 0
-        for step in range(len(qpos)):
-            new_percent = min(int(step / len(qpos) * 100.0), 99)
-            if new_percent > latest_percent:
-                latest_percent = new_percent
-                button.description = f"{latest_percent}%"
-            if step not in img_dict:
-                img_dict[step] = compute_image(step)
-        button.description = "saving mp4..."
-        imgs = []
-        for i in range(len(qpos)):
-            imgs.append(np.array(img_dict[i]))
-        media.write_video(
-            os.path.join(load_dir, "episode", "episode.mp4"),
-            imgs,
-            fps=1.0 / (env_replay.model.opt.timestep * env_replay.frame_skip),
-        )
+        button.description = "Generate gif"
 
     display.display(
-        ipywidgets.widgets.HBox(
-            (
-                DownloadButton(contents=create_gif, description="Generate gif"),
-                DownloadButton(contents=create_mp4, description="Generate mp4"),
-            )
-        )
+        DownloadButton(contents=create_gif, description="Generate gif"),         
     )
 
 
@@ -138,11 +118,12 @@ def brax_notebook_replay(load_dir: str):
     env_name = str(
         np.loadtxt(os.path.join(load_dir, "episode", "env_name.txt"), dtype="str")
     )
-    env = envs.create(env_name=env_name)
+    e = envs.create(env_name=env_name)
     with open(os.path.join(load_dir, "episode", "states.joblib"), "rb") as f:
         states = joblib.load(f)
     episode = [
         jax.tree_util.tree_map(lambda x: x.squeeze(axis=0), st.pipeline_state)
         for st in states
     ]
-    display.display(HTML(html.render(env.sys.replace(dt=env.dt), episode)))
+    display.display(HTML(html.render(
+        e.sys.replace(opt=e.sys.opt.replace(timestep=e.dt)), episode)))
