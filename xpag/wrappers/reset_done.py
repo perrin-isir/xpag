@@ -4,13 +4,15 @@
 
 import numpy as np
 import gymnasium as gym
+from typing import Union
 
 
 class ResetDoneWrapper(gym.Wrapper):
-    def __init__(self, env):
+    def __init__(self, env, max_episode_steps: int | None=None):
         super().__init__(env)
         self._last_obs = None
         self.steps = 0
+        self.max_episode_steps = max_episode_steps
 
     def reset(self, **kwargs):
         obs, info = self.env.reset(**kwargs)
@@ -32,4 +34,6 @@ class ResetDoneWrapper(gym.Wrapper):
         self._last_obs = obs
         self.steps += 1
         info["steps"] = self.steps
+        if self.max_episode_steps and self.steps >= self.max_episode_steps:
+            truncated = True 
         return obs, reward, terminated, truncated, info

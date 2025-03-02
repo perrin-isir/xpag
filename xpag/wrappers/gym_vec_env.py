@@ -42,16 +42,24 @@ def check_goalenv(env) -> bool:
     return True
 
 
-def gym_vec_env_(env_name, num_envs, wrap_function=None, **gym_kwargs):
+def gym_vec_env_(env_name, 
+                 num_envs, 
+                 wrap_function=None, 
+                 max_episode_steps=None,
+                 **gym_kwargs):
     if wrap_function is None:
 
         def wrap_function(x):
             return x
 
+    env_creator = gym.spec(env_name).entry_point
+    if type(env_creator) == str:
+        env_creator = gym.envs.registration.load_env_creator(env_creator)
+
     if "num_envs" in inspect.signature(
-        gym.envs.registration.load_env_creator(gym.spec(env_name).entry_point).__init__
+        env_creator.__init__
     ).parameters and hasattr(
-        gym.envs.registration.load_env_creator(gym.spec(env_name).entry_point),
+        env_creator,
         "reset_done",
     ):
         # no need to create a VecEnv and wrap it if the env accepts 'num_envs' as an
@@ -85,24 +93,25 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None, **gym_kwargs):
         # We force the env to either have a standard gymnasium time limit (with the
         # max number of steps defined in .spec.max_episode_steps), or the max number of
         # steps defined in .max_episode_steps (and in this case we trust the environment
-        # to appropriately prevent episodes from exceeding max_episode_steps steps).
-        assert (
-            hasattr(dummy_env.spec, "max_episode_steps")
-            and dummy_env.spec.max_episode_steps is not None
-        ) or (
-            hasattr(dummy_env, "max_episode_steps")
-            and dummy_env.max_episode_steps is not None
-        ), (
-            "Only allowing gym(nasium) envs with time limit (defined in "
-            ".spec.max_episode_steps or .max_episode_steps)."
-        )
+        # to appropriately prevent episodes from exceeding max_episode_steps steps). 
+        # Otherwise, the argument max_episode_steps must not be None.
         if (
             hasattr(dummy_env.spec, "max_episode_steps")
             and dummy_env.spec.max_episode_steps is not None
         ):
             max_episode_steps = dummy_env.spec.max_episode_steps
-        else:
+        elif (
+            hasattr(dummy_env, "max_episode_steps") 
+            and dummy_env.max_episode_steps is not None
+        ):
             max_episode_steps = dummy_env.max_episode_steps
+        else:
+            assert (
+                max_episode_steps is not None
+            ), (
+                "Error: episode step limit undefined, so argument "
+                "max_episode_steps cannot be None."
+            )
         # env_type = "Mujoco" if isinstance(dummy_env.unwrapped, MujocoEnv) else "Gym"
         # To avoid imposing a dependency to mujoco, we simply guess that the
         # environment is a mujoco environment when it has the 'init_qpos', 'init_qvel',
@@ -118,13 +127,6 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None, **gym_kwargs):
         )
         # The 'init_qpos' and 'state_vector' attributes are the one required to
         # save mujoco episodes (cf. class SaveEpisode in xpag/tools/eval.py).
-        argz = [
-                        (lambda: gym.make(env_name, **gym_kwargs))
-                        if hasattr(dummy_env, "reset_done")
-                        else (
-                            lambda: ResetDoneWrapper(gym.make(env_name, **gym_kwargs))
-                        )
-                    ] * num_envs
         env = wrap_function(
             ResetDoneVecWrapper(
                 AsyncVectorEnv(
@@ -137,7 +139,7 @@ def gym_vec_env_(env_name, num_envs, wrap_function=None, **gym_kwargs):
                     ]
                     * num_envs,
                     worker=_worker_shared_memory_no_auto_reset,
-                    observation_mode="same"
+                    # observation_mode="same"
                 ),
                 max_episode_steps,
             )
@@ -166,36 +168,43 @@ def gym_vec_env(env_name: str, num_envs: int, wrap_function: Callable = None, **
 class ResetDoneVecWrapper(VectorWrapper):
     def __init__(self, env: VectorEnv, max_episode_steps: int):
         super().__init__(env)
+        self.steps = np.zeros(self.num_envs).reshape((self.num_envs,-1))
         self.max_episode_steps = max_episode_steps
 
     def reset(self, **kwargs):
         obs, info_ = self.env.reset(**kwargs)
-        return obs, {"info_tuple": tuple(info_)}
+        self.steps = np.zeros(self.num_envs).reshape((self.num_envs,-1))
+        return obs, info_
 
     def reset_done(self, *args, **kwargs):
         results, info_ = tuple(zip(*self.env.call("reset_done", *args, **kwargs)))
         observations = create_empty_array(
             self.env.single_observation_space, n=self.num_envs, fn=np.empty
         )
-        info = {"info_tuple": tuple(info_)}
+        infos = {}
+        for i, d in enumerate(info_):
+            self._add_info(infos, d, i)
         return (
             concatenate(self.env.single_observation_space, results, observations),
-            info,
+            infos,
         )
 
     def step(self, action):
         obs, reward, terminated, truncated, info_ = self.env.step(action)
         info_["is_success"] = (
-            info_["is_success"]
+            info_["is_success"].flatten()
             if "is_success" in info_
-            else np.array([False] * self.num_envs).reshape((self.num_envs, 1))
+            else np.array([False] * self.num_envs).flatten()
         )
-
+        self.steps += 1
+        truncated = np.logical_or(
+            truncated.reshape((self.env.num_envs, -1)), 
+            self.steps >= self.max_episode_steps)
         return (
             obs,
             reward.reshape((self.env.num_envs, -1)),
             terminated.reshape((self.env.num_envs, -1)),
-            truncated.reshape((self.env.num_envs, -1)),
+            truncated,
             info_,
         )
 
