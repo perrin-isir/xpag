@@ -6,4 +6,4 @@ from xpag import samplers
 from xpag import agents
 from xpag import setters
 
-__version__ = "0.3.3"  # -version-
+__version__ = "0.3.4"  # -version-

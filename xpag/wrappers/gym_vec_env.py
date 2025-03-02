@@ -177,6 +177,8 @@ class ResetDoneVecWrapper(VectorWrapper):
         return obs, info_
 
     def reset_done(self, *args, **kwargs):
+        done = args[0]
+        self.steps = self.steps * (1 - done)
         results, info_ = tuple(zip(*self.env.call("reset_done", *args, **kwargs)))
         observations = create_empty_array(
             self.env.single_observation_space, n=self.num_envs, fn=np.empty
