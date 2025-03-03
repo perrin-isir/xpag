@@ -12,6 +12,7 @@ import optax
 from xpag.agents.agent import Agent
 from xpag.setters.setter import Setter
 import numpy as np
+from tensorflow_probability.substrates import jax as tfp
 
 Params = Any
 PRNGKey = jnp.ndarray
@@ -288,6 +289,40 @@ class FlaxSDQN(Agent):
             backend=self.backend,
         )
 
+        def boltzmann_actions(
+            key_, action_bins: int, action_dim: int, critic_low_params: Params, obs
+        ):
+            obs_shape = obs.shape[0]
+            carry = jnp.zeros((obs_shape, 0 * action_bins))
+
+            def action_progress(carry_action, i_, local_key):
+                res1, res2 = self.critic_low[i_].apply(
+                    critic_low_params[str(i_)], obs, carry_action, action_bins
+                )
+                action_choice_array = jnp.argmax(res1, axis=-1)
+                discrete_dist = tfp.distributions.FiniteDiscrete(
+                    jnp.arange(res1.shape[1]), probs=jax.nn.softmax(res1))
+                action_choice_array = discrete_dist.sample(seed=local_key)
+                a_progress = (
+                    jnp.zeros((obs_shape, action_bins))
+                    .at[jnp.arange(obs_shape), action_choice_array]
+                    .set(1)
+                )
+                return jnp.column_stack((carry_action, a_progress))
+
+            key = key_
+            for k in range(action_dim):
+                key, next_key = jax.random.split(key) 
+                carry = action_progress(carry, k, next_key)
+
+            return carry
+
+        self.boltzmann_actions = jax.jit(
+            boltzmann_actions,
+            static_argnames=["action_bins", "action_dim"],
+            backend=self.backend,
+        )
+
         def critic_up_loss(
             critic_up_params: Params,
             target_critic_up_params: Params,
@@ -523,12 +558,22 @@ class FlaxSDQN(Agent):
         )
 
     def select_action(self, observation, eval_mode=False):
-        onehot_action = self.greedy_actions(
-            self.action_bins,
-            self.action_dim,
-            self.training_state.critic_low_params,
-            observation,
-        )
+        self.key, local_key = jax.random.split(self.key)
+        if eval_mode:
+            onehot_action = self.greedy_actions(
+                self.action_bins,
+                self.action_dim,
+                self.training_state.critic_low_params,
+                observation,
+            )
+        else:
+            onehot_action = self.boltzmann_actions(
+                local_key,
+                self.action_bins,
+                self.action_dim,
+                self.training_state.critic_low_params,
+                observation,
+            )
         where_ones = jnp.where(onehot_action == 1)[1].reshape(
             (observation.shape[0], self.action_dim)
         )
